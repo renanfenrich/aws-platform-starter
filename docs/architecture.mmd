@@ -1,0 +1,20 @@
+flowchart TB
+  User((User)) --> ALB[ALB : HTTPS]
+
+  subgraph VPC
+    subgraph PublicSubnets[Public Subnets x2]
+      ALB
+      NAT1[NAT GW]
+      NAT2[NAT GW]
+    end
+
+    subgraph PrivateSubnets[Private Subnets x2]
+      ECS[ECS Fargate Service]
+      RDS[(RDS PostgreSQL)]
+    end
+  end
+
+  ALB --> ECS
+  ECS --> RDS
+  ECS --> NAT1
+  ECS --> NAT2
