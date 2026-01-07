@@ -1,0 +1,52 @@
+name: ci
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.6.6"
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.53.0
+
+      - name: Install terraform-docs
+        run: |
+          curl -sSLo /tmp/terraform-docs.tar.gz https://github.com/terraform-docs/terraform-docs/releases/download/v0.17.0/terraform-docs-v0.17.0-linux-amd64.tar.gz
+          tar -xzf /tmp/terraform-docs.tar.gz -C /tmp
+          sudo mv /tmp/terraform-docs /usr/local/bin/terraform-docs
+
+      - name: Fmt
+        run: make fmt-check
+
+      - name: Validate
+        run: make validate
+
+      - name: Lint
+        run: make lint
+
+      - name: Security Scan (tfsec)
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          soft_fail: false
+
+      - name: Docs Check
+        run: make docs-check
+
+      - name: Tests
+        run: make test
