@@ -56,7 +56,7 @@ variable "acm_certificate_arn" {
   description = "ACM certificate ARN for HTTPS listener."
 
   validation {
-    condition     = length(trim(var.acm_certificate_arn)) > 0
+    condition     = length(trimspace(var.acm_certificate_arn)) > 0
     error_message = "acm_certificate_arn must be provided for HTTPS."
   }
 }

@@ -1,5 +1,5 @@
 locals {
-  alarm_actions = length(trim(var.alarm_sns_topic_arn)) > 0 ? [var.alarm_sns_topic_arn] : []
+  alarm_actions = length(trimspace(var.alarm_sns_topic_arn)) > 0 ? [var.alarm_sns_topic_arn] : []
 }
 
 resource "aws_cloudwatch_metric_alarm" "alb_5xx" {

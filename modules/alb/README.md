@@ -46,7 +46,7 @@ No modules.
 | <a name="input_deletion_protection"></a> [deletion\_protection](#input\_deletion\_protection) | Enable deletion protection for the ALB. | `bool` | `false` | no |
 | <a name="input_enable_http"></a> [enable\_http](#input\_enable\_http) | Enable HTTP listener (allowed in dev only). | `bool` | `false` | no |
 | <a name="input_health_check_path"></a> [health\_check\_path](#input\_health\_check\_path) | HTTP path for target group health checks. | `string` | `"/"` | no |
-| <a name="input_ingress_cidrs"></a> [ingress\_cidrs](#input\_ingress\_cidrs) | CIDR blocks allowed to access the ALB. | `list(string)` | <pre>[<br>  "0.0.0.0/0"<br>]</pre> | no |
+| <a name="input_ingress_cidrs"></a> [ingress\_cidrs](#input\_ingress\_cidrs) | CIDR blocks allowed to access the ALB. | `list(string)` | <pre>[<br/>  "0.0.0.0/0"<br/>]</pre> | no |
 | <a name="input_name_prefix"></a> [name\_prefix](#input\_name\_prefix) | Prefix used for naming ALB resources. | `string` | n/a | yes |
 | <a name="input_public_subnet_ids"></a> [public\_subnet\_ids](#input\_public\_subnet\_ids) | Public subnet IDs for the ALB. | `list(string)` | n/a | yes |
 | <a name="input_ssl_policy"></a> [ssl\_policy](#input\_ssl\_policy) | SSL policy for the HTTPS listener. | `string` | `"ELBSecurityPolicy-TLS13-1-2-2021-06"` | no |
