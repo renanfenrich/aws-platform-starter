@@ -17,8 +17,17 @@ variable "ecs_capacity_mode" {
   default     = "fargate"
 }
 
+variable "platform" {
+  type        = string
+  description = "Platform selection (ecs or k8s_self_managed)."
+  default     = "ecs"
+}
+
 locals {
   target_group_arn           = "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/test/1234567890abcdef"
+  alb_security_group_id      = "sg-0123456789abcdef0"
+  platform_is_ecs            = var.platform == "ecs"
+  platform_is_k8s            = var.platform == "k8s_self_managed"
   ecs_cluster_name           = "test-ecs"
   ec2_capacity_provider_name = "test-ecs-ec2"
   base_capacity_providers    = ["FARGATE", "FARGATE_SPOT"]
@@ -49,6 +58,8 @@ locals {
   ]
   ecs_service_capacity_provider_strategy = local.ecs_default_capacity_provider_strategy
   ecs_requires_compatibilities           = var.ecs_capacity_mode == "ec2" ? ["EC2"] : ["FARGATE"]
+  ecs_ec2_enabled                        = local.platform_is_ecs && var.ecs_capacity_mode == "ec2"
+  k8s_cluster_name                       = "test-k8s"
 }
 
 module "network" {
@@ -73,6 +84,7 @@ resource "aws_security_group" "app" {
 }
 
 module "ecs" {
+  count  = local.platform_is_ecs ? 1 : 0
   source = "../../modules/ecs"
 
   name_prefix                        = "test"
@@ -83,7 +95,7 @@ module "ecs" {
   capacity_providers                 = local.ecs_capacity_providers
   default_capacity_provider_strategy = local.ecs_default_capacity_provider_strategy
   capacity_provider_strategy         = local.ecs_service_capacity_provider_strategy
-  capacity_provider_dependency       = var.ecs_capacity_mode == "ec2" ? module.ecs_ec2_capacity[0].capacity_provider_name : null
+  capacity_provider_dependency       = local.ecs_ec2_enabled ? module.ecs_ec2_capacity[0].capacity_provider_name : null
   container_image                    = "public.ecr.aws/nginx/nginx:latest"
   container_port                     = 80
   enable_execute_command             = false
@@ -94,7 +106,7 @@ module "ecs" {
 }
 
 module "ecs_ec2_capacity" {
-  count  = var.ecs_capacity_mode == "ec2" ? 1 : 0
+  count  = local.ecs_ec2_enabled ? 1 : 0
   source = "../../modules/ecs-ec2-capacity"
 
   name_prefix                = "test"
@@ -107,6 +119,29 @@ module "ecs_ec2_capacity" {
   min_size                   = 1
   max_size                   = 1
   enable_detailed_monitoring = false
+  tags = {
+    Environment = "test"
+  }
+}
+
+module "k8s_ec2_infra" {
+  count  = local.platform_is_k8s ? 1 : 0
+  source = "../../modules/k8s-ec2-infra"
+
+  name_prefix                 = "test"
+  cluster_name                = local.k8s_cluster_name
+  vpc_id                      = module.network.vpc_id
+  vpc_cidr                    = module.network.vpc_cidr
+  private_subnet_ids          = module.network.private_subnet_ids
+  alb_security_group_id       = local.alb_security_group_id
+  alb_target_group_arn        = local.target_group_arn
+  control_plane_instance_type = "t3.small"
+  worker_instance_type        = "t3.small"
+  worker_desired_capacity     = 1
+  worker_min_size             = 1
+  worker_max_size             = 1
+  ami_id                      = "ami-1234567890abcdef0"
+  enable_detailed_monitoring  = false
   tags = {
     Environment = "test"
   }

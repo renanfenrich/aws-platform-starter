@@ -46,7 +46,8 @@ No modules.
 | <a name="input_ecs_cluster_name"></a> [ecs\_cluster\_name](#input\_ecs\_cluster\_name) | ECS cluster name for the ECS CPU alarm. | `string` | `""` | no |
 | <a name="input_ecs_cpu_threshold"></a> [ecs\_cpu\_threshold](#input\_ecs\_cpu\_threshold) | Threshold for ECS CPU utilization. | `number` | `80` | no |
 | <a name="input_ecs_service_name"></a> [ecs\_service\_name](#input\_ecs\_service\_name) | ECS service name for the ECS CPU alarm. | `string` | `""` | no |
-| <a name="input_enable_ec2_cpu_alarm"></a> [enable\_ec2\_cpu\_alarm](#input\_enable\_ec2\_cpu\_alarm) | Enable EC2 CPU alarm for ECS capacity provider instances. | `bool` | `false` | no |
+| <a name="input_enable_ec2_cpu_alarm"></a> [enable\_ec2\_cpu\_alarm](#input\_enable\_ec2\_cpu\_alarm) | Enable EC2 CPU alarm for EC2-based compute. | `bool` | `false` | no |
+| <a name="input_enable_ecs_cpu_alarm"></a> [enable\_ecs\_cpu\_alarm](#input\_enable\_ecs\_cpu\_alarm) | Enable ECS CPU alarm for ECS services. | `bool` | `true` | no |
 | <a name="input_evaluation_periods"></a> [evaluation\_periods](#input\_evaluation\_periods) | Number of periods for alarm evaluation. | `number` | `2` | no |
 | <a name="input_name_prefix"></a> [name\_prefix](#input\_name\_prefix) | Prefix used for naming alarms. | `string` | n/a | yes |
 | <a name="input_period_seconds"></a> [period\_seconds](#input\_period\_seconds) | Metric evaluation period in seconds. | `number` | `60` | no |

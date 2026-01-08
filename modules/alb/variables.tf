@@ -1,6 +1,11 @@
 variable "name_prefix" {
   type        = string
   description = "Prefix used for naming ALB resources."
+
+  validation {
+    condition     = length(var.name_prefix) <= 28
+    error_message = "name_prefix must be <= 28 characters to keep ALB and target group names within AWS limits."
+  }
 }
 
 variable "vpc_id" {

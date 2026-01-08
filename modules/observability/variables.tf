@@ -5,8 +5,14 @@ variable "name_prefix" {
 
 variable "enable_ec2_cpu_alarm" {
   type        = bool
-  description = "Enable EC2 CPU alarm for ECS capacity provider instances."
+  description = "Enable EC2 CPU alarm for EC2-based compute."
   default     = false
+}
+
+variable "enable_ecs_cpu_alarm" {
+  type        = bool
+  description = "Enable ECS CPU alarm for ECS services."
+  default     = true
 }
 
 variable "alb_arn_suffix" {
@@ -30,8 +36,8 @@ variable "ecs_cluster_name" {
   default     = ""
 
   validation {
-    condition     = length(trim(var.ecs_cluster_name)) > 0
-    error_message = "ecs_cluster_name is required."
+    condition     = !var.enable_ecs_cpu_alarm || length(trimspace(var.ecs_cluster_name)) > 0
+    error_message = "ecs_cluster_name is required when enable_ecs_cpu_alarm is true."
   }
 }
 
@@ -41,8 +47,8 @@ variable "ecs_service_name" {
   default     = ""
 
   validation {
-    condition     = length(trim(var.ecs_service_name)) > 0
-    error_message = "ecs_service_name is required."
+    condition     = !var.enable_ecs_cpu_alarm || length(trimspace(var.ecs_service_name)) > 0
+    error_message = "ecs_service_name is required when enable_ecs_cpu_alarm is true."
   }
 }
 
@@ -52,7 +58,7 @@ variable "ec2_asg_name" {
   default     = ""
 
   validation {
-    condition     = !var.enable_ec2_cpu_alarm || length(trim(var.ec2_asg_name)) > 0
+    condition     = !var.enable_ec2_cpu_alarm || length(trimspace(var.ec2_asg_name)) > 0
     error_message = "ec2_asg_name is required when enable_ec2_cpu_alarm is true."
   }
 }

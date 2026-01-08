@@ -46,6 +46,8 @@ resource "aws_cloudwatch_metric_alarm" "rds_cpu" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "ecs_cpu" {
+  count = var.enable_ecs_cpu_alarm ? 1 : 0
+
   alarm_name          = "${var.name_prefix}-ecs-cpu"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = var.evaluation_periods

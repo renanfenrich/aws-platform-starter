@@ -1,6 +1,11 @@
 variable "project_name" {
   type        = string
   description = "Project name used for resource naming."
+
+  validation {
+    condition     = length("${var.project_name}-${var.environment}") <= 28
+    error_message = "project_name and environment must be <= 28 characters combined to satisfy ALB and target group naming limits."
+  }
 }
 
 variable "environment" {
@@ -13,6 +18,17 @@ variable "environment" {
   }
 }
 
+variable "platform" {
+  type        = string
+  description = "Platform selection (ecs, k8s_self_managed, or eks)."
+  default     = "ecs"
+
+  validation {
+    condition     = contains(["ecs", "k8s_self_managed", "eks"], var.platform)
+    error_message = "platform must be ecs, k8s_self_managed, or eks."
+  }
+}
+
 variable "ecs_capacity_mode" {
   type        = string
   description = "ECS capacity mode (fargate, fargate_spot, or ec2)."
@@ -22,6 +38,101 @@ variable "ecs_capacity_mode" {
     condition     = contains(["fargate", "fargate_spot", "ec2"], var.ecs_capacity_mode)
     error_message = "ecs_capacity_mode must be fargate, fargate_spot, or ec2."
   }
+}
+
+variable "k8s_control_plane_instance_type" {
+  type        = string
+  description = "EC2 instance type for the Kubernetes control plane."
+  default     = "t3.small"
+}
+
+variable "k8s_worker_instance_type" {
+  type        = string
+  description = "EC2 instance type for Kubernetes worker nodes."
+  default     = "t3.small"
+}
+
+variable "k8s_worker_desired_capacity" {
+  type        = number
+  description = "Desired capacity for the Kubernetes worker Auto Scaling group."
+  default     = 1
+}
+
+variable "k8s_worker_min_size" {
+  type        = number
+  description = "Minimum size for the Kubernetes worker Auto Scaling group."
+  default     = 1
+}
+
+variable "k8s_worker_max_size" {
+  type        = number
+  description = "Maximum size for the Kubernetes worker Auto Scaling group."
+  default     = 2
+}
+
+variable "k8s_ami_id" {
+  type        = string
+  description = "Optional AMI ID override for Kubernetes nodes."
+  default     = null
+}
+
+variable "k8s_ami_ssm_parameter" {
+  type        = string
+  description = "SSM parameter path for the Kubernetes node AMI."
+  default     = "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64"
+}
+
+variable "k8s_version" {
+  type        = string
+  description = "Kubernetes version to install (minor or patch)."
+  default     = "1.29.2"
+}
+
+variable "k8s_pod_cidr" {
+  type        = string
+  description = "Pod CIDR for the Kubernetes cluster."
+  default     = "10.244.0.0/16"
+}
+
+variable "k8s_service_cidr" {
+  type        = string
+  description = "Service CIDR for the Kubernetes cluster."
+  default     = "10.96.0.0/12"
+}
+
+variable "k8s_ingress_nodeport" {
+  type        = number
+  description = "NodePort used by the Kubernetes ingress controller."
+  default     = 30080
+
+  validation {
+    condition     = var.k8s_ingress_nodeport >= 30000 && var.k8s_ingress_nodeport <= 32767
+    error_message = "k8s_ingress_nodeport must be within the NodePort range (30000-32767)."
+  }
+}
+
+variable "k8s_enable_ssm" {
+  type        = bool
+  description = "Attach SSM permissions for Kubernetes nodes."
+  default     = true
+}
+
+variable "k8s_enable_detailed_monitoring" {
+  type        = bool
+  description = "Enable detailed monitoring for Kubernetes nodes."
+  default     = true
+}
+
+variable "k8s_instance_role_policy_arns" {
+  type        = list(string)
+  description = "Additional policy ARNs to attach to Kubernetes instance roles."
+  default     = []
+}
+
+variable "k8s_join_parameter_name" {
+  type        = string
+  description = "Optional override for the SSM parameter storing the kubeadm join command."
+  default     = ""
 }
 
 variable "aws_region" {

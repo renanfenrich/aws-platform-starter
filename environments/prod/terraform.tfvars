@@ -1,5 +1,6 @@
 project_name        = "aws-production-platform"
 environment         = "prod"
+platform            = "ecs"
 ecs_capacity_mode   = "fargate"
 aws_region          = "us-east-1"
 allowed_account_ids = []

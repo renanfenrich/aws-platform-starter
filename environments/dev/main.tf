@@ -14,6 +14,11 @@ data "aws_availability_zones" "available" {
 locals {
   name_prefix                = "${var.project_name}-${var.environment}"
   azs                        = slice(data.aws_availability_zones.available.names, 0, 2)
+  platform_is_ecs            = var.platform == "ecs"
+  platform_is_k8s            = var.platform == "k8s_self_managed"
+  platform_is_eks            = var.platform == "eks"
+  alb_target_port            = local.platform_is_k8s ? var.k8s_ingress_nodeport : var.container_port
+  alb_target_type            = local.platform_is_k8s ? "instance" : "ip"
   ecs_cluster_name           = "${local.name_prefix}-ecs"
   ec2_desired_capacity       = var.ec2_desired_capacity != null ? var.ec2_desired_capacity : var.desired_count
   ec2_min_size               = var.ec2_min_size != null ? var.ec2_min_size : local.ec2_desired_capacity
@@ -47,6 +52,10 @@ locals {
   ]
   ecs_service_capacity_provider_strategy = local.ecs_default_capacity_provider_strategy
   ecs_requires_compatibilities           = var.ecs_capacity_mode == "ec2" ? ["EC2"] : ["FARGATE"]
+  ecs_ec2_enabled                        = local.platform_is_ecs && var.ecs_capacity_mode == "ec2"
+  enable_ec2_cpu_alarm                   = local.ecs_ec2_enabled || local.platform_is_k8s
+  k8s_cluster_name                       = "${local.name_prefix}-k8s"
+  k8s_join_parameter_name                = length(trimspace(var.k8s_join_parameter_name)) > 0 ? var.k8s_join_parameter_name : "/${local.name_prefix}/k8s/join-command"
   tags = merge(
     {
       Project     = var.project_name
@@ -56,6 +65,17 @@ locals {
     },
     var.additional_tags
   )
+}
+
+resource "terraform_data" "eks_not_implemented" {
+  count = local.platform_is_eks ? 1 : 0
+
+  lifecycle {
+    precondition {
+      condition     = var.platform != "eks"
+      error_message = "platform = \"eks\" is reserved for future use and is not implemented yet."
+    }
+  }
 }
 
 module "network" {
@@ -73,6 +93,8 @@ module "network" {
 }
 
 resource "aws_security_group" "app" {
+  count = local.platform_is_ecs ? 1 : 0
+
   name        = "${local.name_prefix}-app"
   description = "Application compute security group"
   vpc_id      = module.network.vpc_id
@@ -99,12 +121,14 @@ resource "aws_security_group" "app" {
 }
 
 resource "aws_security_group_rule" "app_from_alb" {
+  count = local.platform_is_ecs ? 1 : 0
+
   type                     = "ingress"
-  from_port                = var.container_port
-  to_port                  = var.container_port
+  from_port                = local.alb_target_port
+  to_port                  = local.alb_target_port
   protocol                 = "tcp"
   source_security_group_id = module.alb.alb_security_group_id
-  security_group_id        = aws_security_group.app.id
+  security_group_id        = aws_security_group.app[0].id
   description              = "App traffic from ALB"
 }
 
@@ -115,8 +139,8 @@ module "alb" {
   vpc_id              = module.network.vpc_id
   vpc_cidr            = module.network.vpc_cidr
   public_subnet_ids   = module.network.public_subnet_ids
-  target_port         = var.container_port
-  target_type         = "ip"
+  target_port         = local.alb_target_port
+  target_type         = local.alb_target_type
   health_check_path   = var.health_check_path
   enable_http         = var.allow_http
   acm_certificate_arn = var.acm_certificate_arn
@@ -131,7 +155,7 @@ module "rds" {
   name_prefix                     = local.name_prefix
   vpc_id                          = module.network.vpc_id
   private_subnet_ids              = module.network.private_subnet_ids
-  app_security_group_id           = aws_security_group.app.id
+  app_security_group_id           = local.platform_is_k8s ? module.k8s_ec2_infra[0].worker_security_group_id : aws_security_group.app[0].id
   db_name                         = var.db_name
   db_username                     = var.db_username
   db_port                         = var.db_port
@@ -167,17 +191,18 @@ locals {
 }
 
 module "ecs" {
+  count  = local.platform_is_ecs ? 1 : 0
   source = "../../modules/ecs"
 
   name_prefix                        = local.name_prefix
   environment                        = var.environment
   private_subnet_ids                 = module.network.private_subnet_ids
-  security_group_id                  = aws_security_group.app.id
+  security_group_id                  = aws_security_group.app[0].id
   target_group_arn                   = module.alb.target_group_arn
   capacity_providers                 = local.ecs_capacity_providers
   default_capacity_provider_strategy = local.ecs_default_capacity_provider_strategy
   capacity_provider_strategy         = local.ecs_service_capacity_provider_strategy
-  capacity_provider_dependency       = var.ecs_capacity_mode == "ec2" ? module.ecs_ec2_capacity[0].capacity_provider_name : null
+  capacity_provider_dependency       = local.ecs_ec2_enabled ? module.ecs_ec2_capacity[0].capacity_provider_name : null
   container_image                    = var.container_image
   container_port                     = var.container_port
   cpu                                = var.container_cpu
@@ -203,14 +228,14 @@ module "ecs" {
 }
 
 module "ecs_ec2_capacity" {
-  count  = var.ecs_capacity_mode == "ec2" ? 1 : 0
+  count  = local.ecs_ec2_enabled ? 1 : 0
   source = "../../modules/ecs-ec2-capacity"
 
   name_prefix                       = local.name_prefix
   cluster_name                      = local.ecs_cluster_name
   capacity_provider_name            = local.ec2_capacity_provider_name
   private_subnet_ids                = module.network.private_subnet_ids
-  security_group_id                 = aws_security_group.app.id
+  security_group_id                 = aws_security_group.app[0].id
   instance_type                     = var.ec2_instance_type
   desired_capacity                  = local.ec2_desired_capacity
   min_size                          = local.ec2_min_size
@@ -224,6 +249,35 @@ module "ecs_ec2_capacity" {
   tags                              = local.tags
 }
 
+module "k8s_ec2_infra" {
+  count  = local.platform_is_k8s ? 1 : 0
+  source = "../../modules/k8s-ec2-infra"
+
+  name_prefix                 = local.name_prefix
+  cluster_name                = local.k8s_cluster_name
+  vpc_id                      = module.network.vpc_id
+  vpc_cidr                    = module.network.vpc_cidr
+  private_subnet_ids          = module.network.private_subnet_ids
+  alb_security_group_id       = module.alb.alb_security_group_id
+  alb_target_group_arn        = module.alb.target_group_arn
+  control_plane_instance_type = var.k8s_control_plane_instance_type
+  worker_instance_type        = var.k8s_worker_instance_type
+  worker_desired_capacity     = var.k8s_worker_desired_capacity
+  worker_min_size             = var.k8s_worker_min_size
+  worker_max_size             = var.k8s_worker_max_size
+  ami_id                      = var.k8s_ami_id
+  ami_ssm_parameter           = var.k8s_ami_ssm_parameter
+  k8s_version                 = var.k8s_version
+  pod_cidr                    = var.k8s_pod_cidr
+  service_cidr                = var.k8s_service_cidr
+  ingress_nodeport            = var.k8s_ingress_nodeport
+  enable_ssm                  = var.k8s_enable_ssm
+  enable_detailed_monitoring  = var.k8s_enable_detailed_monitoring
+  instance_role_policy_arns   = var.k8s_instance_role_policy_arns
+  join_parameter_name         = local.k8s_join_parameter_name
+  tags                        = local.tags
+}
+
 module "observability" {
   source = "../../modules/observability"
 
@@ -231,10 +285,11 @@ module "observability" {
   alb_arn_suffix          = module.alb.alb_arn_suffix
   target_group_arn_suffix = module.alb.target_group_arn_suffix
   rds_instance_id         = module.rds.db_instance_id
-  ecs_cluster_name        = module.ecs.cluster_name
-  ecs_service_name        = module.ecs.service_name
-  enable_ec2_cpu_alarm    = var.ecs_capacity_mode == "ec2"
-  ec2_asg_name            = var.ecs_capacity_mode == "ec2" ? module.ecs_ec2_capacity[0].autoscaling_group_name : ""
+  ecs_cluster_name        = local.platform_is_ecs ? module.ecs[0].cluster_name : ""
+  ecs_service_name        = local.platform_is_ecs ? module.ecs[0].service_name : ""
+  enable_ecs_cpu_alarm    = local.platform_is_ecs
+  enable_ec2_cpu_alarm    = local.enable_ec2_cpu_alarm
+  ec2_asg_name            = local.ecs_ec2_enabled ? module.ecs_ec2_capacity[0].autoscaling_group_name : local.platform_is_k8s ? module.k8s_ec2_infra[0].worker_autoscaling_group_name : ""
   alarm_sns_topic_arn     = var.alarm_sns_topic_arn
   alb_5xx_threshold       = var.alb_5xx_threshold
   rds_cpu_threshold       = var.rds_cpu_threshold
