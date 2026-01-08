@@ -1,6 +1,12 @@
 # ALB Module
 
-Creates an internet-facing Application Load Balancer, target group, and listeners.
+This module owns the public edge: an internet-facing ALB, a target group, listeners, and the security group rules around them. It expects the VPC, subnets, and ACM certificate to be provided by the environment, and it does not manage DNS or certificates.
+
+## Why This Module Exists
+
+- Keep the HTTPS-by-default behavior (and optional dev HTTP) in one place.
+- Make the edge security group rules explicit and reusable.
+- Avoid mixing edge concerns with ECS or networking logic.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -46,6 +52,7 @@ No modules.
 | <a name="input_ssl_policy"></a> [ssl\_policy](#input\_ssl\_policy) | SSL policy for the HTTPS listener. | `string` | `"ELBSecurityPolicy-TLS13-1-2-2021-06"` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to ALB resources. | `map(string)` | `{}` | no |
 | <a name="input_target_port"></a> [target\_port](#input\_target\_port) | Target port for the ALB target group. | `number` | n/a | yes |
+| <a name="input_target_type"></a> [target\_type](#input\_target\_type) | Target type for the ALB target group (ip for ECS, instance for EC2). | `string` | `"ip"` | no |
 | <a name="input_vpc_cidr"></a> [vpc\_cidr](#input\_vpc\_cidr) | CIDR block of the VPC (used for restrictive egress). | `string` | n/a | yes |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | VPC ID for the ALB. | `string` | n/a | yes |
 

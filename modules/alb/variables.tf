@@ -28,6 +28,17 @@ variable "target_port" {
   }
 }
 
+variable "target_type" {
+  type        = string
+  description = "Target type for the ALB target group (ip for ECS, instance for EC2)."
+  default     = "ip"
+
+  validation {
+    condition     = contains(["ip", "instance"], var.target_type)
+    error_message = "target_type must be either \"ip\" or \"instance\"."
+  }
+}
+
 variable "health_check_path" {
   type        = string
   description = "HTTP path for target group health checks."
