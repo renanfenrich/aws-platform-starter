@@ -18,10 +18,10 @@ Where it stops:
 
 What this repo covers:
 
-- Private subnets for compute (ECS or EC2) and RDS.
+- Private subnets for ECS tasks (Fargate, Fargate Spot, or EC2 capacity providers) and RDS.
 - TLS termination at the ALB.
 - RDS encryption with KMS and managed master password in Secrets Manager.
-- Separate task and execution roles with explicit policies, plus an instance role with SSM access in EC2 mode.
+- Separate task and execution roles with explicit policies, plus an instance role with SSM access for EC2 capacity providers.
 
 Where it stops:
 
@@ -32,7 +32,7 @@ Where it stops:
 
 What this repo covers:
 
-- Two AZs for the VPC, ALB, and compute (ECS or EC2 ASG).
+- Two AZs for the VPC, ALB, and ECS compute (Fargate, Fargate Spot, or EC2 capacity providers).
 - Multi-NAT in prod and a single NAT in dev (explicit trade-off).
 - Multi-AZ RDS enabled in prod by default.
 - Remote state locking to avoid concurrent apply issues.
@@ -41,12 +41,13 @@ Where it stops:
 
 - No multi-region failover or DR strategy.
 - No automated failover drills or chaos testing.
+- No explicit buffering beyond the Fargate fallback when using Fargate Spot.
 
 ## Performance Efficiency
 
 What this repo covers:
 
-- Explicit sizing for ECS tasks or EC2 instance types.
+- Explicit sizing for ECS tasks and EC2 instance types when using EC2 capacity providers.
 - Basic ALB health checks for service readiness.
 
 Where it stops:
@@ -58,7 +59,7 @@ Where it stops:
 
 What this repo covers:
 
-- Single NAT in dev and smaller compute sizes to control spend.
+- Single NAT in dev, Fargate Spot defaults in dev, and smaller compute sizes to control spend.
 - Configurable log retention and Multi-AZ toggles.
 
 Where it stops:

@@ -5,11 +5,11 @@ These are the defaults I chose for this repo. Each one is a trade-off, and I kep
 1) **Two-AZ baseline**
    - I default to two AZs because it avoids the single-AZ failure mode without adding much complexity.
 
-2) **ECS by default, EC2 optional**
-   - Fargate stays the default to keep the example focused on infrastructure wiring, but `compute_mode` lets you switch to EC2 when host-level control is required.
+2) **ECS capacity providers with Fargate default**
+   - Fargate stays the prod default and dev uses Fargate Spot with Fargate fallback; `ecs_capacity_mode` lets you switch to an EC2 capacity provider when host-level control is required.
 
-3) **EC2 uses ASG + Launch Template with SSM**
-   - EC2 mode uses a private Auto Scaling group and SSM-enabled instance role. SSH is not opened by default; access is intended through SSM.
+3) **EC2 capacity provider uses ASG + Launch Template with SSM**
+   - EC2 capacity uses a private Auto Scaling group and SSM-enabled instance role. SSH is not opened by default; access is intended through SSM.
 
 4) **RDS managed master password**
    - I do not want database credentials in Terraform state. RDS manages the master password and stores it in Secrets Manager.

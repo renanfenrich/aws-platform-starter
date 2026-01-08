@@ -6,7 +6,7 @@ This stack is small, but a few services still dominate the bill. The numbers wil
 
 - NAT gateways (hourly + data processing)
 - RDS instance class and storage
-- ECS Fargate vCPU/memory or EC2 instance hours (depending on compute mode)
+- ECS Fargate vCPU/memory (including Spot when selected) or EC2 instance hours when using EC2 capacity providers
 - ALB hourly + LCU usage
 
 ## What I Did to Keep Dev Cheap
