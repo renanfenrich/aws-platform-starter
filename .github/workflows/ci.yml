@@ -50,3 +50,65 @@ jobs:
 
       - name: Tests
         run: make test
+
+  infracost:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    if: github.event_name == 'pull_request'
+    env:
+      INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.6.6"
+
+      - name: Check Infracost prerequisites
+        id: prereq
+        run: |
+          if [ -z "$INFRACOST_API_KEY" ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ -n "$AWS_ROLE_ARN" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            echo "mode=oidc" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ -n "$AWS_ACCESS_KEY_ID" ] && [ -n "$AWS_SECRET_ACCESS_KEY" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            echo "mode=keys" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "run=false" >> "$GITHUB_OUTPUT"
+
+      - name: Configure AWS Credentials (OIDC)
+        if: steps.prereq.outputs.run == 'true' && steps.prereq.outputs.mode == 'oidc'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Infracost
+        if: steps.prereq.outputs.run == 'true'
+        uses: infracost/infracost-gh-action@v2
+        env:
+          INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
+          GITHUB_TOKEN: ${{ github.token }}
+          TF_CLI_ARGS_init: "-backend=false -input=false"
+          TF_CLI_ARGS_plan: "-input=false"
+        with:
+          path: infracost.yml

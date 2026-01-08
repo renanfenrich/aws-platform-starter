@@ -1,0 +1,17 @@
+version: "0.1"
+
+projects:
+  - path: "bootstrap"
+    name: "bootstrap"
+    terraform_var_files:
+      - "terraform.tfvars.example"
+
+  - path: "environments/dev"
+    name: "dev"
+    terraform_var_files:
+      - "terraform.tfvars"
+
+  - path: "environments/prod"
+    name: "prod"
+    terraform_var_files:
+      - "terraform.tfvars"
