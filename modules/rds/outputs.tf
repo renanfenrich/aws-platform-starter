@@ -1,16 +1,16 @@
 output "db_instance_id" {
   description = "RDS instance identifier."
-  value       = aws_db_instance.this.id
+  value       = var.prevent_destroy ? aws_db_instance.protected[0].id : aws_db_instance.this[0].id
 }
 
 output "db_endpoint" {
   description = "RDS endpoint."
-  value       = aws_db_instance.this.address
+  value       = var.prevent_destroy ? aws_db_instance.protected[0].address : aws_db_instance.this[0].address
 }
 
 output "db_port" {
   description = "RDS port."
-  value       = aws_db_instance.this.port
+  value       = var.prevent_destroy ? aws_db_instance.protected[0].port : aws_db_instance.this[0].port
 }
 
 output "db_security_group_id" {
@@ -20,10 +20,10 @@ output "db_security_group_id" {
 
 output "master_user_secret_arn" {
   description = "Secrets Manager ARN for the RDS master user secret."
-  value       = aws_db_instance.this.master_user_secret[0].secret_arn
+  value       = var.prevent_destroy ? aws_db_instance.protected[0].master_user_secret[0].secret_arn : aws_db_instance.this[0].master_user_secret[0].secret_arn
 }
 
 output "kms_key_arn" {
   description = "KMS key ARN used by RDS."
-  value       = aws_kms_key.db.arn
+  value       = local.kms_key_arn
 }
