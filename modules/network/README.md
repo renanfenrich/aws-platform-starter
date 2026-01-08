@@ -1,6 +1,12 @@
 # Network Module
 
-Creates a VPC with public/private subnets across two AZs, plus NAT gateways and optional VPC flow logs.
+This module creates the VPC, public/private subnets across two AZs, routing, an internet gateway, NAT gateways, and optional VPC flow logs. It does not manage security groups or VPC endpoints.
+
+## Why This Module Exists
+
+- Provide a consistent network baseline for dev and prod.
+- Make the NAT cost/resilience trade-off visible with `single_nat_gateway`.
+- Keep networking concerns isolated from compute and data.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements

@@ -1,6 +1,12 @@
 # RDS Module
 
-Creates an encrypted RDS instance with KMS and Secrets Manager integration.
+This module provisions a single RDS PostgreSQL instance with encryption, a KMS key, a subnet group, and a security group. It uses an RDS-managed master password stored in Secrets Manager. It does not create read replicas or multi-region DR.
+
+## Why This Module Exists
+
+- Centralize database security defaults and parameters.
+- Keep application and network modules from owning DB details.
+- Make storage, backup, and Multi-AZ decisions explicit inputs.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements

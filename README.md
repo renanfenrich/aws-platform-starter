@@ -1,20 +1,58 @@
 # aws-production-platform-terraform
 
-Production-grade AWS platform scaffolding with Terraform. The goal is to demonstrate senior-level infrastructure design, security, and operational maturity with minimal components and maximum correctness.
+This repo is how I set up a small AWS platform with Terraform when I want one service behind an ALB, a Postgres database, and enough guardrails to be safe. It is intentionally limited: the point is clarity and sane defaults, not a full platform.
 
-## What This Repository Provisions
+## Purpose
 
-- VPC with public/private subnets across two AZs.
-- Internet-facing ALB (HTTPS) with optional HTTP only for dev.
-- ECS Fargate service in private subnets.
-- RDS PostgreSQL in private subnets with KMS encryption and Secrets Manager integration.
-- CloudWatch logs and alarms (ALB 5xx, ECS CPU, RDS CPU).
-- Remote state with S3 + DynamoDB locking (bootstrap folder).
+This repo exists to show the baseline layout I use for a single-service AWS stack. It solves the "blank slate" problem by giving you working networking, compute, database, and basic alarms without a lot of moving parts. The infrastructure is real, but the scope is deliberately small for demonstration.
 
-## Architecture
+## Assumptions
 
-- See `docs/architecture.md` and `docs/architecture.mmd` for the diagram.
-- Well-Architected mapping: `docs/well-architected.md`.
+- One public entry point (ALB) and one application service.
+- Postgres is the only stateful dependency.
+- Dev and prod are separate Terraform environments; you can run them in one account or split them later, but the repo does not manage multi-account plumbing.
+- You can create VPC, ECS, EC2/Auto Scaling, ALB, RDS, and KMS resources in your AWS account.
+
+## Trade-offs I Made
+
+- ECS Fargate is the default to avoid EC2 management, but EC2 mode is available when host-level control is needed.
+- Dev uses a single NAT gateway to save cost; prod uses one per AZ for resilience.
+- Alarms are intentionally minimal; you are expected to add app-specific signals.
+- HTTPS is the default; HTTP is only allowed in dev to speed local testing.
+
+## Architecture Overview
+
+Think of it as a straight line: user -> ALB -> compute -> RDS. The ALB lives in public subnets; ECS tasks or EC2 instances and RDS live in private subnets. NAT gateways handle outbound internet access for compute.
+
+- Diagram and walkthrough: `docs/architecture.md` and `docs/architecture.mmd`
+- Well-Architected mapping: `docs/well-architected.md`
+
+## What Is Included
+
+- VPC with public/private subnets across two AZs
+- Internet-facing ALB with HTTPS (HTTP optional in dev)
+- ECS Fargate service in private subnets (default)
+- EC2 Auto Scaling service in private subnets (optional)
+- RDS PostgreSQL with KMS encryption and Secrets Manager for the master password
+- CloudWatch logs and a small set of alarms (ALB 5xx, ECS/EC2 CPU, RDS CPU)
+- Remote state bootstrap with S3 and DynamoDB locking
+
+## What Is Intentionally Not Included
+
+- WAF, advanced edge security, or bot protection
+- Autoscaling policies, blue/green deployments, or canaries
+- Centralized logging or metrics beyond baseline CloudWatch alarms
+- Multi-account orchestration or organization-level controls
+
+## How This Would Evolve in a Real Production Environment
+
+If this were running a real product, I would add:
+
+- WAF and ALB access logs, plus centralized log storage
+- Autoscaling for ECS and tighter RDS scaling/backup policies
+- CI/CD that deploys and rolls back safely
+- Multi-account separation (at least a dedicated prod account)
+- A real observability stack (dashboards, tracing, SLOs)
 
 ## Repository Layout
 
@@ -31,6 +69,7 @@ Production-grade AWS platform scaffolding with Terraform. The goal is to demonst
     prod/
   modules/
     alb/
+    ec2-service/
     ecs/
     network/
     observability/
@@ -44,7 +83,7 @@ Production-grade AWS platform scaffolding with Terraform. The goal is to demonst
 
 - Terraform >= 1.6
 - AWS credentials via environment variables, SSO, or profile (no hardcoded keys)
-- Access to create VPC, ECS, ALB, RDS, KMS, and supporting resources
+- Permission to create VPC, ECS, EC2/Auto Scaling, ALB, RDS, KMS, and supporting resources
 
 ## Bootstrap Remote State
 
@@ -76,21 +115,17 @@ Prod is identical with `environments/prod`.
 
 ## Configuration Highlights
 
-- HTTPS is always enabled; HTTP is allowed only when `allow_http = true` (dev).
+- HTTPS is always enabled; HTTP is allowed only when `allow_http = true` (dev only).
 - RDS master password is managed by AWS and stored in Secrets Manager.
-- ECS tasks run as a non-root user (`container_user`).
+- ECS tasks run as a non-root user by default (`container_user`).
+- `compute_mode` switches between ECS (`ecs`) and EC2 (`ec2`) compute.
+- EC2 instances use SSM by default; no public SSH ingress is configured.
+- Provide `ec2_user_data` when using EC2 mode to bootstrap the application.
 - `prevent_destroy` can be enabled in prod to protect critical resources.
 
 ## CI/CD
 
-GitHub Actions runs:
-
-- `terraform fmt -check`
-- `terraform validate` (dev and prod)
-- `tflint`
-- `tfsec`
-- `terraform-docs` check
-- `terraform test`
+GitHub Actions runs formatting, validation, linting, security checks, and tests. It is a quality gate, not a deployment pipeline.
 
 ## Testing
 
@@ -98,7 +133,7 @@ GitHub Actions runs:
 
 ## Documentation
 
-- `docs/architecture.md` — architecture overview and diagram.
+- `docs/architecture.md` — architecture walkthrough and diagram.
 - `docs/runbook.md` — operational runbook.
 - `docs/well-architected.md` — pillar mapping and trade-offs.
 - `docs/costs.md` — cost drivers and optimizations.
@@ -106,7 +141,7 @@ GitHub Actions runs:
 
 ## Notes on Costs and Safety
 
-- NAT gateways and Multi-AZ RDS are the dominant costs in production.
+- NAT gateways, compute, and Multi-AZ RDS are the dominant costs in production.
 - Dev defaults are cost-aware (single NAT, smaller instances).
 - Always review changes in `prod` with `prevent_destroy = true`.
 

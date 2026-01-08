@@ -9,12 +9,12 @@ flowchart TB
     end
 
     subgraph PrivateSubnets[Private Subnets x2]
-      ECS[ECS Fargate Service]
+      Compute[Compute : ECS Fargate or EC2 ASG]
       RDS[(RDS PostgreSQL)]
     end
   end
 
-  ALB --> ECS
-  ECS --> RDS
-  ECS --> NAT1
-  ECS --> NAT2
+  ALB --> Compute
+  Compute --> RDS
+  Compute --> NAT1
+  Compute --> NAT2

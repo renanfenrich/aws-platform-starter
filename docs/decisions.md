@@ -1,22 +1,30 @@
 # Decisions
 
+These are the defaults I chose for this repo. Each one is a trade-off, and I kept them explicit on purpose.
+
 1) **Two-AZ baseline**
-   - Improves availability while keeping the footprint minimal.
+   - I default to two AZs because it avoids the single-AZ failure mode without adding much complexity.
 
-2) **ECS Fargate over EC2**
-   - Removes cluster management overhead and aligns with least-ops baseline.
+2) **ECS by default, EC2 optional**
+   - Fargate stays the default to keep the example focused on infrastructure wiring, but `compute_mode` lets you switch to EC2 when host-level control is required.
 
-3) **RDS managed master password**
-   - Avoids storing plaintext credentials in Terraform state.
+3) **EC2 uses ASG + Launch Template with SSM**
+   - EC2 mode uses a private Auto Scaling group and SSM-enabled instance role. SSH is not opened by default; access is intended through SSM.
 
-4) **Remote state with S3 + DynamoDB**
-   - Standard production pattern for locking and state durability.
+4) **RDS managed master password**
+   - I do not want database credentials in Terraform state. RDS manages the master password and stores it in Secrets Manager.
 
-5) **Single NAT in dev, multi-NAT in prod**
-   - Balances cost savings in dev with resilience in production.
+5) **Remote state with S3 + DynamoDB**
+   - This is the standard pattern for teams and it prevents concurrent apply issues. Even a small repo benefits from state locking.
 
-6) **Optional HTTP only in dev**
-   - Enforces HTTPS in production while allowing quick dev iteration.
+6) **CMK encryption + access logs for state storage**
+   - State storage uses a customer-managed KMS key and S3 access logs. The log bucket does not log itself to avoid recursive logging.
 
-7) **Default tagging across all resources**
-   - Ensures cost allocation, ownership, and environment tracing via `default_tags`.
+7) **Single NAT in dev, multi-NAT in prod**
+   - NAT gateways are expensive. Dev uses one to save cost; prod uses one per AZ to avoid a single point of failure for outbound traffic.
+
+8) **Optional HTTP only in dev**
+   - I enforce HTTPS by default. HTTP is only there for quick dev testing when needed.
+
+9) **Default tagging across all resources**
+   - I rely on `default_tags` so ownership and environment context are always present without repeating tags in every module.

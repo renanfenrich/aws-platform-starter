@@ -1,20 +1,22 @@
 # Cost Notes
 
-## Primary Cost Drivers
+This stack is small, but a few services still dominate the bill. The numbers will vary by region and usage, so I keep this as a qualitative guide.
+
+## Main Cost Drivers
 
 - NAT gateways (hourly + data processing)
 - RDS instance class and storage
-- ECS Fargate vCPU and memory
+- ECS Fargate vCPU/memory or EC2 instance hours (depending on compute mode)
 - ALB hourly + LCU usage
 
-## Cost Controls
+## What I Did to Keep Dev Cheap
 
-- Dev defaults use a single NAT gateway and smaller RDS/ECS sizes.
-- Log retention is configurable via variables.
-- Multi-AZ is enabled only in production by default.
+- Single NAT gateway in dev.
+- Smaller compute and RDS defaults.
+- Configurable log retention.
 
-## Optimization Ideas
+## If Cost Became a Priority
 
 - Add VPC endpoints to reduce NAT data charges.
 - Use scheduled scaling for non-24/7 workloads.
-- Evaluate reserved instances or savings plans for steady usage.
+- Evaluate savings plans or reserved instances for steady usage.

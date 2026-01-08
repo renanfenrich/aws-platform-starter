@@ -1,6 +1,12 @@
 # ECS Module
 
-Creates an ECS Fargate cluster, task definition, service, and logging.
+This module runs the application as an ECS Fargate service. It creates the cluster, task definition, service, IAM roles, and log group. Networking and load balancer wiring are passed in from the environment. It does not build container images or define autoscaling policies.
+
+## Why This Module Exists
+
+- Keep IAM and logging defaults consistent across environments.
+- Separate compute concerns from networking and database modules.
+- Make task sizing and runtime settings explicit inputs.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
