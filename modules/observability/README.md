@@ -1,6 +1,12 @@
 # Observability Module
 
-Creates minimal CloudWatch alarms for ALB, ECS, and RDS.
+This module adds a minimal set of CloudWatch alarms for ALB 5xx, ECS CPU, and RDS CPU. It can also wire alarms to an SNS topic if you provide one. It does not create dashboards or a logging pipeline.
+
+## Why This Module Exists
+
+- Keep baseline alarms in one place without bloating the core stack.
+- Make it easy to swap in a richer observability setup later.
+- Avoid burying alarm logic inside unrelated modules.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -24,6 +30,7 @@ No modules.
 | Name | Type |
 |------|------|
 | [aws_cloudwatch_metric_alarm.alb_5xx](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
+| [aws_cloudwatch_metric_alarm.ec2_cpu](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
 | [aws_cloudwatch_metric_alarm.ecs_cpu](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
 | [aws_cloudwatch_metric_alarm.rds_cpu](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
 
@@ -34,9 +41,12 @@ No modules.
 | <a name="input_alarm_sns_topic_arn"></a> [alarm\_sns\_topic\_arn](#input\_alarm\_sns\_topic\_arn) | SNS topic ARN for alarm notifications (optional). | `string` | `""` | no |
 | <a name="input_alb_5xx_threshold"></a> [alb\_5xx\_threshold](#input\_alb\_5xx\_threshold) | Threshold for ALB 5xx target errors. | `number` | `5` | no |
 | <a name="input_alb_arn_suffix"></a> [alb\_arn\_suffix](#input\_alb\_arn\_suffix) | ARN suffix of the ALB. | `string` | n/a | yes |
-| <a name="input_ecs_cluster_name"></a> [ecs\_cluster\_name](#input\_ecs\_cluster\_name) | ECS cluster name. | `string` | n/a | yes |
+| <a name="input_compute_mode"></a> [compute\_mode](#input\_compute\_mode) | Compute mode for alarms (ecs or ec2). | `string` | `"ecs"` | no |
+| <a name="input_ec2_asg_name"></a> [ec2\_asg\_name](#input\_ec2\_asg\_name) | EC2 Auto Scaling group name (required when compute\_mode is ec2). | `string` | `""` | no |
+| <a name="input_ec2_cpu_threshold"></a> [ec2\_cpu\_threshold](#input\_ec2\_cpu\_threshold) | Threshold for EC2 CPU utilization. | `number` | `80` | no |
+| <a name="input_ecs_cluster_name"></a> [ecs\_cluster\_name](#input\_ecs\_cluster\_name) | ECS cluster name (required when compute\_mode is ecs). | `string` | `""` | no |
 | <a name="input_ecs_cpu_threshold"></a> [ecs\_cpu\_threshold](#input\_ecs\_cpu\_threshold) | Threshold for ECS CPU utilization. | `number` | `80` | no |
-| <a name="input_ecs_service_name"></a> [ecs\_service\_name](#input\_ecs\_service\_name) | ECS service name. | `string` | n/a | yes |
+| <a name="input_ecs_service_name"></a> [ecs\_service\_name](#input\_ecs\_service\_name) | ECS service name (required when compute\_mode is ecs). | `string` | `""` | no |
 | <a name="input_evaluation_periods"></a> [evaluation\_periods](#input\_evaluation\_periods) | Number of periods for alarm evaluation. | `number` | `2` | no |
 | <a name="input_name_prefix"></a> [name\_prefix](#input\_name\_prefix) | Prefix used for naming alarms. | `string` | n/a | yes |
 | <a name="input_period_seconds"></a> [period\_seconds](#input\_period\_seconds) | Metric evaluation period in seconds. | `number` | `60` | no |
@@ -50,6 +60,7 @@ No modules.
 | Name | Description |
 |------|-------------|
 | <a name="output_alb_5xx_alarm_name"></a> [alb\_5xx\_alarm\_name](#output\_alb\_5xx\_alarm\_name) | ALB 5xx alarm name. |
+| <a name="output_ec2_cpu_alarm_name"></a> [ec2\_cpu\_alarm\_name](#output\_ec2\_cpu\_alarm\_name) | EC2 CPU alarm name. |
 | <a name="output_ecs_cpu_alarm_name"></a> [ecs\_cpu\_alarm\_name](#output\_ecs\_cpu\_alarm\_name) | ECS CPU alarm name. |
 | <a name="output_rds_cpu_alarm_name"></a> [rds\_cpu\_alarm\_name](#output\_rds\_cpu\_alarm\_name) | RDS CPU alarm name. |
 <!-- END_TF_DOCS -->

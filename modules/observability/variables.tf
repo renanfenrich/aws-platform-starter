@@ -3,6 +3,27 @@ variable "name_prefix" {
   description = "Prefix used for naming alarms."
 }
 
+variable "compute_mode" {
+  type        = string
+  description = "Compute mode for alarms (ecs or ec2)."
+  default     = "ecs"
+
+  validation {
+    condition     = contains(["ecs", "ec2"], var.compute_mode)
+    error_message = "compute_mode must be ecs or ec2."
+  }
+
+  validation {
+    condition     = var.compute_mode != "ecs" || (length(trim(var.ecs_cluster_name)) > 0 && length(trim(var.ecs_service_name)) > 0)
+    error_message = "ecs_cluster_name and ecs_service_name are required when compute_mode is ecs."
+  }
+
+  validation {
+    condition     = var.compute_mode != "ec2" || length(trim(var.ec2_asg_name)) > 0
+    error_message = "ec2_asg_name is required when compute_mode is ec2."
+  }
+}
+
 variable "alb_arn_suffix" {
   type        = string
   description = "ARN suffix of the ALB."
@@ -20,12 +41,20 @@ variable "rds_instance_id" {
 
 variable "ecs_cluster_name" {
   type        = string
-  description = "ECS cluster name."
+  description = "ECS cluster name (required when compute_mode is ecs)."
+  default     = ""
 }
 
 variable "ecs_service_name" {
   type        = string
-  description = "ECS service name."
+  description = "ECS service name (required when compute_mode is ecs)."
+  default     = ""
+}
+
+variable "ec2_asg_name" {
+  type        = string
+  description = "EC2 Auto Scaling group name (required when compute_mode is ec2)."
+  default     = ""
 }
 
 variable "alarm_sns_topic_arn" {
@@ -49,6 +78,12 @@ variable "rds_cpu_threshold" {
 variable "ecs_cpu_threshold" {
   type        = number
   description = "Threshold for ECS CPU utilization."
+  default     = 80
+}
+
+variable "ec2_cpu_threshold" {
+  type        = number
+  description = "Threshold for EC2 CPU utilization."
   default     = 80
 }
 

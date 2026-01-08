@@ -46,6 +46,8 @@ resource "aws_cloudwatch_metric_alarm" "rds_cpu" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "ecs_cpu" {
+  count = var.compute_mode == "ecs" ? 1 : 0
+
   alarm_name          = "${var.name_prefix}-ecs-cpu"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = var.evaluation_periods
@@ -59,6 +61,29 @@ resource "aws_cloudwatch_metric_alarm" "ecs_cpu" {
   dimensions = {
     ClusterName = var.ecs_cluster_name
     ServiceName = var.ecs_service_name
+  }
+
+  alarm_actions = local.alarm_actions
+  ok_actions    = local.alarm_actions
+
+  tags = var.tags
+}
+
+resource "aws_cloudwatch_metric_alarm" "ec2_cpu" {
+  count = var.compute_mode == "ec2" ? 1 : 0
+
+  alarm_name          = "${var.name_prefix}-ec2-cpu"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = var.evaluation_periods
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/EC2"
+  period              = var.period_seconds
+  statistic           = "Average"
+  threshold           = var.ec2_cpu_threshold
+  treat_missing_data  = "notBreaching"
+
+  dimensions = {
+    AutoScalingGroupName = var.ec2_asg_name
   }
 
   alarm_actions = local.alarm_actions
