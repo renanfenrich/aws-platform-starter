@@ -1,5 +1,6 @@
 project_name        = "aws-production-platform"
 environment         = "dev"
+compute_mode        = "ecs"
 aws_region          = "us-east-1"
 allowed_account_ids = []
 
@@ -21,6 +22,10 @@ desired_count     = 1
 health_check_path = "/"
 
 log_retention_in_days = 30
+
+ec2_instance_type = "t3.micro"
+ec2_min_size      = 1
+ec2_max_size      = 1
 
 container_user            = "1000"
 readonly_root_filesystem  = false

@@ -13,6 +13,17 @@ variable "environment" {
   }
 }
 
+variable "compute_mode" {
+  type        = string
+  description = "Compute mode for the service (ecs or ec2)."
+  default     = "ecs"
+
+  validation {
+    condition     = contains(["ecs", "ec2"], var.compute_mode)
+    error_message = "compute_mode must be ecs or ec2."
+  }
+}
+
 variable "aws_region" {
   type        = string
   description = "AWS region to deploy into."
@@ -173,8 +184,44 @@ variable "deployment_maximum_percent" {
 
 variable "log_retention_in_days" {
   type        = number
-  description = "Retention for ECS logs."
+  description = "Retention for compute logs."
   default     = 30
+}
+
+variable "ec2_instance_type" {
+  type        = string
+  description = "EC2 instance type for EC2 compute mode."
+  default     = "t3.micro"
+}
+
+variable "ec2_min_size" {
+  type        = number
+  description = "Minimum EC2 instances for the Auto Scaling group."
+  default     = null
+}
+
+variable "ec2_max_size" {
+  type        = number
+  description = "Maximum EC2 instances for the Auto Scaling group."
+  default     = null
+}
+
+variable "ec2_ami_id" {
+  type        = string
+  description = "Optional AMI ID override for EC2 compute mode."
+  default     = null
+}
+
+variable "ec2_user_data" {
+  type        = string
+  description = "Optional user data script for EC2 compute mode."
+  default     = ""
+}
+
+variable "ec2_instance_role_policy_arns" {
+  type        = list(string)
+  description = "Additional policy ARNs to attach to the EC2 instance role."
+  default     = []
 }
 
 variable "db_name" {
@@ -315,6 +362,12 @@ variable "rds_cpu_threshold" {
 variable "ecs_cpu_threshold" {
   type        = number
   description = "ECS CPU alarm threshold."
+  default     = 80
+}
+
+variable "ec2_cpu_threshold" {
+  type        = number
+  description = "EC2 CPU alarm threshold."
   default     = 80
 }
 

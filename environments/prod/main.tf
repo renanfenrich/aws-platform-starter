@@ -12,8 +12,10 @@ data "aws_availability_zones" "available" {
 }
 
 locals {
-  name_prefix = "${var.project_name}-${var.environment}"
-  azs         = slice(data.aws_availability_zones.available.names, 0, 2)
+  name_prefix  = "${var.project_name}-${var.environment}"
+  azs          = slice(data.aws_availability_zones.available.names, 0, 2)
+  ec2_min_size = var.ec2_min_size != null ? var.ec2_min_size : var.desired_count
+  ec2_max_size = var.ec2_max_size != null ? var.ec2_max_size : var.desired_count
   tags = merge(
     {
       Project     = var.project_name
@@ -41,7 +43,7 @@ module "network" {
 
 resource "aws_security_group" "app" {
   name        = "${local.name_prefix}-app"
-  description = "Application tasks security group"
+  description = "Application compute security group"
   vpc_id      = module.network.vpc_id
 
   egress {
@@ -83,6 +85,7 @@ module "alb" {
   vpc_cidr            = module.network.vpc_cidr
   public_subnet_ids   = module.network.public_subnet_ids
   target_port         = var.container_port
+  target_type         = var.compute_mode == "ecs" ? "ip" : "instance"
   health_check_path   = var.health_check_path
   enable_http         = var.allow_http
   acm_certificate_arn = var.acm_certificate_arn
@@ -133,6 +136,7 @@ locals {
 }
 
 module "ecs" {
+  count  = var.compute_mode == "ecs" ? 1 : 0
   source = "../../modules/ecs"
 
   name_prefix                        = local.name_prefix
@@ -163,6 +167,30 @@ module "ecs" {
   depends_on = [module.alb]
 }
 
+module "ec2_service" {
+  count  = var.compute_mode == "ec2" ? 1 : 0
+  source = "../../modules/ec2-service"
+
+  name_prefix                       = local.name_prefix
+  private_subnet_ids                = module.network.private_subnet_ids
+  security_group_id                 = aws_security_group.app.id
+  target_group_arn                  = module.alb.target_group_arn
+  instance_type                     = var.ec2_instance_type
+  desired_capacity                  = var.desired_count
+  min_size                          = local.ec2_min_size
+  max_size                          = local.ec2_max_size
+  health_check_grace_period_seconds = var.health_check_grace_period_seconds
+  ami_id                            = var.ec2_ami_id
+  user_data                         = var.ec2_user_data
+  secrets_arns                      = values(local.container_secrets)
+  kms_key_arns                      = [module.rds.kms_key_arn]
+  log_retention_in_days             = var.log_retention_in_days
+  instance_role_policy_arns         = var.ec2_instance_role_policy_arns
+  tags                              = local.tags
+
+  depends_on = [module.alb]
+}
+
 module "observability" {
   source = "../../modules/observability"
 
@@ -170,12 +198,15 @@ module "observability" {
   alb_arn_suffix          = module.alb.alb_arn_suffix
   target_group_arn_suffix = module.alb.target_group_arn_suffix
   rds_instance_id         = module.rds.db_instance_id
-  ecs_cluster_name        = module.ecs.cluster_name
-  ecs_service_name        = module.ecs.service_name
+  compute_mode            = var.compute_mode
+  ecs_cluster_name        = var.compute_mode == "ecs" ? module.ecs[0].cluster_name : ""
+  ecs_service_name        = var.compute_mode == "ecs" ? module.ecs[0].service_name : ""
+  ec2_asg_name            = var.compute_mode == "ec2" ? module.ec2_service[0].autoscaling_group_name : ""
   alarm_sns_topic_arn     = var.alarm_sns_topic_arn
   alb_5xx_threshold       = var.alb_5xx_threshold
   rds_cpu_threshold       = var.rds_cpu_threshold
   ecs_cpu_threshold       = var.ecs_cpu_threshold
+  ec2_cpu_threshold       = var.ec2_cpu_threshold
   evaluation_periods      = var.alarm_evaluation_periods
   period_seconds          = var.alarm_period_seconds
   tags                    = local.tags
