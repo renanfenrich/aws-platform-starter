@@ -1,25 +1,59 @@
-# Bootstrap State
+# Bootstrap
 
-I keep remote state separate to avoid circular dependencies. This folder creates the S3 bucket and DynamoDB table used for Terraform state and locking.
+I keep bootstrap separate to avoid circular dependencies. This stack creates the baseline account resources that other environments depend on.
+
+## What it creates
+
+- S3 bucket for Terraform state (versioning, SSE-KMS, access logging, public access blocks).
+- S3 bucket for access logs (versioning, SSE-KMS).
+- DynamoDB lock table (SSE-KMS, optional PITR).
+- KMS key for state, lock table, and SNS encryption.
+- SNS topic for infrastructure notifications (optional email subscriptions).
+- Optional ACM certificate with DNS validation when a hosted zone ID is supplied.
 
 ## Usage
 
-1) Initialize and apply:
+1) Create a local `terraform.tfvars` (use the example as a base):
 
 ```bash
-terraform init
-terraform apply \
-  -var="aws_region=us-east-1" \
-  -var="state_bucket_name=your-terraform-state" \
-  -var="lock_table_name=your-terraform-locks"
+cp bootstrap/terraform.tfvars.example bootstrap/terraform.tfvars
 ```
 
-2) Update `environments/dev/backend.hcl` and `environments/prod/backend.hcl` with the bucket and table names.
+2) Initialize and apply:
+
+```bash
+terraform -chdir=bootstrap init
+terraform -chdir=bootstrap plan -var-file=terraform.tfvars
+terraform -chdir=bootstrap apply -var-file=terraform.tfvars
+```
+
+3) Update `environments/dev/backend.hcl` and `environments/prod/backend.hcl` using the outputs:
+
+- `state_bucket_name`
+- `lock_table_name`
+- `kms_key_arn`
+
+4) Wire notifications by setting `alarm_sns_topic_arn` in the environment `terraform.tfvars`.
+
+5) If you enabled ACM, use `acm_certificate_arn` for `acm_certificate_arn` in the environment `terraform.tfvars`.
 
 ## Notes
 
 - The state bucket has versioning, CMK encryption, access logging, and public access blocking enabled.
 - The lock table has CMK encryption and point-in-time recovery enabled.
-- `prevent_destroy` defaults to true to protect state assets.
+- `prevent_destroy` is enforced in configuration to protect state assets.
 - Access logs go to `${state_bucket_name}-logs` unless `log_bucket_name` is set.
 - The log bucket does not log itself to avoid recursive logging.
+- SNS topic name is `${project_name}-${environment}-${region_short}-infra-alerts`.
+- SNS email subscriptions require confirmation from each recipient.
+- Route53 hosted zones are not created here; supply an existing hosted zone ID to enable ACM DNS validation.
+
+## Destroy (use caution)
+
+State storage is intentionally protected. To destroy:
+
+1) Temporarily set `prevent_destroy = false` in `bootstrap/main.tf`.
+2) If you need to remove the buckets, set `force_destroy = true`.
+3) Apply, then destroy.
+
+Do not destroy the state bucket without migrating state.

@@ -1,0 +1,6 @@
+bucket         = "<bootstrap state bucket>"
+key            = "<project>/prod/terraform.tfstate"
+region         = "us-east-1"
+dynamodb_table = "<bootstrap lock table>"
+encrypt        = true
+kms_key_id     = "<bootstrap kms key arn>"
