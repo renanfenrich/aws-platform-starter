@@ -22,6 +22,26 @@ resource "aws_ecs_cluster" "this" {
   tags = var.tags
 }
 
+resource "terraform_data" "capacity_provider_dependency" {
+  input = var.capacity_provider_dependency
+}
+
+resource "aws_ecs_cluster_capacity_providers" "this" {
+  cluster_name       = aws_ecs_cluster.this.name
+  capacity_providers = var.capacity_providers
+
+  dynamic "default_capacity_provider_strategy" {
+    for_each = var.default_capacity_provider_strategy
+    content {
+      capacity_provider = default_capacity_provider_strategy.value.capacity_provider
+      weight            = default_capacity_provider_strategy.value.weight
+      base              = default_capacity_provider_strategy.value.base
+    }
+  }
+
+  depends_on = [terraform_data.capacity_provider_dependency]
+}
+
 resource "aws_cloudwatch_log_group" "ecs" {
   name              = "/aws/ecs/${var.name_prefix}"
   retention_in_days = var.log_retention_in_days
@@ -106,7 +126,7 @@ locals {
 
 resource "aws_ecs_task_definition" "this" {
   family                   = "${var.name_prefix}-task"
-  requires_compatibilities = ["FARGATE"]
+  requires_compatibilities = var.requires_compatibilities
   network_mode             = "awsvpc"
   cpu                      = var.cpu
   memory                   = var.memory
@@ -148,13 +168,21 @@ resource "aws_ecs_service" "this" {
   cluster         = aws_ecs_cluster.this.id
   task_definition = aws_ecs_task_definition.this.arn
   desired_count   = var.desired_count
-  launch_type     = "FARGATE"
 
   deployment_minimum_healthy_percent = var.deployment_minimum_healthy_percent
   deployment_maximum_percent         = var.deployment_maximum_percent
   health_check_grace_period_seconds  = var.health_check_grace_period_seconds
 
   enable_execute_command = var.enable_execute_command
+
+  dynamic "capacity_provider_strategy" {
+    for_each = var.capacity_provider_strategy
+    content {
+      capacity_provider = capacity_provider_strategy.value.capacity_provider
+      weight            = capacity_provider_strategy.value.weight
+      base              = capacity_provider_strategy.value.base
+    }
+  }
 
   network_configuration {
     subnets          = var.private_subnet_ids
@@ -169,4 +197,6 @@ resource "aws_ecs_service" "this" {
   }
 
   tags = var.tags
+
+  depends_on = [aws_ecs_cluster_capacity_providers.this]
 }

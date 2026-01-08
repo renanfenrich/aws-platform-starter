@@ -23,6 +23,43 @@ variable "target_group_arn" {
   description = "Target group ARN for the ECS service."
 }
 
+variable "capacity_providers" {
+  type        = list(string)
+  description = "Capacity providers associated with the ECS cluster."
+  default     = ["FARGATE"]
+
+  validation {
+    condition     = length(var.capacity_providers) > 0
+    error_message = "capacity_providers must include at least one provider."
+  }
+}
+
+variable "default_capacity_provider_strategy" {
+  type = list(object({
+    capacity_provider = string
+    weight            = number
+    base              = number
+  }))
+  description = "Default capacity provider strategy for the ECS cluster."
+  default     = []
+}
+
+variable "capacity_provider_strategy" {
+  type = list(object({
+    capacity_provider = string
+    weight            = number
+    base              = number
+  }))
+  description = "Capacity provider strategy for the ECS service."
+  default     = []
+}
+
+variable "capacity_provider_dependency" {
+  type        = any
+  description = "Optional dependency to ensure capacity providers exist before association."
+  default     = null
+}
+
 variable "container_image" {
   type        = string
   description = "Container image to run."
@@ -48,6 +85,12 @@ variable "memory" {
   type        = number
   description = "Task memory (MiB)."
   default     = 512
+}
+
+variable "requires_compatibilities" {
+  type        = list(string)
+  description = "Task definition compatibilities (FARGATE or EC2)."
+  default     = ["FARGATE"]
 }
 
 variable "desired_count" {

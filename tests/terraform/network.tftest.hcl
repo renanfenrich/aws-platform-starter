@@ -4,7 +4,14 @@ run "network_plan" {
   command = plan
 
   variables {
-    compute_mode = "none"
+    ecs_capacity_mode = "fargate"
+  }
+
+  override_data {
+    target = module.ecs.data.aws_iam_policy_document.task_assume
+    values = {
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
+    }
   }
 
   assert {

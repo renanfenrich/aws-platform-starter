@@ -8,6 +8,16 @@ output "service_name" {
   value       = aws_ecs_service.this.name
 }
 
+output "capacity_provider_strategy" {
+  description = "Capacity provider strategy for the ECS service."
+  value       = aws_ecs_service.this.capacity_provider_strategy
+}
+
+output "requires_compatibilities" {
+  description = "Task definition compatibilities."
+  value       = aws_ecs_task_definition.this.requires_compatibilities
+}
+
 output "task_execution_role_arn" {
   description = "ARN of the ECS task execution role."
   value       = aws_iam_role.task_execution.arn

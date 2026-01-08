@@ -19,18 +19,18 @@ output "target_group_arn" {
 }
 
 output "service_identifier" {
-  description = "Service identifier (ECS service name or EC2 ASG name)."
-  value       = var.compute_mode == "ecs" ? module.ecs[0].service_name : module.ec2_service[0].autoscaling_group_name
+  description = "ECS service name."
+  value       = module.ecs.service_name
 }
 
 output "ecs_cluster_name" {
   description = "ECS cluster name."
-  value       = var.compute_mode == "ecs" ? module.ecs[0].cluster_name : null
+  value       = module.ecs.cluster_name
 }
 
 output "ecs_service_name" {
   description = "ECS service name."
-  value       = var.compute_mode == "ecs" ? module.ecs[0].service_name : null
+  value       = module.ecs.service_name
 }
 
 output "rds_endpoint" {

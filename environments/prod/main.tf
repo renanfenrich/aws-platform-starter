@@ -12,10 +12,41 @@ data "aws_availability_zones" "available" {
 }
 
 locals {
-  name_prefix  = "${var.project_name}-${var.environment}"
-  azs          = slice(data.aws_availability_zones.available.names, 0, 2)
-  ec2_min_size = var.ec2_min_size != null ? var.ec2_min_size : var.desired_count
-  ec2_max_size = var.ec2_max_size != null ? var.ec2_max_size : var.desired_count
+  name_prefix                = "${var.project_name}-${var.environment}"
+  azs                        = slice(data.aws_availability_zones.available.names, 0, 2)
+  ecs_cluster_name           = "${local.name_prefix}-ecs"
+  ec2_desired_capacity       = var.ec2_desired_capacity != null ? var.ec2_desired_capacity : var.desired_count
+  ec2_min_size               = var.ec2_min_size != null ? var.ec2_min_size : local.ec2_desired_capacity
+  ec2_max_size               = var.ec2_max_size != null ? var.ec2_max_size : local.ec2_desired_capacity
+  ec2_capacity_provider_name = "${local.name_prefix}-ecs-ec2"
+  base_capacity_providers    = ["FARGATE", "FARGATE_SPOT"]
+  ecs_capacity_providers     = var.ecs_capacity_mode == "ec2" ? concat(local.base_capacity_providers, [local.ec2_capacity_provider_name]) : local.base_capacity_providers
+  ecs_default_capacity_provider_strategy = var.ecs_capacity_mode == "fargate" ? [
+    {
+      capacity_provider = "FARGATE"
+      weight            = 1
+      base              = 0
+    }
+    ] : var.ecs_capacity_mode == "fargate_spot" ? [
+    {
+      capacity_provider = "FARGATE_SPOT"
+      weight            = 2
+      base              = 0
+    },
+    {
+      capacity_provider = "FARGATE"
+      weight            = 1
+      base              = 0
+    }
+    ] : [
+    {
+      capacity_provider = local.ec2_capacity_provider_name
+      weight            = 1
+      base              = 0
+    }
+  ]
+  ecs_service_capacity_provider_strategy = local.ecs_default_capacity_provider_strategy
+  ecs_requires_compatibilities           = var.ecs_capacity_mode == "ec2" ? ["EC2"] : ["FARGATE"]
   tags = merge(
     {
       Project     = var.project_name
@@ -85,7 +116,7 @@ module "alb" {
   vpc_cidr            = module.network.vpc_cidr
   public_subnet_ids   = module.network.public_subnet_ids
   target_port         = var.container_port
-  target_type         = var.compute_mode == "ecs" ? "ip" : "instance"
+  target_type         = "ip"
   health_check_path   = var.health_check_path
   enable_http         = var.allow_http
   acm_certificate_arn = var.acm_certificate_arn
@@ -136,7 +167,6 @@ locals {
 }
 
 module "ecs" {
-  count  = var.compute_mode == "ecs" ? 1 : 0
   source = "../../modules/ecs"
 
   name_prefix                        = local.name_prefix
@@ -144,10 +174,15 @@ module "ecs" {
   private_subnet_ids                 = module.network.private_subnet_ids
   security_group_id                  = aws_security_group.app.id
   target_group_arn                   = module.alb.target_group_arn
+  capacity_providers                 = local.ecs_capacity_providers
+  default_capacity_provider_strategy = local.ecs_default_capacity_provider_strategy
+  capacity_provider_strategy         = local.ecs_service_capacity_provider_strategy
+  capacity_provider_dependency       = var.ecs_capacity_mode == "ec2" ? module.ecs_ec2_capacity[0].capacity_provider_name : null
   container_image                    = var.container_image
   container_port                     = var.container_port
   cpu                                = var.container_cpu
   memory                             = var.container_memory
+  requires_compatibilities           = local.ecs_requires_compatibilities
   desired_count                      = var.desired_count
   health_check_grace_period_seconds  = var.health_check_grace_period_seconds
   environment_variables              = local.container_environment
@@ -167,28 +202,26 @@ module "ecs" {
   depends_on = [module.alb]
 }
 
-module "ec2_service" {
-  count  = var.compute_mode == "ec2" ? 1 : 0
-  source = "../../modules/ec2-service"
+module "ecs_ec2_capacity" {
+  count  = var.ecs_capacity_mode == "ec2" ? 1 : 0
+  source = "../../modules/ecs-ec2-capacity"
 
   name_prefix                       = local.name_prefix
+  cluster_name                      = local.ecs_cluster_name
+  capacity_provider_name            = local.ec2_capacity_provider_name
   private_subnet_ids                = module.network.private_subnet_ids
   security_group_id                 = aws_security_group.app.id
-  target_group_arn                  = module.alb.target_group_arn
   instance_type                     = var.ec2_instance_type
-  desired_capacity                  = var.desired_count
+  desired_capacity                  = local.ec2_desired_capacity
   min_size                          = local.ec2_min_size
   max_size                          = local.ec2_max_size
   health_check_grace_period_seconds = var.health_check_grace_period_seconds
   ami_id                            = var.ec2_ami_id
   user_data                         = var.ec2_user_data
-  secrets_arns                      = values(local.container_secrets)
-  kms_key_arns                      = [module.rds.kms_key_arn]
-  log_retention_in_days             = var.log_retention_in_days
+  enable_ssm                        = var.ec2_enable_ssm
+  enable_detailed_monitoring        = var.ec2_enable_detailed_monitoring
   instance_role_policy_arns         = var.ec2_instance_role_policy_arns
   tags                              = local.tags
-
-  depends_on = [module.alb]
 }
 
 module "observability" {
@@ -198,10 +231,10 @@ module "observability" {
   alb_arn_suffix          = module.alb.alb_arn_suffix
   target_group_arn_suffix = module.alb.target_group_arn_suffix
   rds_instance_id         = module.rds.db_instance_id
-  compute_mode            = var.compute_mode
-  ecs_cluster_name        = var.compute_mode == "ecs" ? module.ecs[0].cluster_name : ""
-  ecs_service_name        = var.compute_mode == "ecs" ? module.ecs[0].service_name : ""
-  ec2_asg_name            = var.compute_mode == "ec2" ? module.ec2_service[0].autoscaling_group_name : ""
+  ecs_cluster_name        = module.ecs.cluster_name
+  ecs_service_name        = module.ecs.service_name
+  enable_ec2_cpu_alarm    = var.ecs_capacity_mode == "ec2"
+  ec2_asg_name            = var.ecs_capacity_mode == "ec2" ? module.ecs_ec2_capacity[0].autoscaling_group_name : ""
   alarm_sns_topic_arn     = var.alarm_sns_topic_arn
   alb_5xx_threshold       = var.alb_5xx_threshold
   rds_cpu_threshold       = var.rds_cpu_threshold

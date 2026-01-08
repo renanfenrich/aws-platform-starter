@@ -1,23 +1,18 @@
 locals {
-  ami_id            = var.ami_id != null ? var.ami_id : data.aws_ami.default[0].id
-  user_data_base64  = length(trimspace(var.user_data)) > 0 ? base64encode(var.user_data) : null
-  instance_tag_name = "${var.name_prefix}-app"
+  ami_id = var.ami_id != null ? var.ami_id : data.aws_ssm_parameter.ecs_ami[0].value
+  base_user_data = [
+    "#!/bin/bash",
+    "echo \"ECS_CLUSTER=${var.cluster_name}\" >> /etc/ecs/ecs.config"
+  ]
+  extra_user_data   = length(trimspace(var.user_data)) > 0 ? [var.user_data] : []
+  user_data         = join("\n", concat(local.base_user_data, local.extra_user_data))
+  user_data_base64  = base64encode(local.user_data)
+  instance_tag_name = "${var.name_prefix}-ecs-node"
 }
 
-data "aws_ami" "default" {
-  count       = var.ami_id == null ? 1 : 0
-  most_recent = true
-  owners      = ["amazon"]
-
-  filter {
-    name   = "name"
-    values = ["al2023-ami-*-x86_64"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
+data "aws_ssm_parameter" "ecs_ami" {
+  count = var.ami_id == null ? 1 : 0
+  name  = var.ecs_ami_ssm_parameter
 }
 
 data "aws_iam_policy_document" "instance_assume" {
@@ -32,18 +27,24 @@ data "aws_iam_policy_document" "instance_assume" {
 }
 
 resource "aws_iam_role" "instance" {
-  name               = "${var.name_prefix}-ec2"
+  name               = "${var.name_prefix}-ecs-ec2"
   assume_role_policy = data.aws_iam_policy_document.instance_assume.json
 
   tags = var.tags
 }
 
 resource "aws_iam_instance_profile" "this" {
-  name = "${var.name_prefix}-ec2"
+  name = "${var.name_prefix}-ecs-ec2"
   role = aws_iam_role.instance.name
 }
 
+resource "aws_iam_role_policy_attachment" "ecs" {
+  role       = aws_iam_role.instance.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+}
+
 resource "aws_iam_role_policy_attachment" "ssm" {
+  count      = var.enable_ssm ? 1 : 0
   role       = aws_iam_role.instance.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
@@ -55,59 +56,8 @@ resource "aws_iam_role_policy_attachment" "extra" {
   policy_arn = each.value
 }
 
-resource "aws_cloudwatch_log_group" "app" {
-  name              = "/aws/ec2/${var.name_prefix}"
-  retention_in_days = var.log_retention_in_days
-
-  tags = var.tags
-}
-
-data "aws_iam_policy_document" "log_access" {
-  statement {
-    actions = [
-      "logs:CreateLogStream",
-      "logs:DescribeLogGroups",
-      "logs:DescribeLogStreams",
-      "logs:PutLogEvents"
-    ]
-
-    resources = [
-      aws_cloudwatch_log_group.app.arn,
-      "${aws_cloudwatch_log_group.app.arn}:*"
-    ]
-  }
-}
-
-resource "aws_iam_role_policy" "log_access" {
-  name   = "${var.name_prefix}-ec2-logs"
-  role   = aws_iam_role.instance.id
-  policy = data.aws_iam_policy_document.log_access.json
-}
-
-data "aws_iam_policy_document" "secrets_access" {
-  count = length(var.secrets_arns) > 0 ? 1 : 0
-
-  statement {
-    actions   = ["secretsmanager:GetSecretValue"]
-    resources = var.secrets_arns
-  }
-
-  statement {
-    actions   = ["kms:Decrypt"]
-    resources = var.kms_key_arns
-  }
-}
-
-resource "aws_iam_role_policy" "secrets_access" {
-  count = length(var.secrets_arns) > 0 ? 1 : 0
-
-  name   = "${var.name_prefix}-ec2-secrets"
-  role   = aws_iam_role.instance.id
-  policy = data.aws_iam_policy_document.secrets_access[0].json
-}
-
 resource "aws_launch_template" "this" {
-  name_prefix   = "${var.name_prefix}-lt-"
+  name_prefix   = "${var.name_prefix}-ecs-ec2-"
   image_id      = local.ami_id
   instance_type = var.instance_type
   user_data     = local.user_data_base64
@@ -145,14 +95,14 @@ resource "aws_launch_template" "this" {
 }
 
 resource "aws_autoscaling_group" "this" {
-  name                      = "${var.name_prefix}-asg"
+  name                      = "${var.name_prefix}-ecs-ec2-asg"
   max_size                  = var.max_size
   min_size                  = var.min_size
   desired_capacity          = var.desired_capacity
   vpc_zone_identifier       = var.private_subnet_ids
-  health_check_type         = "ELB"
+  health_check_type         = "EC2"
   health_check_grace_period = var.health_check_grace_period_seconds
-  target_group_arns         = [var.target_group_arn]
+  protect_from_scale_in     = var.enable_managed_termination_protection
 
   launch_template {
     id      = aws_launch_template.this.id
@@ -171,4 +121,22 @@ resource "aws_autoscaling_group" "this" {
   lifecycle {
     create_before_destroy = true
   }
+}
+
+resource "aws_ecs_capacity_provider" "this" {
+  name = var.capacity_provider_name
+
+  auto_scaling_group_provider {
+    auto_scaling_group_arn         = aws_autoscaling_group.this.arn
+    managed_termination_protection = var.enable_managed_termination_protection ? "ENABLED" : "DISABLED"
+
+    managed_scaling {
+      status                    = var.enable_managed_scaling ? "ENABLED" : "DISABLED"
+      target_capacity           = var.capacity_provider_target_capacity
+      minimum_scaling_step_size = var.capacity_provider_min_scaling_step_size
+      maximum_scaling_step_size = var.capacity_provider_max_scaling_step_size
+    }
+  }
+
+  tags = var.tags
 }

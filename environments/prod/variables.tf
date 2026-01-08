@@ -13,14 +13,14 @@ variable "environment" {
   }
 }
 
-variable "compute_mode" {
+variable "ecs_capacity_mode" {
   type        = string
-  description = "Compute mode for the service (ecs or ec2)."
-  default     = "ecs"
+  description = "ECS capacity mode (fargate, fargate_spot, or ec2)."
+  default     = "fargate"
 
   validation {
-    condition     = contains(["ecs", "ec2"], var.compute_mode)
-    error_message = "compute_mode must be ecs or ec2."
+    condition     = contains(["fargate", "fargate_spot", "ec2"], var.ecs_capacity_mode)
+    error_message = "ecs_capacity_mode must be fargate, fargate_spot, or ec2."
   }
 }
 
@@ -190,37 +190,55 @@ variable "log_retention_in_days" {
 
 variable "ec2_instance_type" {
   type        = string
-  description = "EC2 instance type for EC2 compute mode."
+  description = "EC2 instance type for ECS capacity provider instances."
   default     = "t3.micro"
+}
+
+variable "ec2_desired_capacity" {
+  type        = number
+  description = "Desired capacity for the ECS EC2 Auto Scaling group."
+  default     = null
 }
 
 variable "ec2_min_size" {
   type        = number
-  description = "Minimum EC2 instances for the Auto Scaling group."
+  description = "Minimum EC2 instances for the ECS capacity provider Auto Scaling group."
   default     = null
 }
 
 variable "ec2_max_size" {
   type        = number
-  description = "Maximum EC2 instances for the Auto Scaling group."
+  description = "Maximum EC2 instances for the ECS capacity provider Auto Scaling group."
   default     = null
 }
 
 variable "ec2_ami_id" {
   type        = string
-  description = "Optional AMI ID override for EC2 compute mode."
+  description = "Optional AMI ID override for ECS-optimized instances."
   default     = null
 }
 
 variable "ec2_user_data" {
   type        = string
-  description = "Optional user data script for EC2 compute mode."
+  description = "Optional user data appended to the ECS instance bootstrap."
   default     = ""
+}
+
+variable "ec2_enable_ssm" {
+  type        = bool
+  description = "Attach SSM permissions for ECS EC2 instances."
+  default     = true
+}
+
+variable "ec2_enable_detailed_monitoring" {
+  type        = bool
+  description = "Enable detailed monitoring for ECS EC2 instances."
+  default     = true
 }
 
 variable "ec2_instance_role_policy_arns" {
   type        = list(string)
-  description = "Additional policy ARNs to attach to the EC2 instance role."
+  description = "Additional policy ARNs to attach to the ECS EC2 instance role."
   default     = []
 }
 
@@ -367,7 +385,7 @@ variable "ecs_cpu_threshold" {
 
 variable "ec2_cpu_threshold" {
   type        = number
-  description = "EC2 CPU alarm threshold."
+  description = "EC2 capacity provider CPU alarm threshold."
   default     = 80
 }
 
