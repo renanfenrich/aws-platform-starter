@@ -9,7 +9,7 @@ flowchart TB
     end
 
     subgraph PrivateSubnets[Private Subnets x2]
-      Compute[Compute : ECS (Fargate, Fargate Spot, or EC2 capacity provider)]
+      Compute[Compute : ECS or self-managed Kubernetes on EC2]
       RDS[(RDS PostgreSQL)]
     end
   end

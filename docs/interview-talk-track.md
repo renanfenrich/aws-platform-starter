@@ -3,20 +3,21 @@
 ## Recruiter summary
 
 - I built a small AWS platform in Terraform that mirrors how I start real services: VPC, ALB, ECS Fargate or EC2, RDS, and a few alarms.
-- It includes dev/prod environments and a bootstrap step for remote state.
-- CI runs fmt/validate/tflint/tfsec/terraform-docs/terraform test as a quality gate.
+- It includes dev/prod environments and a bootstrap step for remote state and notifications.
+- CI runs fmt/validate/tflint/tfsec/terraform-docs/terraform test, plus an optional Infracost cost check.
 - The scope is intentionally limited so the trade-offs are visible.
 
 ## Technical overview
 
-- Bootstrap creates the S3 bucket and DynamoDB table for remote state, with versioning, encryption, and public access blocks.
+- Bootstrap creates the S3 state bucket + access logs, DynamoDB lock table, KMS key, and an encrypted SNS topic for alerts.
+- Optional ACM DNS validation is supported when a hosted zone ID is provided (no Route53 zone creation).
 - Environments (dev/prod) compose the modules and apply default tags.
 - Network module provisions a two-AZ VPC, public/private subnets, IGW, NAT, and optional flow logs.
 - ALB module provides HTTPS by default (HTTP optional in dev), restrictive security groups, and target group health checks.
 - ECS module runs Fargate tasks in private subnets with separate IAM roles and CloudWatch logs.
-- EC2 module runs instances in private subnets with an Auto Scaling group, launch template, and SSM-enabled instance role.
+- EC2 capacity providers and self-managed Kubernetes run in private subnets with Auto Scaling and SSM-enabled instance roles.
 - RDS module deploys encrypted Postgres with an RDS-managed master password stored in Secrets Manager.
-- Observability module adds CloudWatch alarms for ALB 5xx, ECS CPU, and RDS CPU.
+- Observability module adds CloudWatch alarms for ALB 5xx, ECS CPU, EC2 CPU, and RDS CPU; SNS actions are opt-in.
 
 ## Key decisions and trade-offs
 
@@ -25,6 +26,7 @@
 - HTTPS enforced by default; HTTP only allowed in dev for speed.
 - Managed RDS master password to keep secrets out of Terraform state.
 - Minimal alarms to avoid noise; I expect teams to add app-specific signals.
+- Name prefix length guard to avoid AWS ALB and target group limits.
 
 ## Failure scenarios
 
@@ -57,3 +59,4 @@
 - "How do you keep secrets out of state?" -> RDS manages the master password and stores it in Secrets Manager; ECS reads the secret at runtime.
 - "How would you harden this for production?" -> Add WAF, access logs, VPC endpoints, backup policies, and tighter ingress controls.
 - "What would you add for scale?" -> ECS autoscaling, ALB target tracking, and DB read replicas if the workload needs them.
+- "How do you estimate cost?" -> Infracost runs against bootstrap/dev/prod plans; it’s rough but highlights deltas early.

@@ -28,3 +28,27 @@ These are the defaults I chose for this repo. Each one is a trade-off, and I kep
 
 9) **Default tagging across all resources**
    - I rely on `default_tags` so ownership and environment context are always present without repeating tags in every module.
+
+10) **Platform selector with ECS default**
+   - `platform` allows `ecs` or `k8s_self_managed` today, with `eks` reserved for future work. ECS remains the default to preserve existing behavior.
+
+11) **Self-managed Kubernetes via kubeadm**
+   - The Kubernetes option uses a single control plane instance and a worker Auto Scaling group. It is deliberately simple and non-HA, which keeps the repo deterministic and easy to reason about.
+
+12) **Join command stored in SSM Parameter Store**
+   - The control plane writes a kubeadm join command to SSM (encrypted with a CMK). Workers read it at boot, avoiding public SSH and keeping the join flow mostly automated.
+
+13) **Ingress behind the existing ALB**
+   - Ingress traffic stays on the existing ALB. The ALB forwards to a fixed NodePort on worker nodes, keeping the edge consistent across ECS and Kubernetes.
+
+14) **Bootstrap now includes SNS notifications**
+   - The bootstrap stack creates a single SNS topic for infrastructure alarms and reuses the bootstrap KMS key for encryption. Alarms only notify when the ARN is explicitly wired into each environment.
+
+15) **ACM is opt-in with DNS validation only**
+   - Certificates are created only when a hosted zone ID is provided. Route53 hosted zones are out of scope for this repo to avoid accidental DNS ownership changes.
+
+16) **Bootstrap state resources are protected by default**
+   - State buckets and lock tables enforce `prevent_destroy`; tearing them down requires an explicit config change.
+
+17) **Name prefix length guard**
+   - `project_name` plus `environment` must fit the ALB and target group 32-character limits; tags carry the remaining context.

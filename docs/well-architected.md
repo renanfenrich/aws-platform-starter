@@ -8,6 +8,7 @@ What this repo covers:
 
 - Terraform for repeatable infrastructure.
 - A short runbook and CI checks for formatting, validation, linting, and security scans.
+- Kubernetes access and bootstrap steps via SSM for the self-managed option.
 
 Where it stops:
 
@@ -19,9 +20,11 @@ Where it stops:
 What this repo covers:
 
 - Private subnets for ECS tasks (Fargate, Fargate Spot, or EC2 capacity providers) and RDS.
+- Private subnets for Kubernetes control plane and worker nodes, with no public SSH ingress.
 - TLS termination at the ALB.
 - RDS encryption with KMS and managed master password in Secrets Manager.
 - Separate task and execution roles with explicit policies, plus an instance role with SSM access for EC2 capacity providers.
+- Kubeadm join command stored in SSM Parameter Store and encrypted with a CMK.
 
 Where it stops:
 
@@ -32,7 +35,7 @@ Where it stops:
 
 What this repo covers:
 
-- Two AZs for the VPC, ALB, and ECS compute (Fargate, Fargate Spot, or EC2 capacity providers).
+- Two AZs for the VPC, ALB, and compute (ECS or Kubernetes workers).
 - Multi-NAT in prod and a single NAT in dev (explicit trade-off).
 - Multi-AZ RDS enabled in prod by default.
 - Remote state locking to avoid concurrent apply issues.
@@ -42,12 +45,13 @@ Where it stops:
 - No multi-region failover or DR strategy.
 - No automated failover drills or chaos testing.
 - No explicit buffering beyond the Fargate fallback when using Fargate Spot.
+- Self-managed Kubernetes uses a single control plane instance (no HA control plane).
 
 ## Performance Efficiency
 
 What this repo covers:
 
-- Explicit sizing for ECS tasks and EC2 instance types when using EC2 capacity providers.
+- Explicit sizing for ECS tasks and EC2 instance types when using EC2 capacity providers or Kubernetes nodes.
 - Basic ALB health checks for service readiness.
 
 Where it stops:
