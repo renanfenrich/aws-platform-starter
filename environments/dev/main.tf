@@ -155,7 +155,7 @@ module "rds" {
   name_prefix                     = local.name_prefix
   vpc_id                          = module.network.vpc_id
   private_subnet_ids              = module.network.private_subnet_ids
-  app_security_group_id           = local.platform_is_k8s ? module.k8s_ec2_infra[0].worker_security_group_id : aws_security_group.app[0].id
+  app_security_group_id           = local.platform_is_k8s ? module.k8s_ec2_infra[0].worker_security_group_id : local.platform_is_ecs ? aws_security_group.app[0].id : "sg-00000000000000000"
   db_name                         = var.db_name
   db_username                     = var.db_username
   db_port                         = var.db_port

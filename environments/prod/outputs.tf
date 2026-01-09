@@ -30,7 +30,7 @@ output "private_subnet_ids" {
 
 output "compute_sg_id" {
   description = "Security group ID for compute."
-  value       = local.platform_is_k8s ? module.k8s_ec2_infra[0].worker_security_group_id : aws_security_group.app[0].id
+  value       = local.platform_is_k8s ? module.k8s_ec2_infra[0].worker_security_group_id : local.platform_is_ecs ? aws_security_group.app[0].id : null
 }
 
 output "service_identifier" {
