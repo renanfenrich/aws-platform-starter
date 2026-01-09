@@ -48,6 +48,14 @@ test:
 	terraform -chdir=bootstrap test
 	terraform -chdir=tests/terraform init -backend=false -input=false >/dev/null
 	terraform -chdir=tests/terraform test
+	@for dir in $(ENV_DIRS); do \
+		terraform -chdir=$$dir init -backend=false -input=false >/dev/null; \
+		terraform -chdir=$$dir test; \
+	done
+	@for dir in modules/network modules/ecs modules/ecs-ec2-capacity modules/k8s-ec2-infra modules/rds; do \
+		terraform -chdir=$$dir init -backend=false -input=false >/dev/null; \
+		terraform -chdir=$$dir test; \
+	done
 
 plan:
 	terraform -chdir=environments/$(ENV) init -backend-config=backend.hcl
