@@ -4,6 +4,7 @@ Start with `architecture.md` if you want the walkthrough. The rest are short sup
 
 - `architecture.md` — system walkthrough and diagram.
 - `architecture.mmd` — Mermaid diagram source.
+- `architecture-aws.svg` — generated AWS icon diagram (optional).
 - `decisions.md` — key design decisions.
 - `runbook.md` — operational runbook.
 - `well-architected.md` — AWS Well-Architected mapping.

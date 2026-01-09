@@ -3,8 +3,11 @@ ROOT_DIR := $(shell pwd)
 ENV_DIRS := environments/dev environments/prod
 ENV ?= dev
 platform ?= ecs
+DIAGRAM_STACK ?= environments/dev
+DIAGRAM_OUTPUT ?= docs/architecture-aws.svg
+DIAGRAM_PYTHON ?= $(shell if [ -x .venv/bin/python ]; then echo .venv/bin/python; else echo python3; fi)
 
-.PHONY: fmt fmt-check validate lint security docs docs-check test plan apply cost
+.PHONY: fmt fmt-check validate lint security docs docs-check test plan apply cost diagram
 
 fmt:
 	terraform fmt -recursive
@@ -57,3 +60,6 @@ apply:
 cost:
 	@test -n "$$INFRACOST_API_KEY" || (echo "INFRACOST_API_KEY is required"; exit 1)
 	TF_CLI_ARGS_init="-backend=false -input=false" TF_CLI_ARGS_plan="-input=false" infracost breakdown --config-file infracost.yml
+
+diagram:
+	$(DIAGRAM_PYTHON) scripts/diagram.py --config-dir $(DIAGRAM_STACK) --output $(DIAGRAM_OUTPUT)

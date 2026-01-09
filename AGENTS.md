@@ -19,7 +19,7 @@ This repository is my AWS infrastructure portfolio project. It is intentionally 
 Codex reads the closest AGENTS.md relative to files it changes. If you add sub-project rules, place nested AGENTS.md files inside that subdirectory.
 
 ## Repo structure (expected)
-- `bootstrap/`   : One-time or per-account/per-region prerequisites (state bucket, lock table, KMS, SNS topic, etc.)
+- `bootstrap/`   : One-time or per-account/per-region prerequisites (state bucket with native locking, KMS, SNS topic, etc.)
 - `environments/`: `dev/` and `prod/` root stacks wiring modules together
 - `modules/`     : Focused Terraform modules (networking, compute, data, observability, etc.)
 - `docs/`        : Architecture, decisions, runbook, Well-Architected mapping
@@ -39,6 +39,8 @@ Use these commands exactly (don’t guess other tooling).
   - `make docs-check`
 - Cost estimate:
   - `make cost`
+- Diagram generation:
+  - `make diagram`
 - Tests:
   - `make test`
 - Plan/apply:
@@ -85,7 +87,7 @@ Update docs alongside code changes, not afterwards.
 
 ## Bootstrap policy (avoid AWS console)
 If any setup is currently manual, prefer a Terraform `bootstrap/` stack. Common bootstrap items:
-- Terraform state S3 bucket + DynamoDB lock table + KMS key
+- Terraform state S3 bucket (native locking) + KMS key
 - SNS topic for alarm notifications
 - Optional: ECR repo for demo app
 Keep bootstrap safe:

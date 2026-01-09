@@ -7,5 +7,6 @@ crash.*.log
 .terraformrc
 .terraform.d/
 .infracost/
+.venv/
 bootstrap/plan.json
 bootstrap/terraform.tfvars
