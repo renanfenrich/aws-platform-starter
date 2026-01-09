@@ -181,6 +181,7 @@ GitHub Actions runs formatting, validation, linting, security checks, and tests.
 
 - NAT gateways, compute, and Multi-AZ RDS are the dominant costs in production.
 - Dev defaults are cost-aware (single NAT, smaller instances).
+- Use `make cost` (Infracost) for rough deltas; it requires `INFRACOST_API_KEY` and AWS read-only credentials (see `docs/costs.md`).
 - Always review changes in `prod` with `prevent_destroy = true`.
 
 ## Next Steps

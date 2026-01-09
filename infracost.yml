@@ -5,13 +5,16 @@ projects:
     name: "bootstrap"
     terraform_var_files:
       - "terraform.tfvars.example"
+    usage_file: "infracost-usage-bootstrap.yml"
 
   - path: "environments/dev"
     name: "dev"
     terraform_var_files:
       - "terraform.tfvars"
+    usage_file: "infracost-usage-dev.yml"
 
   - path: "environments/prod"
     name: "prod"
     terraform_var_files:
       - "terraform.tfvars"
+    usage_file: "infracost-usage-prod.yml"

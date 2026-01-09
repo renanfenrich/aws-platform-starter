@@ -31,6 +31,22 @@ infracost breakdown --path bootstrap --terraform-var-file bootstrap/terraform.tf
 
 - CI needs `INFRACOST_API_KEY` and AWS read-only credentials (data sources still call AWS).
 
+## Current Estimate Snapshot
+
+Snapshot from `make cost` on 2026-01-09 using the default var files in `infracost.yml` (us-east-1). Usage-based charges (NAT data, ALB LCU, CloudWatch logs, RDS backups, S3 storage/requests) are not included.
+
+| Stack | Monthly estimate (USD) |
+| --- | --- |
+| bootstrap | $1.00 |
+| dev | $73.57 |
+| prod | $218.24 |
+| overall | $292.80 |
+
+Notes:
+
+- Infracost could not price SNS SMS notifications in `bootstrap` (reported as "not found").
+- These totals assume the current defaults (Fargate Spot in dev, Multi-AZ RDS in prod, etc.).
+
 ## What I Did to Keep Dev Cheap
 
 - Single NAT gateway in dev.
