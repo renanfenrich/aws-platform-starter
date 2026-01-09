@@ -14,8 +14,8 @@ These are the defaults I chose for this repo. Each one is a trade-off, and I kep
 4) **RDS managed master password**
    - I do not want database credentials in Terraform state. RDS manages the master password and stores it in Secrets Manager.
 
-5) **Remote state with S3 + DynamoDB**
-   - This is the standard pattern for teams and it prevents concurrent apply issues. Even a small repo benefits from state locking.
+5) **Remote state with S3 native locking**
+   - Terraform 1.6+ supports S3 lock files, so I avoid a separate DynamoDB table while still preventing concurrent applies.
 
 6) **CMK encryption + access logs for state storage**
    - State storage uses a customer-managed KMS key and S3 access logs. The log bucket does not log itself to avoid recursive logging.
@@ -48,7 +48,7 @@ These are the defaults I chose for this repo. Each one is a trade-off, and I kep
    - Certificates are created only when a hosted zone ID is provided. Route53 hosted zones are out of scope for this repo to avoid accidental DNS ownership changes.
 
 16) **Bootstrap state resources are protected by default**
-   - State buckets and lock tables enforce `prevent_destroy`; tearing them down requires an explicit config change.
+   - State buckets enforce `prevent_destroy`; tearing them down requires an explicit config change.
 
 17) **Name prefix length guard**
    - `project_name` plus `environment` must fit the ALB and target group 32-character limits; tags carry the remaining context.

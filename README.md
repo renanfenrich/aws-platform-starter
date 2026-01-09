@@ -1,4 +1,4 @@
-# aws-production-platform-terraform
+# aws-platform-starter
 
 This repo is how I set up a small AWS platform with Terraform when I want one service behind an ALB, a Postgres database, and enough guardrails to be safe. It is intentionally limited: the point is clarity and sane defaults, not a full platform.
 
@@ -25,7 +25,7 @@ This repo exists to show the baseline layout I use for a single-service AWS stac
 
 Think of it as a straight line: user -> ALB -> compute -> RDS. The ALB lives in public subnets; compute runs as ECS tasks (Fargate, Fargate Spot, or EC2 capacity providers) or a self-managed Kubernetes cluster on EC2 in private subnets. NAT gateways handle outbound internet access for compute.
 
-- Diagram and walkthrough: `docs/architecture.md` and `docs/architecture.mmd`
+- Diagram and walkthrough: `docs/architecture.md`, `docs/architecture.mmd`, and optional generated `docs/architecture-aws.svg`
 - Well-Architected mapping: `docs/well-architected.md`
 
 ## What Is Included
@@ -37,7 +37,7 @@ Think of it as a straight line: user -> ALB -> compute -> RDS. The ALB lives in 
 - Self-managed Kubernetes on EC2 with a single control plane and worker Auto Scaling group (optional)
 - RDS PostgreSQL with KMS encryption and Secrets Manager for the master password
 - CloudWatch logs and a small set of alarms (ALB 5xx, ECS/EC2 CPU, RDS CPU)
-- Remote state bootstrap with S3 and DynamoDB locking
+- Remote state bootstrap with S3 native locking
 - Demo Kubernetes manifests under `k8s/` (namespace, deployment, service, ingress)
 
 ## What Is Intentionally Not Included
@@ -92,7 +92,7 @@ If this were running a real product, I would add:
 
 ## Bootstrap First
 
-Bootstrap creates the shared state, locking, KMS, and notification resources needed by the environments.
+Bootstrap creates the shared state bucket, KMS key, and notification resources needed by the environments. State locking uses S3 native lock files.
 
 ```bash
 cp bootstrap/terraform.tfvars.example bootstrap/terraform.tfvars
@@ -171,6 +171,7 @@ GitHub Actions runs formatting, validation, linting, security checks, and tests.
 ## Documentation
 
 - `docs/architecture.md` — architecture walkthrough and diagram.
+- `docs/architecture-aws.svg` — optional AWS icon diagram generated from Terraform.
 - `docs/runbook.md` — operational runbook.
 - `docs/well-architected.md` — pillar mapping and trade-offs.
 - `docs/costs.md` — cost drivers and optimizations.

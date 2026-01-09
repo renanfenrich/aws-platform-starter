@@ -9,7 +9,7 @@
 
 ## Technical overview
 
-- Bootstrap creates the S3 state bucket + access logs, DynamoDB lock table, KMS key, and an encrypted SNS topic for alerts.
+- Bootstrap creates the S3 state bucket + access logs with native lock files, a KMS key, and an encrypted SNS topic for alerts.
 - Optional ACM DNS validation is supported when a hosted zone ID is provided (no Route53 zone creation).
 - Environments (dev/prod) compose the modules and apply default tags.
 - Network module provisions a two-AZ VPC, public/private subnets, IGW, NAT, and optional flow logs.
@@ -35,7 +35,7 @@
 - EC2 CPU saturation: increase instance size or scale the Auto Scaling group.
 - RDS CPU or storage pressure: scale the instance or storage; review queries and connection counts.
 - NAT outage (dev single NAT): accept reduced resilience; prod uses multi-NAT.
-- State lock contention: verify the DynamoDB lock and team workflow; force unlock only with coordination.
+- State lock contention: check the S3 lock file and team workflow; use `terraform force-unlock` only with coordination.
 
 ## What was intentionally not built
 
