@@ -1,4 +1,4 @@
-project_name        = "aws-production-platform"
+project_name        = "aws-platform-starter"
 environment         = "prod"
 platform            = "ecs"
 ecs_capacity_mode   = "fargate"

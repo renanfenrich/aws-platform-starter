@@ -88,7 +88,7 @@ data "aws_iam_policy_document" "state_kms" {
 }
 
 resource "aws_kms_key" "state" {
-  description             = "KMS key for Terraform state and lock table"
+  description             = "KMS key for Terraform state, logs, and SNS encryption"
   deletion_window_in_days = var.kms_deletion_window_in_days
   enable_key_rotation     = true
   policy                  = data.aws_iam_policy_document.state_kms.json
@@ -232,33 +232,6 @@ resource "aws_s3_bucket_logging" "state" {
   depends_on = [aws_s3_bucket_acl.state_logs]
 }
 
-resource "aws_dynamodb_table" "lock" {
-  name         = var.lock_table_name
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "LockID"
-
-  attribute {
-    name = "LockID"
-    type = "S"
-  }
-
-  point_in_time_recovery {
-    enabled = var.enable_lock_table_pitr
-  }
-
-  server_side_encryption {
-    enabled     = true
-    kms_key_arn = aws_kms_key.state.arn
-  }
-
-  lifecycle {
-    prevent_destroy = true
-  }
-
-  tags = merge(var.tags, {
-    Name = var.lock_table_name
-  })
-}
 
 resource "aws_acm_certificate" "app" {
   count = local.create_acm_certificate ? 1 : 0

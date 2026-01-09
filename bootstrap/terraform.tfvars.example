@@ -1,10 +1,9 @@
 aws_region    = "us-east-1"
-project_name  = "aws-production-platform"
+project_name  = "aws-platform-starter"
 environment   = "dev"
 region_short  = "use1"
 
-state_bucket_name = "aws-production-platform-terraform-state-dev"
-lock_table_name   = "aws-production-platform-terraform-locks-dev"
+state_bucket_name = "aws-platform-starter-state-dev"
 
 sns_email_subscriptions = []
 
@@ -14,12 +13,11 @@ acm_zone_id     = ""
 acm_subject_alternative_names = []
 
 force_destroy        = false
-enable_lock_table_pitr = true
 kms_deletion_window_in_days = 30
 
 tags = {
-  Project     = "aws-production-platform"
+  Project     = "aws-platform-starter"
   Environment = "dev"
   ManagedBy   = "Terraform"
-  Repository  = "aws-production-platform-terraform"
+  Repository  = "aws-platform-starter"
 }

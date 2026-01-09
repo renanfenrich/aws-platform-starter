@@ -5,11 +5,10 @@ run "bootstrap_plan" {
 
   variables {
     aws_region        = "us-east-1"
-    project_name      = "aws-production-platform"
+    project_name      = "aws-platform-starter"
     environment       = "dev"
     region_short      = "use1"
-    state_bucket_name = "aws-production-platform-terraform-state-dev"
-    lock_table_name   = "aws-production-platform-terraform-locks-dev"
+    state_bucket_name = "aws-platform-starter-state-dev"
   }
 
   override_data {
@@ -30,11 +29,6 @@ run "bootstrap_plan" {
   assert {
     condition     = aws_s3_bucket_public_access_block.state.block_public_acls && aws_s3_bucket_public_access_block.state.block_public_policy && aws_s3_bucket_public_access_block.state.ignore_public_acls && aws_s3_bucket_public_access_block.state.restrict_public_buckets
     error_message = "expected state bucket public access block to be fully enabled"
-  }
-
-  assert {
-    condition     = aws_dynamodb_table.lock.name == var.lock_table_name
-    error_message = "expected DynamoDB lock table to be created"
   }
 
   assert {

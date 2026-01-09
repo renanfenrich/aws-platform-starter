@@ -61,7 +61,7 @@ locals {
       Project     = var.project_name
       Environment = var.environment
       ManagedBy   = "Terraform"
-      Repository  = "aws-production-platform-terraform"
+      Repository  = "aws-platform-starter"
     },
     var.additional_tags
   )
