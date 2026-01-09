@@ -19,7 +19,7 @@ This module runs the application as an ECS Fargate service. It creates the clust
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.28.0 |
 | <a name="provider_terraform"></a> [terraform](#provider\_terraform) | n/a |
 
 ## Modules

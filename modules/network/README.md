@@ -19,7 +19,7 @@ This module creates the VPC, public/private subnets across two AZs, routing, an 
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.28.0 |
 
 ## Modules
 

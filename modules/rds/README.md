@@ -19,7 +19,7 @@ This module provisions a single RDS PostgreSQL instance with encryption, a KMS k
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.28.0 |
 
 ## Modules
 

@@ -18,7 +18,7 @@ This module provisions an ECS capacity provider backed by an EC2 Auto Scaling gr
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.28.0 |
 
 ## Modules
 
