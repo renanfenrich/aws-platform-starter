@@ -3,12 +3,12 @@ locals {
   raw_join_parameter_name = length(trimspace(var.join_parameter_name)) > 0 ? var.join_parameter_name : "/${var.name_prefix}/k8s/join-command"
   join_parameter_name     = startswith(local.raw_join_parameter_name, "/") ? local.raw_join_parameter_name : "/${local.raw_join_parameter_name}"
   k8s_version_minor       = join(".", slice(split(".", var.k8s_version), 0, 2))
-  join_parameter_arn      = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter${local.join_parameter_name}"
+  join_parameter_arn      = "arn:aws:ssm:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:parameter${local.join_parameter_name}"
   control_plane_tag_name  = "${var.name_prefix}-k8s-control-plane"
   worker_tag_name         = "${var.name_prefix}-k8s-worker"
 
   control_plane_user_data = templatefile("${path.module}/templates/control-plane-user-data.sh.tpl", {
-    aws_region                = data.aws_region.current.name
+    aws_region                = data.aws_region.current.id
     cluster_name              = var.cluster_name
     ingress_nodeport          = var.ingress_nodeport
     join_parameter_name       = local.join_parameter_name
@@ -18,7 +18,7 @@ locals {
     service_cidr              = var.service_cidr
   })
   worker_user_data = templatefile("${path.module}/templates/worker-user-data.sh.tpl", {
-    aws_region          = data.aws_region.current.name
+    aws_region          = data.aws_region.current.id
     join_parameter_name = local.join_parameter_name
     k8s_version_minor   = local.k8s_version_minor
   })
