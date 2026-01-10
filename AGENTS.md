@@ -39,8 +39,6 @@ Use these commands exactly (don’t guess other tooling).
   - `make docs-check`
 - Cost estimate:
   - `make cost`
-- Diagram generation:
-  - `make diagram`
 - Tests:
   - `make test`
 - Plan/apply:

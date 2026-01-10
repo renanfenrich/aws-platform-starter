@@ -171,7 +171,7 @@ GitHub Actions runs formatting, validation, linting, security checks, and tests.
 ## Documentation
 
 - `docs/architecture.md` — architecture walkthrough and diagram.
-- `docs/architecture-aws.svg` — optional AWS icon diagram generated from Terraform.
+- `docs/architecture-aws.svg` — optional AWS icon diagram.
 - `docs/runbook.md` — operational runbook.
 - `docs/well-architected.md` — pillar mapping and trade-offs.
 - `docs/costs.md` — cost drivers and optimizations.

@@ -34,36 +34,8 @@ flowchart TB
   Compute --> NAT2
 ```
 
-## AWS Icon Diagram (Generated)
-
-This repo also supports generating an AWS icon diagram from Terraform configuration.
-
-Prereqs:
-
-- Python 3 with `diagrams` installed (recommended in `.venv`).
-- Python 3 with `python-hcl2` installed (for parsing Terraform configs).
-- Graphviz installed (`dot` available on PATH).
-- `make diagram` uses `.venv/bin/python` if available.
-
-Generate for dev (default):
-
-```bash
-python3 -m venv .venv
-.venv/bin/pip install diagrams python-hcl2
-make diagram
-```
-
-Generate for bootstrap:
-
-```bash
-make diagram DIAGRAM_STACK=bootstrap DIAGRAM_OUTPUT=docs/architecture-aws-bootstrap.svg
-```
-
-The output defaults to `docs/architecture-aws.svg` (SVG).
-
 ## Notes
 
-- The generated SVG embeds AWS icon images as data URIs to stay portable across machines.
 - The ALB is the only public entry point.
 - Compute and RDS are private by default; only the ALB and NAT gateways are exposed to the internet.
 - Outbound traffic from the compute layer is the main reason NAT gateways exist here.
