@@ -102,6 +102,33 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-east-1
 
+      - name: Install Infracost CLI
+        if: steps.prereq.outputs.run == 'true'
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/infracost/infracost/master/scripts/install.sh | sh
+
+      - name: Generate Infracost report
+        if: steps.prereq.outputs.run == 'true'
+        env:
+          INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
+          TF_CLI_ARGS_init: "-backend=false -input=false"
+          TF_CLI_ARGS_plan: "-input=false"
+        run: |
+          infracost breakdown --config-file infracost.yml --format json --out-file infracost-report.json
+
+      - name: FinOps summary
+        if: steps.prereq.outputs.run == 'true'
+        id: finops
+        run: |
+          bash scripts/finops-ci.sh infracost-report.json environments/dev/terraform.tfvars environments/prod/terraform.tfvars
+
+      - name: Upload Infracost report
+        if: steps.prereq.outputs.run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: infracost-report
+          path: infracost-report.json
+
       - name: Infracost
         if: steps.prereq.outputs.run == 'true'
         uses: infracost/infracost-gh-action@v2
