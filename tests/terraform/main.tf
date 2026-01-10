@@ -73,7 +73,13 @@ module "network" {
   single_nat_gateway   = true
   enable_flow_logs     = false
   tags = {
+    Project     = "test"
     Environment = "test"
+    Service     = "test"
+    Owner       = "test"
+    CostCenter  = "test"
+    ManagedBy   = "Terraform"
+    Repository  = "aws-platform-starter"
   }
 }
 
@@ -101,7 +107,13 @@ module "ecs" {
   enable_execute_command             = false
   requires_compatibilities           = local.ecs_requires_compatibilities
   tags = {
+    Project     = "test"
     Environment = "test"
+    Service     = "test"
+    Owner       = "test"
+    CostCenter  = "test"
+    ManagedBy   = "Terraform"
+    Repository  = "aws-platform-starter"
   }
 }
 
@@ -120,7 +132,13 @@ module "ecs_ec2_capacity" {
   max_size                   = 1
   enable_detailed_monitoring = false
   tags = {
+    Project     = "test"
     Environment = "test"
+    Service     = "test"
+    Owner       = "test"
+    CostCenter  = "test"
+    ManagedBy   = "Terraform"
+    Repository  = "aws-platform-starter"
   }
 }
 
@@ -143,6 +161,12 @@ module "k8s_ec2_infra" {
   ami_id                      = "ami-1234567890abcdef0"
   enable_detailed_monitoring  = false
   tags = {
+    Project     = "test"
     Environment = "test"
+    Service     = "test"
+    Owner       = "test"
+    CostCenter  = "test"
+    ManagedBy   = "Terraform"
+    Repository  = "aws-platform-starter"
   }
 }

@@ -14,7 +14,11 @@ run "network_defaults" {
     tags = {
       Project     = "test"
       Environment = "test"
+      Service     = "test"
+      Owner       = "test"
+      CostCenter  = "test"
       ManagedBy   = "Terraform"
+      Repository  = "aws-platform-starter"
     }
   }
 
@@ -72,6 +76,15 @@ run "network_invalid_vpc_cidr" {
     azs                  = ["us-east-1a", "us-east-1b"]
     public_subnet_cidrs  = ["10.0.0.0/24", "10.0.1.0/24"]
     private_subnet_cidrs = ["10.0.10.0/24", "10.0.11.0/24"]
+    tags = {
+      Project     = "test"
+      Environment = "test"
+      Service     = "test"
+      Owner       = "test"
+      CostCenter  = "test"
+      ManagedBy   = "Terraform"
+      Repository  = "aws-platform-starter"
+    }
   }
 
   override_data {
@@ -100,6 +113,15 @@ run "network_invalid_azs" {
     azs                  = ["us-east-1a"]
     public_subnet_cidrs  = ["10.0.0.0/24"]
     private_subnet_cidrs = ["10.0.10.0/24"]
+    tags = {
+      Project     = "test"
+      Environment = "test"
+      Service     = "test"
+      Owner       = "test"
+      CostCenter  = "test"
+      ManagedBy   = "Terraform"
+      Repository  = "aws-platform-starter"
+    }
   }
 
   override_data {

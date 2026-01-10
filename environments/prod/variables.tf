@@ -18,6 +18,129 @@ variable "environment" {
   }
 }
 
+variable "service_name" {
+  type        = string
+  description = "Service identifier used for cost allocation."
+
+  validation {
+    condition     = length(trimspace(var.service_name)) > 0
+    error_message = "service_name must not be empty."
+  }
+}
+
+variable "owner" {
+  type        = string
+  description = "Owning team or individual for cost allocation."
+
+  validation {
+    condition     = length(trimspace(var.owner)) > 0
+    error_message = "owner must not be empty."
+  }
+}
+
+variable "cost_center" {
+  type        = string
+  description = "Cost center identifier for chargeback/showback."
+
+  validation {
+    condition     = length(trimspace(var.cost_center)) > 0
+    error_message = "cost_center must not be empty."
+  }
+}
+
+variable "cost_posture" {
+  type        = string
+  description = "FinOps cost posture (cost_optimized or stability_first)."
+
+  validation {
+    condition     = contains(["cost_optimized", "stability_first"], var.cost_posture)
+    error_message = "cost_posture must be cost_optimized or stability_first."
+  }
+
+  validation {
+    condition     = (var.environment == "dev" && var.cost_posture == "cost_optimized") || (var.environment == "prod" && var.cost_posture == "stability_first")
+    error_message = "cost_posture must be cost_optimized for dev and stability_first for prod."
+  }
+}
+
+variable "allow_spot_in_prod" {
+  type        = bool
+  description = "Allow Fargate Spot capacity in prod (default is false)."
+  default     = false
+}
+
+variable "enforce_cost_controls" {
+  type        = bool
+  description = "Block deploys when estimated costs exceed the hard threshold."
+  default     = true
+}
+
+variable "estimated_monthly_cost" {
+  type        = number
+  description = "Estimated monthly cost (USD) injected by CI."
+  default     = null
+  nullable    = true
+
+  validation {
+    condition     = var.estimated_monthly_cost == null || var.estimated_monthly_cost >= 0
+    error_message = "estimated_monthly_cost must be greater than or equal to 0."
+  }
+}
+
+variable "budget_limit_usd" {
+  type        = number
+  description = "Monthly budget limit in USD."
+
+  validation {
+    condition     = var.budget_limit_usd > 0
+    error_message = "budget_limit_usd must be greater than 0."
+  }
+}
+
+variable "budget_warning_threshold_percent" {
+  type        = number
+  description = "Warning threshold percentage for budget notifications."
+
+  validation {
+    condition     = var.budget_warning_threshold_percent > 0 && var.budget_warning_threshold_percent < 100
+    error_message = "budget_warning_threshold_percent must be between 0 and 100."
+  }
+}
+
+variable "budget_hard_limit_percent" {
+  type        = number
+  description = "Hard limit percentage used for deploy-time enforcement."
+
+  validation {
+    condition     = var.budget_hard_limit_percent > var.budget_warning_threshold_percent && var.budget_hard_limit_percent <= 100
+    error_message = "budget_hard_limit_percent must be greater than budget_warning_threshold_percent and <= 100."
+  }
+}
+
+variable "budget_notification_emails" {
+  type        = list(string)
+  description = "Email recipients for budget alerts."
+  default     = []
+
+  validation {
+    condition = alltrue([
+      for email in var.budget_notification_emails : length(trimspace(email)) > 0
+    ])
+    error_message = "budget_notification_emails must not contain empty values."
+  }
+
+  validation {
+    condition     = length(var.budget_notification_emails) > 0 || length(trimspace(var.budget_sns_topic_arn)) > 0 || length(trimspace(var.alarm_sns_topic_arn)) > 0
+    error_message = "Set budget_notification_emails, budget_sns_topic_arn, or alarm_sns_topic_arn for budget alerts."
+  }
+}
+
+variable "budget_sns_topic_arn" {
+  type        = string
+  description = "SNS topic ARN for budget alerts (optional override)."
+  default     = ""
+}
+
 variable "platform" {
   type        = string
   description = "Platform selection (ecs, k8s_self_managed, or eks)."
@@ -35,8 +158,8 @@ variable "ecs_capacity_mode" {
   default     = "fargate"
 
   validation {
-    condition     = contains(["fargate", "fargate_spot", "ec2"], var.ecs_capacity_mode)
-    error_message = "ecs_capacity_mode must be fargate, fargate_spot, or ec2."
+    condition     = contains(["fargate", "fargate_spot", "ec2"], var.ecs_capacity_mode) && (var.environment == "dev" || var.ecs_capacity_mode != "fargate_spot" || var.allow_spot_in_prod)
+    error_message = "ecs_capacity_mode must be fargate, fargate_spot, or ec2. Fargate Spot in prod requires allow_spot_in_prod = true."
   }
 }
 
@@ -516,4 +639,9 @@ variable "additional_tags" {
   type        = map(string)
   description = "Additional tags to apply."
   default     = {}
+
+  validation {
+    condition     = length(setintersection(keys(var.additional_tags), ["Project", "Environment", "Service", "Owner", "CostCenter", "ManagedBy", "Repository"])) == 0
+    error_message = "additional_tags must not override Project, Environment, Service, Owner, CostCenter, ManagedBy, or Repository."
+  }
 }

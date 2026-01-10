@@ -15,7 +15,11 @@ run "ecs_defaults" {
     tags = {
       Project     = "test"
       Environment = "test"
+      Service     = "test"
+      Owner       = "test"
+      CostCenter  = "test"
       ManagedBy   = "Terraform"
+      Repository  = "aws-platform-starter"
     }
   }
 
@@ -78,6 +82,15 @@ run "ecs_invalid_container_port" {
     container_image        = "public.ecr.aws/nginx/nginx:latest"
     container_port         = 70000
     enable_execute_command = false
+    tags = {
+      Project     = "test"
+      Environment = "test"
+      Service     = "test"
+      Owner       = "test"
+      CostCenter  = "test"
+      ManagedBy   = "Terraform"
+      Repository  = "aws-platform-starter"
+    }
   }
 
   override_data {
@@ -110,6 +123,15 @@ run "ecs_missing_kms_key_arns" {
     container_port         = 80
     secrets_arns           = ["arn:aws:secretsmanager:us-east-1:123456789012:secret:app"]
     enable_execute_command = false
+    tags = {
+      Project     = "test"
+      Environment = "test"
+      Service     = "test"
+      Owner       = "test"
+      CostCenter  = "test"
+      ManagedBy   = "Terraform"
+      Repository  = "aws-platform-starter"
+    }
   }
 
   override_data {

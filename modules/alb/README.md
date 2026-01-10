@@ -50,7 +50,7 @@ No modules.
 | <a name="input_name_prefix"></a> [name\_prefix](#input\_name\_prefix) | Prefix used for naming ALB resources. | `string` | n/a | yes |
 | <a name="input_public_subnet_ids"></a> [public\_subnet\_ids](#input\_public\_subnet\_ids) | Public subnet IDs for the ALB. | `list(string)` | n/a | yes |
 | <a name="input_ssl_policy"></a> [ssl\_policy](#input\_ssl\_policy) | SSL policy for the HTTPS listener. | `string` | `"ELBSecurityPolicy-TLS13-1-2-2021-06"` | no |
-| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to ALB resources. | `map(string)` | `{}` | no |
+| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to ALB resources. | `map(string)` | n/a | yes |
 | <a name="input_target_port"></a> [target\_port](#input\_target\_port) | Target port for the ALB target group. | `number` | n/a | yes |
 | <a name="input_target_type"></a> [target\_type](#input\_target\_type) | Target type for the ALB target group (ip for ECS, instance for EC2). | `string` | `"ip"` | no |
 | <a name="input_vpc_cidr"></a> [vpc\_cidr](#input\_vpc\_cidr) | CIDR block of the VPC (used for restrictive egress). | `string` | n/a | yes |

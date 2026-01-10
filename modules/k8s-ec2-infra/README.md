@@ -87,7 +87,7 @@ No modules.
 | <a name="input_pod_cidr"></a> [pod\_cidr](#input\_pod\_cidr) | CIDR for Kubernetes pods. | `string` | `"10.244.0.0/16"` | no |
 | <a name="input_private_subnet_ids"></a> [private\_subnet\_ids](#input\_private\_subnet\_ids) | Private subnet IDs for control plane and worker nodes. | `list(string)` | n/a | yes |
 | <a name="input_service_cidr"></a> [service\_cidr](#input\_service\_cidr) | CIDR for Kubernetes services. | `string` | `"10.96.0.0/12"` | no |
-| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to Kubernetes resources. | `map(string)` | `{}` | no |
+| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to Kubernetes resources. | `map(string)` | n/a | yes |
 | <a name="input_vpc_cidr"></a> [vpc\_cidr](#input\_vpc\_cidr) | VPC CIDR block for security group rules. | `string` | n/a | yes |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | VPC ID for Kubernetes resources. | `string` | n/a | yes |
 | <a name="input_worker_desired_capacity"></a> [worker\_desired\_capacity](#input\_worker\_desired\_capacity) | Desired size of the worker Auto Scaling group. | `number` | n/a | yes |

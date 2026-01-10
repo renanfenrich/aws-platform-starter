@@ -78,7 +78,7 @@ No modules.
 | <a name="input_requires_compatibilities"></a> [requires\_compatibilities](#input\_requires\_compatibilities) | Task definition compatibilities (FARGATE or EC2). | `list(string)` | <pre>[<br/>  "FARGATE"<br/>]</pre> | no |
 | <a name="input_secrets_arns"></a> [secrets\_arns](#input\_secrets\_arns) | Secret ARNs that the execution role needs to access. | `list(string)` | `[]` | no |
 | <a name="input_security_group_id"></a> [security\_group\_id](#input\_security\_group\_id) | Security group ID to attach to ECS tasks. | `string` | n/a | yes |
-| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to ECS resources. | `map(string)` | `{}` | no |
+| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to ECS resources. | `map(string)` | n/a | yes |
 | <a name="input_target_group_arn"></a> [target\_group\_arn](#input\_target\_group\_arn) | Target group ARN for the ECS service. | `string` | n/a | yes |
 | <a name="input_task_role_policy_arns"></a> [task\_role\_policy\_arns](#input\_task\_role\_policy\_arns) | Additional policy ARNs to attach to the task role. | `list(string)` | `[]` | no |
 

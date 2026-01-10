@@ -53,7 +53,7 @@ No modules.
 | <a name="input_period_seconds"></a> [period\_seconds](#input\_period\_seconds) | Metric evaluation period in seconds. | `number` | `60` | no |
 | <a name="input_rds_cpu_threshold"></a> [rds\_cpu\_threshold](#input\_rds\_cpu\_threshold) | Threshold for RDS CPU utilization. | `number` | `80` | no |
 | <a name="input_rds_instance_id"></a> [rds\_instance\_id](#input\_rds\_instance\_id) | RDS instance identifier. | `string` | n/a | yes |
-| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to alarm resources. | `map(string)` | `{}` | no |
+| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to alarm resources. | `map(string)` | n/a | yes |
 | <a name="input_target_group_arn_suffix"></a> [target\_group\_arn\_suffix](#input\_target\_group\_arn\_suffix) | ARN suffix of the target group. | `string` | n/a | yes |
 
 ## Outputs

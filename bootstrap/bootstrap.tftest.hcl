@@ -9,6 +9,15 @@ run "bootstrap_plan" {
     environment       = "dev"
     region_short      = "use1"
     state_bucket_name = "aws-platform-starter-state-dev"
+    tags = {
+      Project     = "aws-platform-starter"
+      Environment = "dev"
+      Service     = "bootstrap"
+      Owner       = "platform-team"
+      CostCenter  = "platform"
+      ManagedBy   = "Terraform"
+      Repository  = "aws-platform-starter"
+    }
   }
 
   override_data {

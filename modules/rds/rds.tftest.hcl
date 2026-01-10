@@ -13,7 +13,11 @@ run "rds_defaults" {
     tags = {
       Project     = "test"
       Environment = "test"
+      Service     = "test"
+      Owner       = "test"
+      CostCenter  = "test"
       ManagedBy   = "Terraform"
+      Repository  = "aws-platform-starter"
     }
   }
 

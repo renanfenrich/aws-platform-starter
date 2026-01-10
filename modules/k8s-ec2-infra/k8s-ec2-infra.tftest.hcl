@@ -21,7 +21,11 @@ run "k8s_defaults" {
     tags = {
       Project     = "test"
       Environment = "test"
+      Service     = "test"
+      Owner       = "test"
+      CostCenter  = "test"
       ManagedBy   = "Terraform"
+      Repository  = "aws-platform-starter"
     }
   }
 
@@ -126,6 +130,15 @@ run "k8s_invalid_nodeport" {
     worker_max_size             = 2
     ingress_nodeport            = 20000
     ami_id                      = "ami-1234567890abcdef0"
+    tags = {
+      Project     = "test"
+      Environment = "test"
+      Service     = "test"
+      Owner       = "test"
+      CostCenter  = "test"
+      ManagedBy   = "Terraform"
+      Repository  = "aws-platform-starter"
+    }
   }
 
   override_data {

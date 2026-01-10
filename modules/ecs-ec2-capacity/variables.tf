@@ -118,5 +118,12 @@ variable "enable_managed_termination_protection" {
 variable "tags" {
   type        = map(string)
   description = "Tags to apply to EC2 capacity resources."
-  default     = {}
+
+  validation {
+    condition = alltrue([
+      for key in ["Project", "Environment", "Service", "Owner", "CostCenter", "ManagedBy", "Repository"] :
+      contains(keys(var.tags), key) && length(trimspace(var.tags[key])) > 0
+    ])
+    error_message = "tags must include non-empty Project, Environment, Service, Owner, CostCenter, ManagedBy, and Repository values."
+  }
 }

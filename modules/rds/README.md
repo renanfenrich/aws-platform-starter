@@ -66,7 +66,7 @@ No modules.
 | <a name="input_publicly_accessible"></a> [publicly\_accessible](#input\_publicly\_accessible) | Whether the DB is publicly accessible. | `bool` | `false` | no |
 | <a name="input_skip_final_snapshot"></a> [skip\_final\_snapshot](#input\_skip\_final\_snapshot) | Skip final snapshot on deletion. | `bool` | `false` | no |
 | <a name="input_storage_type"></a> [storage\_type](#input\_storage\_type) | Storage type. | `string` | `"gp3"` | no |
-| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to database resources. | `map(string)` | `{}` | no |
+| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to database resources. | `map(string)` | n/a | yes |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | VPC ID for the database. | `string` | n/a | yes |
 
 ## Outputs

@@ -11,10 +11,12 @@ projects:
     name: "dev"
     terraform_var_files:
       - "terraform.tfvars"
+      - "infracost.tfvars"
     usage_file: "infracost-usage-dev.yml"
 
   - path: "environments/prod"
     name: "prod"
     terraform_var_files:
       - "terraform.tfvars"
+      - "infracost.tfvars"
     usage_file: "infracost-usage-prod.yml"

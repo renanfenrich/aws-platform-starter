@@ -63,7 +63,7 @@ No modules.
 | <a name="input_name_prefix"></a> [name\_prefix](#input\_name\_prefix) | Prefix used for naming EC2 capacity resources. | `string` | n/a | yes |
 | <a name="input_private_subnet_ids"></a> [private\_subnet\_ids](#input\_private\_subnet\_ids) | Private subnet IDs for the Auto Scaling group. | `list(string)` | n/a | yes |
 | <a name="input_security_group_id"></a> [security\_group\_id](#input\_security\_group\_id) | Security group ID attached to the EC2 instances. | `string` | n/a | yes |
-| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to EC2 capacity resources. | `map(string)` | `{}` | no |
+| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to EC2 capacity resources. | `map(string)` | n/a | yes |
 | <a name="input_user_data"></a> [user\_data](#input\_user\_data) | Additional user data appended after ECS cluster configuration. | `string` | `""` | no |
 
 ## Outputs

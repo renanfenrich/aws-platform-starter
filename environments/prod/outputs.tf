@@ -3,6 +3,41 @@ output "platform" {
   value       = var.platform
 }
 
+output "cost_posture" {
+  description = "FinOps cost posture for this environment."
+  value       = var.cost_posture
+}
+
+output "estimated_monthly_cost" {
+  description = "Estimated monthly cost provided by CI."
+  value       = var.estimated_monthly_cost
+}
+
+output "budget_name" {
+  description = "Budget name for this environment."
+  value       = module.budget.budget_name
+}
+
+output "budget_limit_usd" {
+  description = "Monthly budget limit in USD."
+  value       = var.budget_limit_usd
+}
+
+output "budget_warning_threshold_percent" {
+  description = "Warning threshold percentage."
+  value       = var.budget_warning_threshold_percent
+}
+
+output "budget_hard_limit_percent" {
+  description = "Hard limit percentage."
+  value       = var.budget_hard_limit_percent
+}
+
+output "budget_hard_limit_usd" {
+  description = "Hard limit in USD used for deploy-time enforcement."
+  value       = local.budget_hard_limit_usd
+}
+
 output "alb_dns_name" {
   description = "ALB DNS name."
   value       = module.alb.alb_dns_name
