@@ -8,8 +8,8 @@ This repo uses `terraform test` with mock providers and `-backend=false` to keep
 | Stack | Test harness | Modes covered | Regression targets |
 | --- | --- | --- | --- |
 | `bootstrap/` | `bootstrap/bootstrap.tftest.hcl` | N/A | State bucket encryption, public access block, SNS KMS encryption |
-| `environments/dev/` | `environments/dev/stack.tftest.hcl` | `platform=ecs` (`fargate`, `fargate_spot`, `ec2`), `platform=k8s_self_managed` | Selector wiring, subnet counts, tag propagation on app SG, ECS vs K8s outputs, reserved `eks` guard |
-| `environments/prod/` | `environments/prod/stack.tftest.hcl` | `platform=ecs` (`fargate`, `fargate_spot`, `ec2`), `platform=k8s_self_managed` | Selector wiring, HTTP listener disabled in prod, ECS vs K8s outputs |
+| `environments/dev/` | `environments/dev/stack.tftest.hcl` | `platform=ecs` (`fargate`, `fargate_spot`, `ec2`), `platform=k8s_self_managed` | Selector wiring, subnet counts, tag propagation on app SG, ECS vs K8s outputs, reserved `eks` guard, budget creation, cost posture validation, deploy-time cost enforcement |
+| `environments/prod/` | `environments/prod/stack.tftest.hcl` | `platform=ecs` (`fargate`, `fargate_spot`, `ec2`), `platform=k8s_self_managed` | Selector wiring, HTTP listener disabled in prod, ECS vs K8s outputs, budget creation, spot override guard, cost posture validation, deploy-time cost enforcement |
 
 ### Modules
 | Module | Test harness | Key assertions |

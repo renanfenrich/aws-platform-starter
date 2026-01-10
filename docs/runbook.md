@@ -2,9 +2,20 @@
 
 This is the short list of steps I actually use when operating this stack.
 
+## Cost Estimate (Required)
+
+Estimate costs before any deploy and pass the number into Terraform:
+
+```bash
+INFRACOST_API_KEY=... make cost
+```
+
+Capture the estimated monthly cost for the target environment, then export it as `TF_VAR_estimated_monthly_cost`.
+
 ## Deploy (Dev)
 
 ```bash
+export TF_VAR_estimated_monthly_cost=123.45
 cd environments/dev
 terraform init -backend-config=backend.hcl
 terraform apply -var-file=terraform.tfvars
@@ -13,6 +24,7 @@ terraform apply -var-file=terraform.tfvars
 ## Deploy (Prod)
 
 ```bash
+export TF_VAR_estimated_monthly_cost=123.45
 cd environments/prod
 terraform init -backend-config=backend.hcl
 terraform apply -var-file=terraform.tfvars
@@ -25,6 +37,12 @@ terraform apply -var-file=terraform.tfvars
 3) Confirm the email subscription in each inbox.
 
 Baseline alarms: ALB 5xx, ECS CPU, EC2 CPU (when enabled), and RDS CPU.
+
+## Budget Alerts
+
+1) Set `budget_notification_emails` or `budget_sns_topic_arn` in each environment `terraform.tfvars`.
+2) Confirm email subscriptions or SNS endpoints as required.
+3) When a budget warning fires, review the latest cost estimate and recent deploys before adjusting capacity.
 
 ## Deploy (Kubernetes Self-Managed)
 

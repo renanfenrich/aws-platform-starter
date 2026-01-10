@@ -6,6 +6,7 @@ Start with `architecture.md` if you want the walkthrough. The rest are short sup
 - `architecture.mmd` — Mermaid diagram source.
 - `architecture-aws.svg` — AWS icon diagram (optional).
 - `decisions.md` — key design decisions.
+- `finops.md` — cost estimation, enforcement, and monitoring model.
 - `runbook.md` — operational runbook.
 - `well-architected.md` — AWS Well-Architected mapping.
 - `costs.md` — cost drivers and optimizations.

@@ -2,6 +2,8 @@
 
 This stack is small, but a few services still dominate the bill. The numbers will vary by region and usage, so I keep this as a qualitative guide.
 
+For the end-to-end FinOps flow (estimate → enforce → monitor), see `docs/finops.md`.
+
 ## Main Cost Drivers
 
 - NAT gateways (hourly + data processing)
