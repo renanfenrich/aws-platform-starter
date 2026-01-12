@@ -19,8 +19,8 @@ This repo uses `terraform test` with mock providers and `-backend=false` to keep
 | `modules/ecs-ec2-capacity` | `modules/ecs-ec2-capacity/ecs-ec2-capacity.tftest.hcl` | No public IPs, IMDSv2 required, tag propagation |
 | `modules/k8s-ec2-infra` | `modules/k8s-ec2-infra/k8s-ec2-infra.tftest.hcl` | No public SSH, KMS key rotation, name_prefix, input validation |
 | `modules/rds` | `modules/rds/rds.tftest.hcl` | Storage encryption, private by default, managed credentials, KMS rotation, name_prefix, tags |
-| `modules/alb` | Not covered | Listener/ingress assertions pending |
-| `modules/observability` | Not covered | Alarm dimensions and thresholds pending |
+| `modules/alb` | `modules/alb/alb.tftest.hcl` | HTTPS listener + ACM, HTTP-only when enabled, subnet wiring, SG ingress 443/80, target group port/protocol + health check path, listener forward actions, tags, input validation |
+| `modules/observability` | `modules/observability/observability.tftest.hcl` | ALB/ECS/RDS alarms: thresholds, evaluation periods, dimensions, SNS actions, treat_missing_data, SNS-disabled behavior, input validation |
 
 ### Selector coverage
 | Selector | Values covered |
@@ -29,9 +29,8 @@ This repo uses `terraform test` with mock providers and `-backend=false` to keep
 | `ecs_capacity_mode` | `fargate`, `fargate_spot`, `ec2`, invalid value rejected |
 
 ## Remaining Gaps (Ranked)
-1. `modules/alb` and `modules/observability` lack focused unit-level assertions (listener wiring, alarm thresholds/dimensions).
-2. Tag coverage relies on representative resources (app SG, VPC, ECS/RDS/K8s resources); no plan-wide tag sweep.
-3. No plan JSON assertions yet for “forbidden security posture” across all resources (e.g., 0.0.0.0/0 SSH sweep).
+1. Tag coverage relies on representative resources (app SG, VPC, ECS/RDS/K8s resources); no plan-wide tag sweep.
+2. No plan JSON assertions yet for “forbidden security posture” across all resources (e.g., 0.0.0.0/0 SSH sweep).
 
 ## How To Run
 - `make test`
