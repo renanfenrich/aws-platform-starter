@@ -15,6 +15,7 @@ This repository is my AWS infrastructure portfolio project. It is intentionally 
 3) No console hand-waving. If AWS prerequisites exist, create a Terraform bootstrap stack or document why it must remain manual.
 4) Don’t commit secrets, state files, or local configs.
 5) Run checks before concluding. If you can’t run something, say exactly what you didn’t run and why.
+6) Always commit changes you make unless explicitly told not to.
 
 Codex reads the closest AGENTS.md relative to files it changes. If you add sub-project rules, place nested AGENTS.md files inside that subdirectory.
 
