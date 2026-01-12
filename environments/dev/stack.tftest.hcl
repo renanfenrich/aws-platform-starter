@@ -86,7 +86,7 @@ run "dev_ecs_fargate_spot" {
   }
 
   assert {
-    condition     = length(module.network.aws_flow_log.this) == 0
+    condition     = module.network.flow_logs_log_group_name == null
     error_message = "expected VPC flow logs to be disabled in dev by default"
   }
 

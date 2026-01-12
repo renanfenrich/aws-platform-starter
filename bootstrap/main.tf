@@ -305,6 +305,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "alb_access_logs" {
     id     = "log-retention"
     status = "Enabled"
 
+    filter {
+      prefix = ""
+    }
+
     transition {
       days          = 30
       storage_class = "STANDARD_IA"

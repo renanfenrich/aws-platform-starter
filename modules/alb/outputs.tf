@@ -37,3 +37,8 @@ output "http_listener_arn" {
   description = "ARN of the HTTP listener (if enabled)."
   value       = var.enable_http ? aws_lb_listener.http[0].arn : null
 }
+
+output "alb_access_logs_bucket" {
+  description = "S3 bucket name for ALB access logs (null if disabled)."
+  value       = length(aws_lb.this.access_logs) > 0 ? aws_lb.this.access_logs[0].bucket : null
+}

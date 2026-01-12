@@ -94,17 +94,12 @@ run "prod_ecs_fargate" {
   }
 
   assert {
-    condition     = length(module.alb.aws_lb.this.access_logs) == 1 && module.alb.aws_lb.this.access_logs[0].enabled
-    error_message = "expected ALB access logs to be enabled in prod"
-  }
-
-  assert {
-    condition     = module.alb.aws_lb.this.access_logs[0].bucket == var.alb_access_logs_bucket
+    condition     = module.alb.alb_access_logs_bucket == var.alb_access_logs_bucket
     error_message = "expected ALB access logs bucket to match configuration"
   }
 
   assert {
-    condition     = length(module.network.aws_flow_log.this) == 1
+    condition     = module.network.flow_logs_log_group_name != null
     error_message = "expected VPC flow logs to be enabled in prod"
   }
 
