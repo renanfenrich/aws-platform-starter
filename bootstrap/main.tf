@@ -52,7 +52,10 @@ data "aws_iam_policy_document" "state_kms" {
     condition {
       test     = "ArnLike"
       variable = "aws:SourceArn"
-      values   = ["arn:aws:s3:::${var.state_bucket_name}"]
+      values = [
+        "arn:aws:s3:::${var.state_bucket_name}",
+        "arn:aws:s3:::${local.alb_access_logs_bucket_name}"
+      ]
     }
   }
 
@@ -289,6 +292,14 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "alb_access_logs" 
   }
 }
 
+resource "aws_s3_bucket_versioning" "alb_access_logs" {
+  bucket = aws_s3_bucket.alb_access_logs.id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
 resource "aws_s3_bucket_public_access_block" "alb_access_logs" {
   bucket = aws_s3_bucket.alb_access_logs.id
 
@@ -296,6 +307,14 @@ resource "aws_s3_bucket_public_access_block" "alb_access_logs" {
   block_public_policy     = true
   ignore_public_acls      = true
   restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_logging" "alb_access_logs" {
+  bucket        = aws_s3_bucket.alb_access_logs.id
+  target_bucket = aws_s3_bucket.state_logs.id
+  target_prefix = "alb-access-logs/"
+
+  depends_on = [aws_s3_bucket_acl.state_logs]
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "alb_access_logs" {
