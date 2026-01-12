@@ -15,7 +15,7 @@ log() {
 }
 
 log "Installing dependencies"
-dnf -y install containerd awscli curl jq conntrack socat iproute-tc iptables
+dnf -y install containerd awscli amazon-ecr-credential-helper curl jq conntrack socat iproute-tc iptables
 
 cat <<REPO >/etc/yum.repos.d/kubernetes.repo
 [kubernetes]
@@ -51,6 +51,63 @@ sed -i '/ swap / s/^/#/' /etc/fstab
 containerd config default > /etc/containerd/config.toml
 sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
 systemctl enable --now containerd
+
+log "Configuring ECR credential helper"
+ECR_REFRESH_SCRIPT="/usr/local/bin/ecr-credential-helper-refresh"
+cat <<'EOF' > "$ECR_REFRESH_SCRIPT"
+#!/bin/bash
+set -euo pipefail
+
+AWS_REGION="${aws_region}"
+
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text --region "$AWS_REGION")
+ECR_REGISTRY="$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
+ECR_AUTH=$(echo "https://$ECR_REGISTRY" | docker-credential-ecr-login get)
+ECR_USERNAME=$(echo "$ECR_AUTH" | jq -r '.Username')
+ECR_PASSWORD=$(echo "$ECR_AUTH" | jq -r '.Secret')
+
+sed -i '/# BEGIN ECR AUTH/,/# END ECR AUTH/d' /etc/containerd/config.toml
+
+cat <<EOT >> /etc/containerd/config.toml
+# BEGIN ECR AUTH
+[plugins."io.containerd.grpc.v1.cri".registry.configs."$ECR_REGISTRY".auth]
+  username = "$ECR_USERNAME"
+  password = "$ECR_PASSWORD"
+# END ECR AUTH
+EOT
+
+systemctl restart containerd
+EOF
+
+chmod 0755 "$ECR_REFRESH_SCRIPT"
+"$ECR_REFRESH_SCRIPT"
+
+cat <<EOF >/etc/systemd/system/ecr-credential-refresh.service
+[Unit]
+Description=Refresh ECR credentials for containerd
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=$ECR_REFRESH_SCRIPT
+EOF
+
+cat <<EOF >/etc/systemd/system/ecr-credential-refresh.timer
+[Unit]
+Description=Refresh ECR credentials for containerd
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=6h
+Unit=ecr-credential-refresh.service
+
+[Install]
+WantedBy=timers.target
+EOF
+
+systemctl daemon-reload
+systemctl enable --now ecr-credential-refresh.timer
 
 TOKEN=$(curl -sX PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
 PRIVATE_IP=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/local-ipv4)

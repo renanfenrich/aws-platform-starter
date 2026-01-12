@@ -35,6 +35,7 @@ Think of it as a straight line: user -> ALB -> compute -> RDS. The ALB lives in 
 - ECS service in private subnets with capacity providers (Fargate default, Fargate Spot in dev, EC2 optional)
 - ECS EC2 capacity provider with a private Auto Scaling group (optional)
 - Self-managed Kubernetes on EC2 with a single control plane and worker Auto Scaling group (optional)
+- ECR repository per environment for application images
 - RDS PostgreSQL with KMS encryption and Secrets Manager for the master password
 - CloudWatch logs and a small set of alarms (ALB 5xx, ECS/EC2 CPU, RDS CPU)
 - Remote state bootstrap with S3 native locking
@@ -82,6 +83,7 @@ If this were running a real product, I would add:
     k8s-ec2-infra/
     ecs-ec2-capacity/
     ecs/
+    ecr/
     network/
     observability/
     rds/
@@ -157,6 +159,7 @@ kubectl apply -f k8s/
 - HTTPS is always enabled; HTTP is allowed only when `allow_http = true` (dev only).
 - RDS master password is managed by AWS and stored in Secrets Manager.
 - ECS tasks run as a non-root user by default (`container_user`).
+- Container images default to the environment ECR repository plus `image_tag`; set `container_image` to override.
 - `platform` selects `ecs` or `k8s_self_managed` (with `eks` reserved for future use).
 - `ecs_capacity_mode` switches between `fargate`, `fargate_spot`, and `ec2` capacity providers.
 - ECS settings are ignored when `platform = "k8s_self_managed"`.

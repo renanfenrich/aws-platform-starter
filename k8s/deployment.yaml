@@ -15,6 +15,6 @@ spec:
     spec:
       containers:
         - name: app
-          image: public.ecr.aws/nginx/nginx:latest
+          image: REPLACE_WITH_ECR_IMAGE
           ports:
             - containerPort: 80

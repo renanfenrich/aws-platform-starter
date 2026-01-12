@@ -28,7 +28,7 @@ acm_certificate_arn     = "arn:aws:acm:us-east-1:000000000000:certificate/000000
 alb_ingress_cidrs       = ["0.0.0.0/0"]
 alb_deletion_protection = false
 
-container_image   = "public.ecr.aws/nginx/nginx:latest"
+image_tag         = "latest"
 container_port    = 80
 container_cpu     = 256
 container_memory  = 512

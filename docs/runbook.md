@@ -30,6 +30,22 @@ terraform init -backend-config=backend.hcl
 terraform apply -var-file=terraform.tfvars
 ```
 
+## Build and Push an Image to ECR (Manual)
+
+From the environment directory (set `AWS_REGION` to match `aws_region` in your tfvars):
+
+```bash
+AWS_REGION=us-east-1
+IMAGE_TAG=latest
+ECR_REPO=$(terraform output -raw ecr_repository_url)
+aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$ECR_REPO"
+docker build -t demo-app .
+docker tag demo-app:latest "${ECR_REPO}:${IMAGE_TAG}"
+docker push "${ECR_REPO}:${IMAGE_TAG}"
+```
+
+Update `image_tag` (or set `container_image` for a full override) in `terraform.tfvars`, then apply again.
+
 ## Production Hardening Toggles
 
 - ALB access logs are enabled in prod by default; set `alb_access_logs_bucket` to the bootstrap output `alb_access_logs_bucket_name`.
@@ -60,6 +76,21 @@ Baseline alarms: ALB 5xx, ECS CPU, EC2 CPU (when enabled), and RDS CPU.
 ```bash
 kubectl apply -f k8s/
 ```
+
+## Update ECS Image
+
+1) Set `image_tag` (or `container_image`) in the environment `terraform.tfvars`.
+2) Apply the environment again.
+
+## Update Kubernetes Image
+
+After applying the environment, use the resolved image output:
+
+```bash
+kubectl set image deployment/demo-app app=$(terraform output -raw resolved_container_image) -n demo
+```
+
+Kubernetes nodes use the ECR credential helper, so no expiring imagePullSecrets are required.
 
 ## Scale Compute
 

@@ -4,8 +4,9 @@ If I were sketching this on a whiteboard, I would start at the edge and walk inw
 
 1) The user hits the ALB in the public subnets. TLS terminates here. HTTP only exists when `allow_http = true` in dev.
 2) The ALB forwards to the compute layer in private subnets. Compute runs either as ECS tasks with capacity providers (Fargate, Fargate Spot, or EC2 capacity provider) or as a self-managed Kubernetes cluster on EC2. For Kubernetes, the ALB forwards to a NodePort on worker nodes backed by an ingress controller.
-3) Compute talks to RDS in private subnets. The DB security group only allows traffic from the compute security group.
-4) For outbound internet access (image pulls, patches, external APIs), compute traffic goes through NAT gateways. Dev uses a single NAT; prod uses one per AZ.
+3) Container images live in an environment-scoped ECR repository. ECS tasks and Kubernetes nodes pull from ECR using IAM roles and a credential helper on the nodes.
+4) Compute talks to RDS in private subnets. The DB security group only allows traffic from the compute security group.
+5) For outbound internet access (image pulls, patches, external APIs), compute traffic goes through NAT gateways. Dev uses a single NAT; prod uses one per AZ.
 
 RDS manages the master password and stores it in Secrets Manager. ECS tasks retrieve it via the execution role; EC2 container instances and Kubernetes nodes are SSM-enabled for access when needed.
 

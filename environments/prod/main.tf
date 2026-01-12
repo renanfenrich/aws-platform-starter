@@ -59,9 +59,10 @@ locals {
   budget_cost_filters = {
     TagKeyValue = [format("Environment$%s", var.environment)]
   }
-  budget_sns_topic_arn  = length(trimspace(var.budget_sns_topic_arn)) > 0 ? var.budget_sns_topic_arn : var.alarm_sns_topic_arn
-  budget_hard_limit_usd = var.budget_limit_usd * (var.budget_hard_limit_percent / 100)
-  estimated_cost_label  = var.estimated_monthly_cost != null ? format("%.2f", var.estimated_monthly_cost) : "unset"
+  budget_sns_topic_arn     = length(trimspace(var.budget_sns_topic_arn)) > 0 ? var.budget_sns_topic_arn : var.alarm_sns_topic_arn
+  budget_hard_limit_usd    = var.budget_limit_usd * (var.budget_hard_limit_percent / 100)
+  estimated_cost_label     = var.estimated_monthly_cost != null ? format("%.2f", var.estimated_monthly_cost) : "unset"
+  container_image_override = var.container_image != null && length(trimspace(var.container_image)) > 0
   tags = merge(
     {
       Project     = var.project_name
@@ -74,6 +75,7 @@ locals {
     },
     var.additional_tags
   )
+  resolved_container_image = local.container_image_override ? var.container_image : "${module.ecr.repository_url}:${var.image_tag}"
 }
 
 resource "terraform_data" "cost_enforcement" {
@@ -97,6 +99,14 @@ module "budget" {
   notification_emails        = var.budget_notification_emails
   notification_sns_topic_arn = local.budget_sns_topic_arn
   cost_filters               = local.budget_cost_filters
+}
+
+module "ecr" {
+  source = "../../modules/ecr"
+
+  name_prefix  = local.name_prefix
+  service_name = var.service_name
+  tags         = local.tags
 }
 
 resource "terraform_data" "eks_not_implemented" {
@@ -239,7 +249,7 @@ module "ecs" {
   default_capacity_provider_strategy = local.ecs_default_capacity_provider_strategy
   capacity_provider_strategy         = local.ecs_service_capacity_provider_strategy
   capacity_provider_dependency       = local.ecs_ec2_enabled ? module.ecs_ec2_capacity[0].capacity_provider_name : null
-  container_image                    = var.container_image
+  container_image                    = local.resolved_container_image
   container_port                     = var.container_port
   cpu                                = var.container_cpu
   memory                             = var.container_memory

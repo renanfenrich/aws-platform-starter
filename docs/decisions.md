@@ -74,3 +74,7 @@ These are the defaults I chose for this repo. Each one is a trade-off, and I kep
 
 24) **Hardening stops at baseline visibility**
    - I stop at access logs, flow logs, and optional WAF attachment to keep scope tight; managed rule sets and centralized logging pipelines belong in a larger platform.
+
+25) **ECR repository per environment with AWS-managed encryption**
+   - I add a single ECR repo per environment so images live with the stack and IAM can stay scoped.
+   - I use AES256 (AWS-managed) to keep the baseline simple; a CMK can be added later if policy requires it.

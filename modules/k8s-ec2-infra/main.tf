@@ -173,6 +173,16 @@ resource "aws_iam_role_policy_attachment" "worker_ssm" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
+resource "aws_iam_role_policy_attachment" "control_plane_ecr_read" {
+  role       = aws_iam_role.control_plane.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+}
+
+resource "aws_iam_role_policy_attachment" "worker_ecr_read" {
+  role       = aws_iam_role.worker.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+}
+
 resource "aws_iam_role_policy_attachment" "control_plane_extra" {
   for_each = toset(var.instance_role_policy_arns)
 

@@ -53,6 +53,16 @@ output "target_group_arn" {
   value       = module.alb.target_group_arn
 }
 
+output "ecr_repository_url" {
+  description = "ECR repository URL for the application image."
+  value       = module.ecr.repository_url
+}
+
+output "resolved_container_image" {
+  description = "Resolved container image reference (override or ECR repository + tag)."
+  value       = local.resolved_container_image
+}
+
 output "vpc_id" {
   description = "VPC ID."
   value       = module.network.vpc_id

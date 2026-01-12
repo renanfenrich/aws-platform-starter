@@ -29,7 +29,7 @@ alb_deletion_protection = true
 alb_enable_access_logs  = true
 alb_access_logs_bucket  = "CHANGE_ME"
 
-container_image   = "public.ecr.aws/nginx/nginx:latest"
+image_tag         = "latest"
 container_port    = 80
 container_cpu     = 512
 container_memory  = 1024

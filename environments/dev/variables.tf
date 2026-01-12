@@ -376,7 +376,24 @@ variable "alb_waf_acl_arn" {
 
 variable "container_image" {
   type        = string
-  description = "Container image to deploy."
+  description = "Container image to deploy (optional override)."
+  default     = null
+
+  validation {
+    condition     = var.container_image == null || length(trimspace(var.container_image)) > 0
+    error_message = "container_image must be null or a non-empty string."
+  }
+}
+
+variable "image_tag" {
+  type        = string
+  description = "Image tag to use when container_image is not set."
+  default     = "latest"
+
+  validation {
+    condition     = length(trimspace(var.image_tag)) > 0
+    error_message = "image_tag must not be empty."
+  }
 }
 
 variable "container_port" {

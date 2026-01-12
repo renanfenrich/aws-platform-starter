@@ -19,7 +19,7 @@ This module adds a minimal set of CloudWatch alarms for ALB 5xx, ECS CPU, and RD
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.28.0 |
 
 ## Modules
 

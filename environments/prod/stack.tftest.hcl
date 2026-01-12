@@ -214,6 +214,21 @@ run "prod_ecs_fargate_spot" {
   }
 
   assert {
+    condition     = module.ecr.repository_name != ""
+    error_message = "expected ECR repository to be created"
+  }
+
+  assert {
+    condition     = module.ecr.image_tag_mutability == "IMMUTABLE"
+    error_message = "expected ECR repository to default to immutable tags"
+  }
+
+  assert {
+    condition     = module.ecr.scan_on_push == true
+    error_message = "expected ECR repository scan_on_push to be enabled"
+  }
+
+  assert {
     condition     = length(module.ecs_ec2_capacity) == 0
     error_message = "expected EC2 capacity provider module to be skipped"
   }
@@ -403,6 +418,21 @@ run "prod_k8s" {
   assert {
     condition     = output.platform == "k8s_self_managed"
     error_message = "expected platform output to be k8s_self_managed"
+  }
+
+  assert {
+    condition     = module.ecr.repository_name != ""
+    error_message = "expected ECR repository to be created"
+  }
+
+  assert {
+    condition     = module.ecr.image_tag_mutability == "IMMUTABLE"
+    error_message = "expected ECR repository to default to immutable tags"
+  }
+
+  assert {
+    condition     = module.ecr.scan_on_push == true
+    error_message = "expected ECR repository scan_on_push to be enabled"
   }
 
   assert {
