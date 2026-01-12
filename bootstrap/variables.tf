@@ -44,6 +44,30 @@ variable "log_bucket_name" {
   default     = null
 }
 
+variable "alb_access_logs_bucket_name" {
+  type        = string
+  description = "Optional name of the S3 bucket for ALB access logs."
+  default     = null
+
+  validation {
+    condition     = var.alb_access_logs_bucket_name == null || length(trimspace(var.alb_access_logs_bucket_name)) > 0
+    error_message = "alb_access_logs_bucket_name must be null or a non-empty string."
+  }
+}
+
+variable "alb_access_logs_source_arns" {
+  type        = list(string)
+  description = "Optional list of ALB ARNs allowed to write access logs."
+  default     = []
+
+  validation {
+    condition = alltrue([
+      for arn in var.alb_access_logs_source_arns : length(trimspace(arn)) > 0
+    ])
+    error_message = "alb_access_logs_source_arns must not contain empty values."
+  }
+}
+
 variable "force_destroy" {
   type        = bool
   description = "Allow destroying the state bucket (not recommended)."

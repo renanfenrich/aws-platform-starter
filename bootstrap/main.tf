@@ -2,6 +2,7 @@ data "aws_caller_identity" "current" {}
 
 locals {
   log_bucket_name = var.log_bucket_name != null && length(trimspace(var.log_bucket_name)) > 0 ? var.log_bucket_name : "${var.state_bucket_name}-logs"
+  alb_access_logs_bucket_name = var.alb_access_logs_bucket_name != null && length(trimspace(var.alb_access_logs_bucket_name)) > 0 ? var.alb_access_logs_bucket_name : lower("${var.project_name}-${var.environment}-${data.aws_caller_identity.current.account_id}-${var.region_short}-alb-logs")
   name_prefix     = "${var.project_name}-${var.environment}"
   sns_topic_name  = "${local.name_prefix}-${var.region_short}-infra-alerts"
   sns_emails = toset([
@@ -52,6 +53,30 @@ data "aws_iam_policy_document" "state_kms" {
       test     = "ArnLike"
       variable = "aws:SourceArn"
       values   = ["arn:aws:s3:::${var.state_bucket_name}"]
+    }
+  }
+
+  statement {
+    sid = "AllowAlbLogDelivery"
+
+    actions = [
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey"
+    ]
+    resources = ["*"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["logdelivery.elasticloadbalancing.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceAccount"
+      values   = [data.aws_caller_identity.current.account_id]
     }
   }
 
@@ -230,6 +255,136 @@ resource "aws_s3_bucket_logging" "state" {
   target_prefix = "state/"
 
   depends_on = [aws_s3_bucket_acl.state_logs]
+}
+
+resource "aws_s3_bucket" "alb_access_logs" {
+  bucket        = local.alb_access_logs_bucket_name
+  force_destroy = var.force_destroy
+
+  lifecycle {
+    prevent_destroy = true
+  }
+
+  tags = merge(var.tags, {
+    Name = local.alb_access_logs_bucket_name
+  })
+}
+
+resource "aws_s3_bucket_ownership_controls" "alb_access_logs" {
+  bucket = aws_s3_bucket.alb_access_logs.id
+
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "alb_access_logs" {
+  bucket = aws_s3_bucket.alb_access_logs.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm     = "aws:kms"
+      kms_master_key_id = aws_kms_key.state.arn
+    }
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "alb_access_logs" {
+  bucket = aws_s3_bucket.alb_access_logs.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "alb_access_logs" {
+  bucket = aws_s3_bucket.alb_access_logs.id
+
+  rule {
+    id     = "log-retention"
+    status = "Enabled"
+
+    transition {
+      days          = 30
+      storage_class = "STANDARD_IA"
+    }
+
+    expiration {
+      days = 180
+    }
+  }
+}
+
+data "aws_iam_policy_document" "alb_access_logs" {
+  statement {
+    sid     = "AllowAlbLogDelivery"
+    actions = ["s3:PutObject"]
+    resources = [
+      "${aws_s3_bucket.alb_access_logs.arn}/AWSLogs/${data.aws_caller_identity.current.account_id}/*"
+    ]
+
+    principals {
+      type        = "Service"
+      identifiers = ["logdelivery.elasticloadbalancing.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "s3:x-amz-acl"
+      values   = ["bucket-owner-full-control"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceAccount"
+      values   = [data.aws_caller_identity.current.account_id]
+    }
+
+    dynamic "condition" {
+      for_each = length(var.alb_access_logs_source_arns) > 0 ? [1] : []
+
+      content {
+        test     = "ArnLike"
+        variable = "aws:SourceArn"
+        values   = var.alb_access_logs_source_arns
+      }
+    }
+  }
+
+  statement {
+    sid     = "AllowAlbLogDeliveryAclCheck"
+    actions = ["s3:GetBucketAcl"]
+    resources = [
+      aws_s3_bucket.alb_access_logs.arn
+    ]
+
+    principals {
+      type        = "Service"
+      identifiers = ["logdelivery.elasticloadbalancing.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceAccount"
+      values   = [data.aws_caller_identity.current.account_id]
+    }
+
+    dynamic "condition" {
+      for_each = length(var.alb_access_logs_source_arns) > 0 ? [1] : []
+
+      content {
+        test     = "ArnLike"
+        variable = "aws:SourceArn"
+        values   = var.alb_access_logs_source_arns
+      }
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "alb_access_logs" {
+  bucket = aws_s3_bucket.alb_access_logs.id
+  policy = data.aws_iam_policy_document.alb_access_logs.json
 }
 
 

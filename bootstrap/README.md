@@ -6,6 +6,7 @@ I keep bootstrap separate to avoid circular dependencies. This stack creates the
 
 - S3 bucket for Terraform state (versioning, SSE-KMS, access logging, public access blocks).
 - S3 bucket for access logs (versioning, SSE-KMS).
+- S3 bucket for ALB access logs (SSE-KMS, lifecycle rules, restricted delivery policy).
 - KMS key for state, logs, and SNS encryption.
 - SNS topic for infrastructure notifications (optional email subscriptions).
 - Optional ACM certificate with DNS validation when a hosted zone ID is supplied.
@@ -37,6 +38,8 @@ terraform -chdir=bootstrap apply -var-file=terraform.tfvars
 
 6) If you enabled ACM, use `acm_certificate_arn` for `acm_certificate_arn` in the environment `terraform.tfvars`.
 
+7) For ALB access logs, set `alb_access_logs_bucket` in the prod environment `terraform.tfvars` to the `alb_access_logs_bucket_name` output.
+
 ## Notes
 
 - The state bucket has versioning, CMK encryption, access logging, and public access blocking enabled.
@@ -44,6 +47,8 @@ terraform -chdir=bootstrap apply -var-file=terraform.tfvars
 - `prevent_destroy` is enforced in configuration to protect state assets.
 - Access logs go to `${state_bucket_name}-logs` unless `log_bucket_name` is set.
 - The log bucket does not log itself to avoid recursive logging.
+- The ALB access log bucket name defaults to `<project>-<environment>-<account>-<region>-alb-logs` unless overridden.
+- Restrict ALB log delivery to specific load balancers by setting `alb_access_logs_source_arns` after the ALB exists.
 - SNS topic name is `${project_name}-${environment}-${region_short}-infra-alerts`.
 - SNS email subscriptions require confirmation from each recipient.
 - Route53 hosted zones are not created here; supply an existing hosted zone ID to enable ACM DNS validation.

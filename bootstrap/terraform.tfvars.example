@@ -7,6 +7,10 @@ state_bucket_name = "aws-platform-starter-state-dev"
 
 sns_email_subscriptions = []
 
+# Optional ALB access log bucket controls.
+alb_access_logs_bucket_name = null
+alb_access_logs_source_arns = []
+
 # Optional ACM DNS validation (set both to enable).
 acm_domain_name = ""
 acm_zone_id     = ""
