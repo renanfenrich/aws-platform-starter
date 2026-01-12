@@ -49,7 +49,7 @@ test:
 		terraform -chdir=$$dir init -backend=false -input=false >/dev/null; \
 		terraform -chdir=$$dir test; \
 	done
-	@for dir in modules/network modules/ecs modules/ecs-ec2-capacity modules/k8s-ec2-infra modules/rds; do \
+	@for dir in modules/network modules/alb modules/ecs modules/ecs-ec2-capacity modules/k8s-ec2-infra modules/rds; do \
 		terraform -chdir=$$dir init -backend=false -input=false >/dev/null; \
 		terraform -chdir=$$dir test; \
 	done
