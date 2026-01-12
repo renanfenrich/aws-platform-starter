@@ -84,6 +84,40 @@ variable "deletion_protection" {
   default     = false
 }
 
+variable "enable_access_logs" {
+  type        = bool
+  description = "Enable ALB access logging."
+  default     = false
+}
+
+variable "access_logs_bucket" {
+  type        = string
+  description = "S3 bucket name for ALB access logs."
+  default     = null
+
+  validation {
+    condition     = !var.enable_access_logs || (var.access_logs_bucket != null && length(trimspace(var.access_logs_bucket)) > 0)
+    error_message = "access_logs_bucket must be set when enable_access_logs is true."
+  }
+}
+
+variable "enable_waf" {
+  type        = bool
+  description = "Enable WAF web ACL association."
+  default     = false
+}
+
+variable "waf_acl_arn" {
+  type        = string
+  description = "WAF web ACL ARN to associate with the ALB."
+  default     = null
+
+  validation {
+    condition     = !var.enable_waf || (var.waf_acl_arn != null && length(trimspace(var.waf_acl_arn)) > 0)
+    error_message = "waf_acl_arn must be set when enable_waf is true."
+  }
+}
+
 variable "tags" {
   type        = map(string)
   description = "Tags to apply to ALB resources."

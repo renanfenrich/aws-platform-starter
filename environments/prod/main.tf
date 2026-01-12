@@ -178,6 +178,10 @@ module "alb" {
   acm_certificate_arn = var.acm_certificate_arn
   ingress_cidrs       = var.alb_ingress_cidrs
   deletion_protection = var.alb_deletion_protection
+  enable_access_logs  = var.alb_enable_access_logs
+  access_logs_bucket  = var.alb_access_logs_bucket
+  enable_waf          = var.alb_enable_waf
+  waf_acl_arn         = var.alb_waf_acl_arn
   tags                = local.tags
 }
 

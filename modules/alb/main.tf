@@ -47,6 +47,15 @@ resource "aws_lb" "this" {
   security_groups    = [aws_security_group.alb.id]
   subnets            = var.public_subnet_ids
 
+  dynamic "access_logs" {
+    for_each = var.enable_access_logs ? [1] : []
+
+    content {
+      bucket  = var.access_logs_bucket
+      enabled = true
+    }
+  }
+
   enable_deletion_protection = var.deletion_protection
 
   tags = merge(var.tags, {
@@ -99,4 +108,11 @@ resource "aws_lb_listener" "http" {
     type             = "forward"
     target_group_arn = aws_lb_target_group.this.arn
   }
+}
+
+resource "aws_wafv2_web_acl_association" "this" {
+  count = var.enable_waf ? 1 : 0
+
+  resource_arn = aws_lb.this.arn
+  web_acl_arn  = var.waf_acl_arn
 }

@@ -25,6 +25,8 @@ allow_http              = false
 acm_certificate_arn     = "CHANGE_ME"
 alb_ingress_cidrs       = ["0.0.0.0/0"]
 alb_deletion_protection = true
+alb_enable_access_logs  = true
+alb_access_logs_bucket  = "CHANGE_ME"
 
 container_image   = "public.ecr.aws/nginx/nginx:latest"
 container_port    = 80

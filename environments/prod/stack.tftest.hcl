@@ -16,6 +16,7 @@ run "prod_ecs_fargate" {
     platform                         = "ecs"
     ecs_capacity_mode                = "fargate"
     acm_certificate_arn              = "arn:aws:acm:us-east-1:123456789012:certificate/00000000-0000-0000-0000-000000000000"
+    alb_access_logs_bucket          = "example-alb-access-logs"
   }
 
   override_data {
@@ -93,6 +94,16 @@ run "prod_ecs_fargate" {
   }
 
   assert {
+    condition     = length(module.alb.aws_lb.this.access_logs) == 1 && module.alb.aws_lb.this.access_logs[0].enabled
+    error_message = "expected ALB access logs to be enabled in prod"
+  }
+
+  assert {
+    condition     = module.alb.aws_lb.this.access_logs[0].bucket == var.alb_access_logs_bucket
+    error_message = "expected ALB access logs bucket to match configuration"
+  }
+
+  assert {
     condition     = aws_security_group.app[0].tags["Project"] == var.project_name
     error_message = "expected app security group to include Project tag"
   }
@@ -145,6 +156,7 @@ run "prod_ecs_fargate_spot" {
     platform                         = "ecs"
     ecs_capacity_mode                = "fargate_spot"
     acm_certificate_arn              = "arn:aws:acm:us-east-1:123456789012:certificate/00000000-0000-0000-0000-000000000000"
+    alb_access_logs_bucket          = "example-alb-access-logs"
   }
 
   override_data {
@@ -223,6 +235,7 @@ run "prod_ecs_ec2" {
     platform                         = "ecs"
     ecs_capacity_mode                = "ec2"
     acm_certificate_arn              = "arn:aws:acm:us-east-1:123456789012:certificate/00000000-0000-0000-0000-000000000000"
+    alb_access_logs_bucket          = "example-alb-access-logs"
   }
 
   override_data {
@@ -314,6 +327,7 @@ run "prod_k8s" {
     estimated_monthly_cost           = 200
     platform                         = "k8s_self_managed"
     acm_certificate_arn              = "arn:aws:acm:us-east-1:123456789012:certificate/00000000-0000-0000-0000-000000000000"
+    alb_access_logs_bucket          = "example-alb-access-logs"
   }
 
   override_data {
@@ -422,6 +436,7 @@ run "prod_invalid_allow_http" {
     estimated_monthly_cost           = 200
     allow_http                       = true
     acm_certificate_arn              = "arn:aws:acm:us-east-1:123456789012:certificate/00000000-0000-0000-0000-000000000000"
+    alb_access_logs_bucket          = "example-alb-access-logs"
   }
 
   override_data {
@@ -492,6 +507,7 @@ run "prod_spot_blocked_without_override" {
     platform                         = "ecs"
     ecs_capacity_mode                = "fargate_spot"
     acm_certificate_arn              = "arn:aws:acm:us-east-1:123456789012:certificate/00000000-0000-0000-0000-000000000000"
+    alb_access_logs_bucket          = "example-alb-access-logs"
   }
 
   override_data {
@@ -561,6 +577,7 @@ run "prod_invalid_cost_posture" {
     estimated_monthly_cost           = 200
     platform                         = "ecs"
     acm_certificate_arn              = "arn:aws:acm:us-east-1:123456789012:certificate/00000000-0000-0000-0000-000000000000"
+    alb_access_logs_bucket          = "example-alb-access-logs"
   }
 
   override_data {
@@ -631,6 +648,7 @@ run "prod_cost_enforcement_block" {
     platform                         = "ecs"
     ecs_capacity_mode                = "fargate"
     acm_certificate_arn              = "arn:aws:acm:us-east-1:123456789012:certificate/00000000-0000-0000-0000-000000000000"
+    alb_access_logs_bucket          = "example-alb-access-logs"
   }
 
   override_data {

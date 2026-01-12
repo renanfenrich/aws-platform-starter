@@ -340,6 +340,45 @@ variable "alb_deletion_protection" {
   default     = true
 }
 
+variable "alb_enable_access_logs" {
+  type        = bool
+  description = "Enable ALB access logs."
+  default     = true
+
+  validation {
+    condition     = var.environment != "prod" || var.alb_enable_access_logs
+    error_message = "alb_enable_access_logs must be true in prod."
+  }
+}
+
+variable "alb_access_logs_bucket" {
+  type        = string
+  description = "S3 bucket name for ALB access logs."
+  default     = null
+
+  validation {
+    condition     = !var.alb_enable_access_logs || (var.alb_access_logs_bucket != null && length(trimspace(var.alb_access_logs_bucket)) > 0)
+    error_message = "alb_access_logs_bucket must be set when alb_enable_access_logs is true."
+  }
+}
+
+variable "alb_enable_waf" {
+  type        = bool
+  description = "Enable WAF web ACL association for the ALB."
+  default     = false
+}
+
+variable "alb_waf_acl_arn" {
+  type        = string
+  description = "WAF web ACL ARN to associate with the ALB."
+  default     = null
+
+  validation {
+    condition     = !var.alb_enable_waf || (var.alb_waf_acl_arn != null && length(trimspace(var.alb_waf_acl_arn)) > 0)
+    error_message = "alb_waf_acl_arn must be set when alb_enable_waf is true."
+  }
+}
+
 variable "container_image" {
   type        = string
   description = "Container image to deploy."
