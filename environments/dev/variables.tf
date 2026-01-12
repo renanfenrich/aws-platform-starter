@@ -303,7 +303,7 @@ variable "single_nat_gateway" {
 variable "enable_flow_logs" {
   type        = bool
   description = "Enable VPC flow logs."
-  default     = true
+  default     = false
 }
 
 variable "flow_logs_retention_in_days" {

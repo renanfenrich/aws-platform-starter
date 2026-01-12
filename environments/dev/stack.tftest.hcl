@@ -25,19 +25,7 @@ run "dev_ecs_fargate_spot" {
     }
   }
 
-  override_data {
-    target = module.network.data.aws_iam_policy_document.flow_logs_assume
-    values = {
-      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
-    }
-  }
 
-  override_data {
-    target = module.network.data.aws_iam_policy_document.flow_logs
-    values = {
-      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
-    }
-  }
 
   override_data {
     target = module.ecs[0].data.aws_region.current
@@ -95,6 +83,11 @@ run "dev_ecs_fargate_spot" {
   assert {
     condition     = length(module.network.private_subnet_ids) == 2
     error_message = "expected two private subnets"
+  }
+
+  assert {
+    condition     = length(module.network.aws_flow_log.this) == 0
+    error_message = "expected VPC flow logs to be disabled in dev by default"
   }
 
   assert {
@@ -168,19 +161,7 @@ run "dev_ecs_fargate" {
     }
   }
 
-  override_data {
-    target = module.network.data.aws_iam_policy_document.flow_logs_assume
-    values = {
-      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
-    }
-  }
 
-  override_data {
-    target = module.network.data.aws_iam_policy_document.flow_logs
-    values = {
-      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
-    }
-  }
 
   override_data {
     target = module.ecs[0].data.aws_region.current
@@ -246,19 +227,7 @@ run "dev_ecs_ec2" {
     }
   }
 
-  override_data {
-    target = module.network.data.aws_iam_policy_document.flow_logs_assume
-    values = {
-      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
-    }
-  }
 
-  override_data {
-    target = module.network.data.aws_iam_policy_document.flow_logs
-    values = {
-      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
-    }
-  }
 
   override_data {
     target = module.ecs[0].data.aws_region.current
@@ -337,19 +306,7 @@ run "dev_k8s" {
     }
   }
 
-  override_data {
-    target = module.network.data.aws_iam_policy_document.flow_logs_assume
-    values = {
-      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
-    }
-  }
 
-  override_data {
-    target = module.network.data.aws_iam_policy_document.flow_logs
-    values = {
-      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
-    }
-  }
 
   override_data {
     target = module.k8s_ec2_infra[0].data.aws_region.current
@@ -450,19 +407,7 @@ run "dev_invalid_platform" {
     }
   }
 
-  override_data {
-    target = module.network.data.aws_iam_policy_document.flow_logs_assume
-    values = {
-      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
-    }
-  }
 
-  override_data {
-    target = module.network.data.aws_iam_policy_document.flow_logs
-    values = {
-      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
-    }
-  }
 
   expect_failures = [var.platform]
 }
@@ -491,19 +436,7 @@ run "dev_invalid_ecs_capacity_mode" {
     }
   }
 
-  override_data {
-    target = module.network.data.aws_iam_policy_document.flow_logs_assume
-    values = {
-      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
-    }
-  }
 
-  override_data {
-    target = module.network.data.aws_iam_policy_document.flow_logs
-    values = {
-      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
-    }
-  }
 
   override_data {
     target = module.ecs[0].data.aws_region.current
@@ -560,19 +493,7 @@ run "dev_eks_reserved" {
     }
   }
 
-  override_data {
-    target = module.network.data.aws_iam_policy_document.flow_logs_assume
-    values = {
-      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
-    }
-  }
 
-  override_data {
-    target = module.network.data.aws_iam_policy_document.flow_logs
-    values = {
-      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
-    }
-  }
 
   expect_failures = [terraform_data.eks_not_implemented]
 }
@@ -601,19 +522,7 @@ run "dev_invalid_cost_posture" {
     }
   }
 
-  override_data {
-    target = module.network.data.aws_iam_policy_document.flow_logs_assume
-    values = {
-      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
-    }
-  }
 
-  override_data {
-    target = module.network.data.aws_iam_policy_document.flow_logs
-    values = {
-      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
-    }
-  }
 
   override_data {
     target = module.ecs[0].data.aws_region.current
@@ -671,19 +580,7 @@ run "dev_cost_enforcement_block" {
     }
   }
 
-  override_data {
-    target = module.network.data.aws_iam_policy_document.flow_logs_assume
-    values = {
-      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
-    }
-  }
 
-  override_data {
-    target = module.network.data.aws_iam_policy_document.flow_logs
-    values = {
-      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
-    }
-  }
 
   override_data {
     target = module.ecs[0].data.aws_region.current

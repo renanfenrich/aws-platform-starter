@@ -104,6 +104,11 @@ run "prod_ecs_fargate" {
   }
 
   assert {
+    condition     = length(module.network.aws_flow_log.this) == 1
+    error_message = "expected VPC flow logs to be enabled in prod"
+  }
+
+  assert {
     condition     = aws_security_group.app[0].tags["Project"] == var.project_name
     error_message = "expected app security group to include Project tag"
   }
