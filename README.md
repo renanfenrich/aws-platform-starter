@@ -170,6 +170,7 @@ GitHub Actions runs formatting, validation, linting, security checks, and tests.
 
 ## Documentation
 
+- `docs/project-overview.md` — repository layout, root stacks, and environment model.
 - `docs/architecture.md` — architecture walkthrough and diagram.
 - `docs/architecture-aws.svg` — optional AWS icon diagram.
 - `docs/runbook.md` — operational runbook.
