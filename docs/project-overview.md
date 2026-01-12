@@ -70,6 +70,12 @@ Documentation is treated as part of the system: architecture, runbook, and decis
 │   │   ├── versions.tf
 │   │   ├── ecs-ec2-capacity.tftest.hcl
 │   │   └── README.md
+│   ├── ecr
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   ├── outputs.tf
+│   │   ├── versions.tf
+│   │   └── README.md
 │   ├── k8s-ec2-infra
 │   │   ├── main.tf
 │   │   ├── variables.tf
@@ -144,6 +150,7 @@ Note: local state, lockfiles, generated caches, and environment-specific values 
 - `modules/budget`: Monthly budget with warning/critical thresholds and notifications.
 - `modules/ecs`: ECS cluster, task definition, service, IAM, and logs for Fargate/EC2 modes.
 - `modules/ecs-ec2-capacity`: ECS EC2 capacity provider backed by an Auto Scaling group.
+- `modules/ecr`: ECR repository for application images, scanning, and lifecycle policy.
 - `modules/k8s-ec2-infra`: Self-managed Kubernetes on EC2 (control plane + workers, IAM, KMS, SGs).
 - `modules/network`: VPC, subnets, routing, NAT gateways, and optional flow logs.
 - `modules/observability`: Baseline CloudWatch alarms for ALB, ECS/EC2, and RDS.
@@ -163,6 +170,17 @@ Platform selection is a single variable shared by both environments:
 - Allowed values: `ecs`, `k8s_self_managed`, `eks` (reserved and blocked by preconditions).
 - Defaults: `ecs` in both environment tfvars.
 - One active platform per environment; ECS and K8s modules are mutually exclusive by design.
+
+
+## Portfolio Commit Workflow
+This repo is used as a portfolio artifact, so commit history matters as much as the code.
+When curating or rebuilding history, follow these defaults:
+- Use 8–12 milestone commits with Conventional Commit messages.
+- Keep commits coherent and ordered; each commit should be buildable when feasible.
+- Prefer folder-based staging; use `git add -p` only when a file mixes concerns.
+- Run relevant Makefile checks before each commit (fmt/validate/lint/docs-check/test).
+- Never commit local configs, state, or secrets (for example: `backend.hcl`, `.terraform/`, `terraform.tfstate*`).
+- Close by reviewing the git log for senior signal and refreshing `docs/interview-talk-track.md` for Project 1.
 
 ## How to Navigate and Run
 - Format: `make fmt`
