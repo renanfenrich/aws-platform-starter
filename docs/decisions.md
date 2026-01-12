@@ -61,3 +61,16 @@ These are the defaults I chose for this repo. Each one is a trade-off, and I kep
 
 20) **Mandatory cost allocation tags + environment budgets**
    - Tagging is enforced across modules, and budgets are scoped by the `Environment` cost allocation tag to keep dev/prod spend distinct.
+
+21) **ALB access logs are a prod default**
+   - Access logs provide request-level visibility and are cheap enough to justify in prod.
+   - Logs land in a dedicated S3 bucket with lifecycle rules; the policy limits writes to the ALB log delivery service and can be narrowed to explicit ALB ARNs.
+
+22) **VPC Flow Logs are prod-default, dev opt-in**
+   - Flow logs are valuable for prod troubleshooting but noisy and costlier in dev, so dev stays off unless explicitly enabled.
+
+23) **WAF is optional and attach-only**
+   - WAF rules are application-specific. This repo only supports attaching an existing Web ACL when enabled and keeps it off by default.
+
+24) **Hardening stops at baseline visibility**
+   - I stop at access logs, flow logs, and optional WAF attachment to keep scope tight; managed rule sets and centralized logging pipelines belong in a larger platform.

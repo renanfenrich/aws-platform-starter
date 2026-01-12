@@ -30,6 +30,13 @@ terraform init -backend-config=backend.hcl
 terraform apply -var-file=terraform.tfvars
 ```
 
+## Production Hardening Toggles
+
+- ALB access logs are enabled in prod by default; set `alb_access_logs_bucket` to the bootstrap output `alb_access_logs_bucket_name`.
+- To tighten ALB log delivery, set `alb_access_logs_source_arns` in `bootstrap/terraform.tfvars` after the ALB exists, then re-apply bootstrap.
+- WAF is opt-in. Set `alb_enable_waf = true` and `alb_waf_acl_arn` to an existing Web ACL ARN in the environment `terraform.tfvars`.
+- Dev flow logs are opt-in. Set `enable_flow_logs = true` in `environments/dev/terraform.tfvars` when needed.
+
 ## Notifications
 
 1) Set `alarm_sns_topic_arn` in the environment `terraform.tfvars` to the bootstrap output.

@@ -40,18 +40,24 @@ Think of it as a straight line: user -> ALB -> compute -> RDS. The ALB lives in 
 - Remote state bootstrap with S3 native locking
 - Demo Kubernetes manifests under `k8s/` (namespace, deployment, service, ingress)
 
+## Production Hardening
+
+- ALB access logs to S3 (prod default)
+- VPC Flow Logs to CloudWatch (prod default)
+- Optional WAF association for the ALB (off by default)
+
 ## What Is Intentionally Not Included
 
-- WAF, advanced edge security, or bot protection
+- Managed WAF rule sets, advanced edge security, or bot protection (WAF attachment is optional but not configured here)
 - Autoscaling policies, blue/green deployments, or canaries
-- Centralized logging or metrics beyond baseline CloudWatch alarms
+- Centralized logging or metrics beyond baseline CloudWatch alarms (ALB access logs and VPC Flow Logs are minimal, not a full log platform)
 - Multi-account orchestration or organization-level controls
 
 ## How This Would Evolve in a Real Production Environment
 
 If this were running a real product, I would add:
 
-- WAF and ALB access logs, plus centralized log storage
+- Managed WAF rules and a centralized log pipeline
 - Autoscaling for ECS and tighter RDS scaling/backup policies
 - CI/CD that deploys and rolls back safely
 - Multi-account separation (at least a dedicated prod account)
