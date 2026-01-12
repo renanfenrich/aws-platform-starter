@@ -22,18 +22,23 @@ Codex reads the closest AGENTS.md relative to files it changes. If you add sub-p
 - `bootstrap/`   : One-time or per-account/per-region prerequisites (state bucket with native locking, KMS, SNS topic, etc.)
 - `environments/`: `dev/` and `prod/` root stacks wiring modules together
 - `modules/`     : Focused Terraform modules (networking, compute, data, observability, etc.)
-- `docs/`        : Architecture, decisions, runbook, Well-Architected mapping
-- `tests/`       : Plan-based assertions or terraform test / terratest (minimal but real)
+- `docs/`        : Architecture, decisions, runbook, FinOps guidance, Well-Architected mapping
+- `tests/`       : Terraform test with mock providers and plan-based assertions (minimal but real)
+- `k8s/`         : Demo Kubernetes manifests for the self-managed cluster
+- `scripts/`     : CI helper scripts (FinOps summary, etc.)
 - `.github/`     : CI workflow and any repo instruction files
 
 ## Canonical commands
 Use these commands exactly (don’t guess other tooling).
 - Format:
   - `make fmt`
+  - `make fmt-check`
 - Validate:
   - `make validate`
-- Lint / security:
+- Lint:
   - `make lint`
+- Security:
+  - `make security`
 - Docs generation/check:
   - `make docs`
   - `make docs-check`
@@ -71,10 +76,21 @@ CI should validate without requiring a real backend. Use `terraform init -backen
 - Secrets are stored in AWS Secrets Manager or SSM Parameter Store (encrypted), never in git.
 
 ## Platform selectors and “modes”
+Current selectors and guards:
+- `platform`: `ecs` or `k8s_self_managed`; `eks` is reserved and must remain blocked by preconditions. Only one platform is active per environment.
+- `ecs_capacity_mode`: `fargate`, `fargate_spot`, or `ec2`; Fargate Spot in prod requires `allow_spot_in_prod = true`.
+
 When adding “choose between options” functionality:
 - Use a single validated selector variable with clear allowed values.
 - Keep stable outputs across modes so environment wiring doesn’t fork.
 - Document operational differences in `docs/runbook.md` and trade-offs in `docs/decisions.md`.
+
+## FinOps and governance
+- `cost_posture` is enforced: dev = `cost_optimized`, prod = `stability_first`.
+- Each environment provisions an AWS Budget; notifications use `budget_notification_emails` and/or SNS (defaulting to `alarm_sns_topic_arn`).
+- Deploy-time cost enforcement uses `estimated_monthly_cost` with `enforce_cost_controls`; Infracost inputs live in `infracost.yml` and `infracost-usage-*.yml`, and `infracost.tfvars` disables enforcement during estimates.
+- Required cost tags: `Project`, `Environment`, `Service`, `Owner`, `CostCenter`, `ManagedBy`, `Repository`.
+- AWS cost allocation tags must be activated once in the Billing console; this manual step is documented in `docs/finops.md`.
 
 ## Documentation standards (sound like me)
 Docs must be:
@@ -86,8 +102,9 @@ Update docs alongside code changes, not afterwards.
 ## Bootstrap policy (avoid AWS console)
 If any setup is currently manual, prefer a Terraform `bootstrap/` stack. Common bootstrap items:
 - Terraform state S3 bucket (native locking) + KMS key
+- S3 log bucket for state access logs
 - SNS topic for alarm notifications
-- Optional: ECR repo for demo app
+- Optional: ACM certificate (DNS validation) for HTTPS
 Keep bootstrap safe:
 - Require explicit variables for anything high-impact.
 - Document destroy risks (state bucket especially).
