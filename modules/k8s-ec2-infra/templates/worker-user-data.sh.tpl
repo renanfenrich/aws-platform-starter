@@ -10,7 +10,7 @@ log() {
 }
 
 log "Installing dependencies"
-dnf -y install containerd awscli amazon-ecr-credential-helper curl jq conntrack socat iproute-tc iptables
+dnf -y install containerd awscli amazon-cloudwatch-agent amazon-ecr-credential-helper curl jq conntrack socat iproute-tc iptables
 
 cat <<REPO >/etc/yum.repos.d/kubernetes.repo
 [kubernetes]
@@ -46,6 +46,32 @@ sed -i '/ swap / s/^/#/' /etc/fstab
 containerd config default > /etc/containerd/config.toml
 sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
 systemctl enable --now containerd
+
+log "Configuring CloudWatch Logs"
+cat <<EOF >/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+{
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          {
+            "file_path": "/var/log/containers/*.log",
+            "log_group_name": "${log_group_name}",
+            "log_stream_name": "{instance_id}",
+            "timestamp_format": "%Y-%m-%dT%H:%M:%S.%fZ"
+          }
+        ]
+      }
+    }
+  }
+}
+EOF
+
+/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+  -a fetch-config \
+  -m ec2 \
+  -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json \
+  -s
 
 log "Configuring ECR credential helper"
 ECR_REFRESH_SCRIPT="/usr/local/bin/ecr-credential-helper-refresh"

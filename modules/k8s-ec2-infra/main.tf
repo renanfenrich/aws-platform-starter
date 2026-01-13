@@ -6,6 +6,7 @@ locals {
   join_parameter_arn      = "arn:aws:ssm:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:parameter${local.join_parameter_name}"
   control_plane_tag_name  = "${var.name_prefix}-k8s-control-plane"
   worker_tag_name         = "${var.name_prefix}-k8s-worker"
+  k8s_log_group_name      = "/aws/k8s/${var.name_prefix}"
 
   control_plane_user_data = templatefile("${path.module}/templates/control-plane-user-data.sh.tpl", {
     aws_region                = data.aws_region.current.id
@@ -14,6 +15,7 @@ locals {
     join_parameter_name       = local.join_parameter_name
     join_parameter_kms_key_id = aws_kms_key.join_parameter.arn
     k8s_version_minor         = local.k8s_version_minor
+    log_group_name            = local.k8s_log_group_name
     pod_cidr                  = var.pod_cidr
     service_cidr              = var.service_cidr
   })
@@ -21,6 +23,7 @@ locals {
     aws_region          = data.aws_region.current.id
     join_parameter_name = local.join_parameter_name
     k8s_version_minor   = local.k8s_version_minor
+    log_group_name      = local.k8s_log_group_name
   })
 
   control_plane_user_data_base64 = base64encode(local.control_plane_user_data)
@@ -59,6 +62,42 @@ resource "aws_iam_role" "worker" {
   assume_role_policy = data.aws_iam_policy_document.instance_assume.json
 
   tags = var.tags
+}
+
+resource "aws_cloudwatch_log_group" "k8s_app" {
+  name              = local.k8s_log_group_name
+  retention_in_days = var.log_retention_in_days
+
+  tags = var.tags
+}
+
+data "aws_iam_policy_document" "k8s_cloudwatch_logs" {
+  statement {
+    actions = [
+      "logs:CreateLogStream",
+      "logs:DescribeLogStreams",
+      "logs:PutLogEvents"
+    ]
+    resources = [
+      aws_cloudwatch_log_group.k8s_app.arn,
+      "${aws_cloudwatch_log_group.k8s_app.arn}:*"
+    ]
+  }
+}
+
+resource "aws_iam_policy" "k8s_cloudwatch_logs" {
+  name   = "${var.name_prefix}-k8s-logs"
+  policy = data.aws_iam_policy_document.k8s_cloudwatch_logs.json
+}
+
+resource "aws_iam_role_policy_attachment" "control_plane_cloudwatch_logs" {
+  role       = aws_iam_role.control_plane.name
+  policy_arn = aws_iam_policy.k8s_cloudwatch_logs.arn
+}
+
+resource "aws_iam_role_policy_attachment" "worker_cloudwatch_logs" {
+  role       = aws_iam_role.worker.name
+  policy_arn = aws_iam_policy.k8s_cloudwatch_logs.arn
 }
 
 data "aws_iam_policy_document" "kms_key" {

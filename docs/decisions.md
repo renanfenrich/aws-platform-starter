@@ -95,3 +95,11 @@ These are the defaults I chose for this repo. Each one is a trade-off, and I kep
 29) **Minimal ECS autoscaling (CPU target tracking only)**
    - Autoscaling is opt-in and only adjusts ECS service desired count via a single CPU target tracking policy.
    - I skipped ALB request-based scaling and multi-metric/step scaling to keep behavior deterministic and testable.
+
+30) **No distributed tracing**
+   - The stack is single-hop and small; tracing adds instrumentation overhead without a clear operational payoff.
+   - ALB latency, service metrics, and logs are enough until real multi-service paths exist.
+
+31) **No centralized logging platform**
+   - CloudWatch Logs per service keeps the footprint small and operationally simple.
+   - Running OpenSearch/ELK is out of scope for this repo’s size and cost posture.

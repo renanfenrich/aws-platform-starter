@@ -55,11 +55,22 @@ Update `image_tag` (or set `container_image` for a full override) in `terraform.
 
 ## Notifications
 
-1) Set `alarm_sns_topic_arn` in the environment `terraform.tfvars` to the bootstrap output.
-2) If you want email notifications, add addresses to `sns_email_subscriptions` in `bootstrap/terraform.tfvars` and re-apply.
-3) Confirm the email subscription in each inbox.
+1) Set `enable_alarms = true` in dev if you want alarms; prod enforces alarms on.
+2) Set `alarm_sns_topic_arn` in the environment `terraform.tfvars` to the bootstrap output.
+3) If you want email notifications, add addresses to `sns_email_subscriptions` in `bootstrap/terraform.tfvars` and re-apply.
+4) Confirm the email subscription in each inbox.
 
-Baseline alarms: ALB 5xx, ECS CPU, EC2 CPU (when enabled), and RDS CPU.
+Baseline alarms: ALB 5xx, ALB latency p95, ALB unhealthy hosts, ECS CPU, ECS memory, ECS desired vs running, EC2 CPU (when enabled), RDS CPU, and RDS free storage.
+
+## Dashboards
+
+Each environment creates a CloudWatch dashboard named `<project>-<environment>-observability` with ALB, compute, and RDS metrics.
+
+## Logs
+
+- ECS logs land in `/aws/ecs/<project>-<environment>` and honor `log_retention_in_days`.
+- Self-managed Kubernetes logs land in `/aws/k8s/<project>-<environment>` using the same retention.
+- RDS exports error logs only by default (`db_log_exports = ["postgresql"]`); slow query logs are opt-in.
 
 ## Budget Alerts
 
@@ -174,10 +185,15 @@ Warnings:
 
 ## Investigate Alarms
 
-- ALB 5xx: check target health, ECS task logs, and recent deploys.
+- ALB 5xx: check target health, application logs, and recent deploys.
+- ALB latency p95: check upstream dependencies (ECS tasks or Kubernetes nodes) and the database; scale compute if CPU/memory is saturated.
+- ALB unhealthy hosts: check target group health checks, task/node health, and security group rules.
 - ECS CPU: scale tasks or increase CPU/memory.
-- EC2 CPU: scale the EC2 Auto Scaling group (ECS capacity or Kubernetes workers) or move to a larger instance type.
+- ECS memory: increase task memory or reduce in-process caching.
+- ECS desired vs running: check ECS service events, deployment progress, and capacity provider headroom.
+- EC2 CPU: scale the Auto Scaling group (ECS capacity or Kubernetes workers) or move to a larger instance type.
 - RDS CPU: scale the instance class or review queries and connections.
+- RDS free storage: increase allocated storage or reduce data footprint.
 
 ## Rollback
 

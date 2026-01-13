@@ -3,6 +3,12 @@ variable "name_prefix" {
   description = "Prefix used for naming alarms."
 }
 
+variable "enable_alarms" {
+  type        = bool
+  description = "Enable CloudWatch alarms for this environment."
+  default     = true
+}
+
 variable "enable_ec2_cpu_alarm" {
   type        = bool
   description = "Enable EC2 CPU alarm for EC2-based compute."
@@ -11,7 +17,7 @@ variable "enable_ec2_cpu_alarm" {
 
 variable "enable_ecs_cpu_alarm" {
   type        = bool
-  description = "Enable ECS CPU alarm for ECS services."
+  description = "Enable ECS service alarms (CPU, memory, capacity)."
   default     = true
 }
 
@@ -32,7 +38,7 @@ variable "rds_instance_id" {
 
 variable "ecs_cluster_name" {
   type        = string
-  description = "ECS cluster name for the ECS CPU alarm."
+  description = "ECS cluster name for ECS service alarms."
   default     = ""
 
   validation {
@@ -43,7 +49,7 @@ variable "ecs_cluster_name" {
 
 variable "ecs_service_name" {
   type        = string
-  description = "ECS service name for the ECS CPU alarm."
+  description = "ECS service name for ECS service alarms."
   default     = ""
 
   validation {
@@ -75,15 +81,39 @@ variable "alb_5xx_threshold" {
   default     = 5
 }
 
+variable "alb_latency_p95_threshold" {
+  type        = number
+  description = "Threshold in seconds for ALB target response time p95."
+  default     = 1
+}
+
+variable "alb_unhealthy_host_threshold" {
+  type        = number
+  description = "Threshold for ALB unhealthy host count."
+  default     = 1
+}
+
 variable "rds_cpu_threshold" {
   type        = number
   description = "Threshold for RDS CPU utilization."
   default     = 80
 }
 
+variable "rds_free_storage_threshold_gb" {
+  type        = number
+  description = "Threshold in GiB for RDS free storage space."
+  default     = 5
+}
+
 variable "ecs_cpu_threshold" {
   type        = number
   description = "Threshold for ECS CPU utilization."
+  default     = 80
+}
+
+variable "ecs_memory_threshold" {
+  type        = number
+  description = "Threshold for ECS memory utilization."
   default     = 80
 }
 

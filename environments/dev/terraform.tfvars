@@ -37,7 +37,7 @@ container_memory  = 512
 desired_count     = 1
 health_check_path = "/"
 
-log_retention_in_days = 30
+log_retention_in_days = 7
 
 ec2_instance_type = "t3.micro"
 ec2_min_size      = 1

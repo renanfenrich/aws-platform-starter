@@ -174,6 +174,16 @@ run "dev_ecs_fargate_spot" {
     condition     = var.db_skip_final_snapshot == true
     error_message = "expected dev RDS to skip final snapshots by default"
   }
+
+  assert {
+    condition     = var.enable_alarms == false
+    error_message = "expected dev alarms to be optional by default"
+  }
+
+  assert {
+    condition     = var.log_retention_in_days == 7
+    error_message = "expected dev log retention to default to 7 days"
+  }
 }
 
 run "dev_ecs_fargate" {

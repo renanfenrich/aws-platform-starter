@@ -162,6 +162,16 @@ run "prod_ecs_fargate" {
     condition     = var.db_skip_final_snapshot == false
     error_message = "expected prod RDS to take a final snapshot by default"
   }
+
+  assert {
+    condition     = var.enable_alarms == true
+    error_message = "expected prod alarms to be enabled by default"
+  }
+
+  assert {
+    condition     = var.log_retention_in_days == 90
+    error_message = "expected prod log retention to default to 90 days"
+  }
 }
 
 run "prod_ecs_fargate_spot" {

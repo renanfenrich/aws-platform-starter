@@ -722,6 +722,17 @@ variable "prevent_destroy" {
   default     = false
 }
 
+variable "enable_alarms" {
+  type        = bool
+  description = "Enable CloudWatch alarms in this environment."
+  default     = true
+
+  validation {
+    condition     = var.enable_alarms
+    error_message = "enable_alarms must be true in prod."
+  }
+}
+
 variable "alarm_sns_topic_arn" {
   type        = string
   description = "SNS topic for alarm notifications."
@@ -734,15 +745,39 @@ variable "alb_5xx_threshold" {
   default     = 5
 }
 
+variable "alb_latency_p95_threshold" {
+  type        = number
+  description = "ALB target response time p95 threshold in seconds."
+  default     = 1
+}
+
+variable "alb_unhealthy_host_threshold" {
+  type        = number
+  description = "ALB unhealthy host count threshold."
+  default     = 1
+}
+
 variable "rds_cpu_threshold" {
   type        = number
   description = "RDS CPU alarm threshold."
   default     = 80
 }
 
+variable "rds_free_storage_threshold_gb" {
+  type        = number
+  description = "RDS free storage alarm threshold in GiB."
+  default     = 5
+}
+
 variable "ecs_cpu_threshold" {
   type        = number
   description = "ECS CPU alarm threshold."
+  default     = 80
+}
+
+variable "ecs_memory_threshold" {
+  type        = number
+  description = "ECS memory alarm threshold."
   default     = 80
 }
 

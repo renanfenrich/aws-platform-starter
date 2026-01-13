@@ -117,6 +117,12 @@ variable "enable_detailed_monitoring" {
   default     = true
 }
 
+variable "log_retention_in_days" {
+  type        = number
+  description = "Retention for Kubernetes application logs in CloudWatch Logs."
+  default     = 30
+}
+
 variable "instance_role_policy_arns" {
   type        = list(string)
   description = "Additional policy ARNs to attach to Kubernetes instance roles."
