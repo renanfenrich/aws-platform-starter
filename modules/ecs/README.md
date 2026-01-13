@@ -1,6 +1,6 @@
 # ECS Module
 
-This module runs the application as an ECS Fargate service. It creates the cluster, task definition, service, IAM roles, and log group. Networking and load balancer wiring are passed in from the environment. It does not build container images or define autoscaling policies.
+This module runs the application as an ECS Fargate service. It creates the cluster, task definition, service, IAM roles, and log group. Networking and load balancer wiring are passed in from the environment. It can optionally enable ECS service autoscaling using CPU target tracking.
 
 ## Why This Module Exists
 
@@ -30,6 +30,8 @@ No modules.
 
 | Name | Type |
 |------|------|
+| [aws_appautoscaling_policy.service_cpu](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/appautoscaling_policy) | resource |
+| [aws_appautoscaling_target.service_desired_count](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/appautoscaling_target) | resource |
 | [aws_cloudwatch_log_group.ecs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
 | [aws_ecs_cluster.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_cluster) | resource |
 | [aws_ecs_cluster_capacity_providers.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_cluster_capacity_providers) | resource |
@@ -52,6 +54,11 @@ No modules.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_assign_public_ip"></a> [assign\_public\_ip](#input\_assign\_public\_ip) | Assign public IPs to tasks. | `bool` | `false` | no |
+| <a name="input_autoscaling_max_capacity"></a> [autoscaling\_max\_capacity](#input\_autoscaling\_max\_capacity) | Maximum task count when autoscaling is enabled. | `number` | `2` | no |
+| <a name="input_autoscaling_min_capacity"></a> [autoscaling\_min\_capacity](#input\_autoscaling\_min\_capacity) | Minimum task count when autoscaling is enabled. | `number` | `1` | no |
+| <a name="input_autoscaling_scale_in_cooldown"></a> [autoscaling\_scale\_in\_cooldown](#input\_autoscaling\_scale\_in\_cooldown) | Cooldown in seconds before scaling in. | `number` | `60` | no |
+| <a name="input_autoscaling_scale_out_cooldown"></a> [autoscaling\_scale\_out\_cooldown](#input\_autoscaling\_scale\_out\_cooldown) | Cooldown in seconds before scaling out. | `number` | `60` | no |
+| <a name="input_autoscaling_target_cpu"></a> [autoscaling\_target\_cpu](#input\_autoscaling\_target\_cpu) | Target CPU utilization percentage for autoscaling. | `number` | `60` | no |
 | <a name="input_capacity_provider_dependency"></a> [capacity\_provider\_dependency](#input\_capacity\_provider\_dependency) | Optional dependency to ensure capacity providers exist before association. | `any` | `null` | no |
 | <a name="input_capacity_provider_strategy"></a> [capacity\_provider\_strategy](#input\_capacity\_provider\_strategy) | Capacity provider strategy for the ECS service. | <pre>list(object({<br/>    capacity_provider = string<br/>    weight            = number<br/>    base              = number<br/>  }))</pre> | `[]` | no |
 | <a name="input_capacity_providers"></a> [capacity\_providers](#input\_capacity\_providers) | Capacity providers associated with the ECS cluster. | `list(string)` | <pre>[<br/>  "FARGATE"<br/>]</pre> | no |
@@ -64,6 +71,7 @@ No modules.
 | <a name="input_deployment_maximum_percent"></a> [deployment\_maximum\_percent](#input\_deployment\_maximum\_percent) | Maximum percent for deployments. | `number` | `200` | no |
 | <a name="input_deployment_minimum_healthy_percent"></a> [deployment\_minimum\_healthy\_percent](#input\_deployment\_minimum\_healthy\_percent) | Minimum healthy percent for deployments. | `number` | `50` | no |
 | <a name="input_desired_count"></a> [desired\_count](#input\_desired\_count) | Desired number of tasks. | `number` | `1` | no |
+| <a name="input_enable_autoscaling"></a> [enable\_autoscaling](#input\_enable\_autoscaling) | Enable ECS service autoscaling for desired count. | `bool` | `false` | no |
 | <a name="input_enable_container_insights"></a> [enable\_container\_insights](#input\_enable\_container\_insights) | Enable ECS container insights. | `bool` | `true` | no |
 | <a name="input_enable_execute_command"></a> [enable\_execute\_command](#input\_enable\_execute\_command) | Enable ECS exec. | `bool` | `true` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | Environment name (dev/prod). | `string` | n/a | yes |

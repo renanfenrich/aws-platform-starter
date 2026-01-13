@@ -260,6 +260,12 @@ module "ecs" {
   memory                             = var.container_memory
   requires_compatibilities           = local.ecs_requires_compatibilities
   desired_count                      = var.desired_count
+  enable_autoscaling                 = var.enable_autoscaling
+  autoscaling_min_capacity           = var.autoscaling_min_capacity
+  autoscaling_max_capacity           = var.autoscaling_max_capacity
+  autoscaling_target_cpu             = var.autoscaling_target_cpu
+  autoscaling_scale_in_cooldown      = var.autoscaling_scale_in_cooldown
+  autoscaling_scale_out_cooldown     = var.autoscaling_scale_out_cooldown
   health_check_grace_period_seconds  = var.health_check_grace_period_seconds
   environment_variables              = local.container_environment
   container_secrets                  = local.container_secrets

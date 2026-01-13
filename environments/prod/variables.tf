@@ -436,6 +436,67 @@ variable "desired_count" {
   default     = 1
 }
 
+variable "enable_autoscaling" {
+  type        = bool
+  description = "Enable ECS service autoscaling for desired count."
+  default     = false
+}
+
+variable "autoscaling_min_capacity" {
+  type        = number
+  description = "Minimum task count when autoscaling is enabled."
+  default     = 2
+
+  validation {
+    condition     = var.autoscaling_min_capacity >= 1
+    error_message = "autoscaling_min_capacity must be at least 1."
+  }
+}
+
+variable "autoscaling_max_capacity" {
+  type        = number
+  description = "Maximum task count when autoscaling is enabled."
+  default     = 6
+
+  validation {
+    condition     = var.autoscaling_max_capacity >= var.autoscaling_min_capacity
+    error_message = "autoscaling_max_capacity must be greater than or equal to autoscaling_min_capacity."
+  }
+}
+
+variable "autoscaling_target_cpu" {
+  type        = number
+  description = "Target CPU utilization percentage for autoscaling."
+  default     = 50
+
+  validation {
+    condition     = var.autoscaling_target_cpu >= 10 && var.autoscaling_target_cpu <= 90
+    error_message = "autoscaling_target_cpu must be between 10 and 90."
+  }
+}
+
+variable "autoscaling_scale_in_cooldown" {
+  type        = number
+  description = "Cooldown in seconds before scaling in."
+  default     = 120
+
+  validation {
+    condition     = var.autoscaling_scale_in_cooldown >= 0
+    error_message = "autoscaling_scale_in_cooldown must be greater than or equal to 0."
+  }
+}
+
+variable "autoscaling_scale_out_cooldown" {
+  type        = number
+  description = "Cooldown in seconds before scaling out."
+  default     = 120
+
+  validation {
+    condition     = var.autoscaling_scale_out_cooldown >= 0
+    error_message = "autoscaling_scale_out_cooldown must be greater than or equal to 0."
+  }
+}
+
 variable "health_check_path" {
   type        = string
   description = "Health check path for the ALB target group."
