@@ -47,6 +47,19 @@ Think of it as a straight line: user -> ALB -> compute -> RDS. The ALB lives in 
 - Remote state bootstrap with S3 native locking
 - Demo Kubernetes manifests under `k8s/` (namespace, deployment, service, ingress)
 
+## Autoscaling
+
+ECS service autoscaling is optional and uses target tracking on average CPU utilization to scale `desired_count`. It is intentionally single-metric and deterministic. Terraform still sets `desired_count` on apply, so keep it aligned with your autoscaling minimum.
+
+Defaults and posture:
+- Dev: disabled by default. If enabled, min=1, max=2, target CPU=60%, cooldowns=60s.
+- Prod: disabled by default because `environments/prod/terraform.tfvars` sets `desired_count = 2`. If you enable it, recommended values are min=2, max=6, target CPU=50%, cooldowns=120s.
+
+Enable or disable it with:
+- `enable_autoscaling = true|false`
+- `autoscaling_min_capacity`, `autoscaling_max_capacity`, `autoscaling_target_cpu`
+- `autoscaling_scale_in_cooldown`, `autoscaling_scale_out_cooldown`
+
 ## Production Hardening
 
 - ALB access logs to S3 (prod default)
@@ -60,7 +73,7 @@ RDS uses native automated backups with environment-aware retention (dev 3 days, 
 ## What Is Intentionally Not Included
 
 - Managed WAF rule sets, advanced edge security, or bot protection (WAF attachment is optional but not configured here)
-- Autoscaling policies, blue/green deployments, or canaries
+- Advanced autoscaling policies (multi-metric, request-based, step scaling), blue/green deployments, or canaries
 - Centralized logging or metrics beyond baseline CloudWatch alarms (ALB access logs and VPC Flow Logs are minimal, not a full log platform)
 - Multi-account orchestration or organization-level controls
 
@@ -69,7 +82,7 @@ RDS uses native automated backups with environment-aware retention (dev 3 days, 
 If this were running a real product, I would add:
 
 - Managed WAF rules and a centralized log pipeline
-- Autoscaling for ECS and tighter RDS scaling/backup policies
+- More advanced autoscaling (request-based, multi-metric) and tighter RDS scaling/backup policies
 - CI/CD that deploys and rolls back safely
 - Multi-account separation (at least a dedicated prod account)
 - A real observability stack (dashboards, tracing, SLOs)
@@ -175,6 +188,7 @@ Use `k8s/overlays/prod` for prod.
 - `platform` selects `ecs` or `k8s_self_managed` (with `eks` reserved for future use).
 - `ecs_capacity_mode` switches between `fargate`, `fargate_spot`, and `ec2` capacity providers.
 - ECS settings are ignored when `platform = "k8s_self_managed"`.
+- ECS autoscaling is opt-in via `enable_autoscaling` and uses CPU target tracking; tune min/max/target/cooldowns per environment.
 - Fargate Spot mode uses a weighted capacity provider strategy with FARGATE fallback.
 - EC2 capacity providers use SSM by default; no public SSH ingress is configured.
 - Provide `ec2_user_data` to extend ECS container instance bootstrap when using EC2 capacity.

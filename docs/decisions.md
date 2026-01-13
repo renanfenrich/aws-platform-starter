@@ -91,3 +91,7 @@ These are the defaults I chose for this repo. Each one is a trade-off, and I kep
 28) **Kustomize-based Kubernetes demo with baseline hardening**
    - I use kustomize overlays (dev/prod) so environment differences are explicit without introducing Helm or operators.
    - The demo includes PSA restricted labels, probes, requests/limits, HPA, PDB, and default-deny network policies to show safe-by-default patterns while keeping scope tight.
+
+29) **Minimal ECS autoscaling (CPU target tracking only)**
+   - Autoscaling is opt-in and only adjusts ECS service desired count via a single CPU target tracking policy.
+   - I skipped ALB request-based scaling and multi-metric/step scaling to keep behavior deterministic and testable.
