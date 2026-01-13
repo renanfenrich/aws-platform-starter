@@ -53,6 +53,10 @@ Think of it as a straight line: user -> ALB -> compute -> RDS. The ALB lives in 
 - VPC Flow Logs to CloudWatch (prod default)
 - Optional WAF association for the ALB (off by default)
 
+## Data Protection
+
+RDS uses native automated backups with environment-aware retention (dev 3 days, prod 7 days) and encryption at rest; prod also enforces deletion protection and requires a final snapshot on delete. You can override `db_backup_retention_period`, `db_deletion_protection`, and `db_skip_final_snapshot` per environment, but doing so reduces recoverability; AWS Backup and cross-region DR are intentionally out of scope here.
+
 ## What Is Intentionally Not Included
 
 - Managed WAF rule sets, advanced edge security, or bot protection (WAF attachment is optional but not configured here)

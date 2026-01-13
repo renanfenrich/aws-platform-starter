@@ -83,3 +83,7 @@ These are the defaults I chose for this repo. Each one is a trade-off, and I kep
    - S3 and DynamoDB gateway endpoints are always enabled because they carry the bulk of baseline service traffic and reduce NAT data processing.
    - Interface endpoints for ECR (api/dkr), CloudWatch Logs, and SSM (ssm/ssmmessages/ec2messages) are prod-default and dev opt-in to balance cost and operational clarity.
    - I am explicitly not adding STS, KMS, Secrets Manager, or CloudWatch metrics endpoints yet; their traffic profile here is smaller, and each adds policy surface and operational overhead. Revisit when usage justifies it.
+
+27) **RDS-only data protection baseline**
+   - I rely on native RDS automated backups and final snapshots for recoverability. Dev keeps short retention and skips final snapshots; prod keeps longer retention, deletion protection, and requires a final snapshot on delete.
+   - AWS Backup orchestration and cross-region DR are intentionally out of scope to keep the repo small and avoid introducing a second backup control plane without a clear operational need.
