@@ -74,8 +74,24 @@ Baseline alarms: ALB 5xx, ECS CPU, EC2 CPU (when enabled), and RDS CPU.
 3) Use the `cluster_access_instructions` output to access the control plane via SSM and apply the demo manifests:
 
 ```bash
-kubectl apply -f k8s/
+kubectl apply -k k8s/overlays/dev
 ```
+
+Prod uses the prod overlay:
+
+```bash
+kubectl apply -k k8s/overlays/prod
+```
+
+Verify basics:
+
+```bash
+kubectl get pods -n demo
+kubectl get hpa -n demo
+kubectl get netpol -n demo
+```
+
+If HPA reports `Unknown`, install metrics-server in the cluster first.
 
 ## Update ECS Image
 

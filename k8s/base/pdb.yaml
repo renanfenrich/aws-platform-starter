@@ -1,0 +1,12 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: demo-app
+  labels:
+    app.kubernetes.io/name: demo-app
+    app.kubernetes.io/part-of: demo
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: demo-app

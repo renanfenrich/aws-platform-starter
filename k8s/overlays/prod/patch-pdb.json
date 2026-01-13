@@ -1,0 +1,7 @@
+- op: replace
+  path: /spec
+  value:
+    minAvailable: 2
+    selector:
+      matchLabels:
+        app: demo-app

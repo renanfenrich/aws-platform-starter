@@ -161,8 +161,10 @@ For Kubernetes:
 aws ssm start-session --target <control_plane_instance_id> --region us-east-1
 sudo -i
 export KUBECONFIG=/etc/kubernetes/admin.conf
-kubectl apply -f k8s/
+kubectl apply -k k8s/overlays/dev
 ```
+
+Use `k8s/overlays/prod` for prod.
 
 ## Configuration Highlights
 
