@@ -604,7 +604,7 @@ variable "db_multi_az" {
 variable "db_backup_retention_period" {
   type        = number
   description = "Backup retention period in days."
-  default     = 3
+  default     = 7
 }
 
 variable "db_maintenance_window" {
@@ -622,13 +622,13 @@ variable "db_backup_window" {
 variable "db_deletion_protection" {
   type        = bool
   description = "Enable RDS deletion protection."
-  default     = false
+  default     = true
 }
 
 variable "db_skip_final_snapshot" {
   type        = bool
   description = "Skip final snapshot on delete."
-  default     = true
+  default     = false
 }
 
 variable "db_final_snapshot_identifier" {

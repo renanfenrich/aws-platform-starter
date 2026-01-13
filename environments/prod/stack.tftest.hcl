@@ -147,6 +147,21 @@ run "prod_ecs_fargate" {
     condition     = output.budget_hard_limit_usd > 0
     error_message = "expected budget hard limit to be greater than 0"
   }
+
+  assert {
+    condition     = var.db_backup_retention_period == 7
+    error_message = "expected prod RDS backup retention to default to 7 days"
+  }
+
+  assert {
+    condition     = var.db_deletion_protection == true
+    error_message = "expected prod RDS deletion protection to default to true"
+  }
+
+  assert {
+    condition     = var.db_skip_final_snapshot == false
+    error_message = "expected prod RDS to take a final snapshot by default"
+  }
 }
 
 run "prod_ecs_fargate_spot" {

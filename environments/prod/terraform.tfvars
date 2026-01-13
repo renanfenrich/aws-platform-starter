@@ -16,13 +16,13 @@ budget_hard_limit_percent        = 90
 budget_notification_emails       = ["platform-alerts@example.com"]
 budget_sns_topic_arn             = ""
 
-vpc_cidr             = "10.20.0.0/16"
-public_subnet_cidrs  = ["10.20.0.0/24", "10.20.1.0/24"]
-private_subnet_cidrs = ["10.20.10.0/24", "10.20.11.0/24"]
-single_nat_gateway   = false
-enable_gateway_endpoints = true
+vpc_cidr                   = "10.20.0.0/16"
+public_subnet_cidrs        = ["10.20.0.0/24", "10.20.1.0/24"]
+private_subnet_cidrs       = ["10.20.10.0/24", "10.20.11.0/24"]
+single_nat_gateway         = false
+enable_gateway_endpoints   = true
 enable_interface_endpoints = true
-enable_flow_logs     = true
+enable_flow_logs           = true
 
 allow_http              = false
 acm_certificate_arn     = "CHANGE_ME"

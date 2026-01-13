@@ -126,3 +126,18 @@ output "rds_master_secret_arn" {
   value       = module.rds.master_user_secret_arn
   sensitive   = true
 }
+
+output "rds_instance_id" {
+  description = "RDS instance identifier."
+  value       = module.rds.db_instance_id
+}
+
+output "rds_final_snapshot_arn_pattern" {
+  description = "Expected final snapshot ARN when skip_final_snapshot is false."
+  value = var.db_skip_final_snapshot ? null : format(
+    "arn:aws:rds:%s:%s:snapshot:%s",
+    var.aws_region,
+    data.aws_caller_identity.current.account_id,
+    coalesce(var.db_final_snapshot_identifier, "${local.name_prefix}-final")
+  )
+}

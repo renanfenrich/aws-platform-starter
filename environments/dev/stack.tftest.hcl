@@ -159,6 +159,21 @@ run "dev_ecs_fargate_spot" {
     condition     = output.k8s_control_plane_private_ip == null
     error_message = "expected k8s control plane output to be null for ecs"
   }
+
+  assert {
+    condition     = var.db_backup_retention_period == 3
+    error_message = "expected dev RDS backup retention to default to 3 days"
+  }
+
+  assert {
+    condition     = var.db_deletion_protection == false
+    error_message = "expected dev RDS deletion protection to default to false"
+  }
+
+  assert {
+    condition     = var.db_skip_final_snapshot == true
+    error_message = "expected dev RDS to skip final snapshots by default"
+  }
 }
 
 run "dev_ecs_fargate" {
