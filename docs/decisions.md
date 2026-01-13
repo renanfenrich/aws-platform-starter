@@ -78,3 +78,8 @@ These are the defaults I chose for this repo. Each one is a trade-off, and I kep
 25) **ECR repository per environment with AWS-managed encryption**
    - I add a single ECR repo per environment so images live with the stack and IAM can stay scoped.
    - I use AES256 (AWS-managed) to keep the baseline simple; a CMK can be added later if policy requires it.
+
+26) **Targeted VPC endpoints, not a full catalog**
+   - S3 and DynamoDB gateway endpoints are always enabled because they carry the bulk of baseline service traffic and reduce NAT data processing.
+   - Interface endpoints for ECR (api/dkr), CloudWatch Logs, and SSM (ssm/ssmmessages/ec2messages) are prod-default and dev opt-in to balance cost and operational clarity.
+   - I am explicitly not adding STS, KMS, Secrets Manager, or CloudWatch metrics endpoints yet; their traffic profile here is smaller, and each adds policy surface and operational overhead. Revisit when usage justifies it.

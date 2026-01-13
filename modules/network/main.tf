@@ -176,7 +176,7 @@ resource "aws_vpc_endpoint" "interface" {
   private_dns_enabled = true
 
   tags = merge(var.tags, {
-    Name = "${var.name_prefix}-vpce-${replace(each.key, \".\", \"-\")}"
+    Name = "${var.name_prefix}-vpce-${replace(each.key, ".", "-")}"
   })
 }
 

@@ -21,6 +21,12 @@ This repo exists to show the baseline layout I use for a single-service AWS stac
 - Alarms are intentionally minimal; you are expected to add app-specific signals.
 - HTTPS is the default; HTTP is only allowed in dev to speed local testing.
 
+## VPC Endpoints
+
+- S3 and DynamoDB gateway endpoints are always enabled to keep common service traffic off the NAT and inside the AWS backbone.
+- Interface endpoints (ECR api/dkr, CloudWatch Logs, SSM/ssmmessages/ec2messages) are enabled by default in prod and opt-in in dev to avoid extra hourly endpoint and ENI costs.
+- This cuts NAT data processing and narrows egress paths without changing subnet layout or NAT behavior.
+
 ## Architecture Overview
 
 Think of it as a straight line: user -> ALB -> compute -> RDS. The ALB lives in public subnets; compute runs as ECS tasks (Fargate, Fargate Spot, or EC2 capacity providers) or a self-managed Kubernetes cluster on EC2 in private subnets. NAT gateways handle outbound internet access for compute.
