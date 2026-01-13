@@ -306,6 +306,12 @@ variable "enable_gateway_endpoints" {
   default     = true
 }
 
+variable "enable_interface_endpoints" {
+  type        = bool
+  description = "Enable interface VPC endpoints for ECR, CloudWatch Logs, and SSM."
+  default     = false
+}
+
 variable "enable_flow_logs" {
   type        = bool
   description = "Enable VPC flow logs."

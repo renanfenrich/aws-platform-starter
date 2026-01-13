@@ -1,5 +1,3 @@
-data "aws_region" "current" {}
-
 locals {
   public_subnet_map              = { for idx, cidr in var.public_subnet_cidrs : idx => { cidr = cidr, az = var.azs[idx] } }
   private_subnet_map             = { for idx, cidr in var.private_subnet_cidrs : idx => { cidr = cidr, az = var.azs[idx] } }
@@ -8,7 +6,11 @@ locals {
   private_subnet_ids             = [for idx in sort(keys(aws_subnet.private)) : aws_subnet.private[idx].id]
   nat_gateway_subnets            = var.single_nat_gateway ? [local.public_subnet_ids[0]] : local.public_subnet_ids
   gateway_endpoint_services      = ["s3", "dynamodb"]
-  gateway_endpoint_service_names = { for service in local.gateway_endpoint_services : service => "com.amazonaws.${data.aws_region.current.name}.${service}" }
+  gateway_endpoint_service_names = { for service in local.gateway_endpoint_services : service => "com.amazonaws.${var.aws_region}.${service}" }
+  interface_endpoint_services    = ["ecr.api", "ecr.dkr", "logs", "ssm", "ssmmessages", "ec2messages"]
+  interface_endpoint_service_names = {
+    for service in local.interface_endpoint_services : service => "com.amazonaws.${var.aws_region}.${service}"
+  }
 }
 
 resource "aws_vpc" "this" {
@@ -132,6 +134,49 @@ resource "aws_vpc_endpoint" "gateway" {
 
   tags = merge(var.tags, {
     Name = "${var.name_prefix}-vpce-${each.key}"
+  })
+}
+
+resource "aws_security_group" "vpc_endpoints" {
+  count = var.enable_interface_endpoints ? 1 : 0
+
+  name        = "${var.name_prefix}-vpce"
+  description = "VPC interface endpoints"
+  vpc_id      = aws_vpc.this.id
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr]
+    description = "HTTPS from VPC"
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "All egress"
+  }
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-vpce-sg"
+  })
+}
+
+resource "aws_vpc_endpoint" "interface" {
+  for_each = var.enable_interface_endpoints ? local.interface_endpoint_service_names : {}
+
+  vpc_id              = aws_vpc.this.id
+  service_name        = each.value
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = local.private_subnet_ids
+  security_group_ids  = aws_security_group.vpc_endpoints[*].id
+  private_dns_enabled = true
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-vpce-${replace(each.key, \".\", \"-\")}"
   })
 }
 

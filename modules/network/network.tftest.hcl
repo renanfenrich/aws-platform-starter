@@ -5,6 +5,7 @@ run "network_defaults" {
 
   variables {
     name_prefix          = "test"
+    aws_region           = "us-east-1"
     vpc_cidr             = "10.0.0.0/16"
     azs                  = ["us-east-1a", "us-east-1b"]
     public_subnet_cidrs  = ["10.0.0.0/24", "10.0.1.0/24"]
@@ -72,6 +73,7 @@ run "network_invalid_vpc_cidr" {
 
   variables {
     name_prefix          = "test"
+    aws_region           = "us-east-1"
     vpc_cidr             = "invalid"
     azs                  = ["us-east-1a", "us-east-1b"]
     public_subnet_cidrs  = ["10.0.0.0/24", "10.0.1.0/24"]
@@ -109,6 +111,7 @@ run "network_invalid_azs" {
 
   variables {
     name_prefix          = "test"
+    aws_region           = "us-east-1"
     vpc_cidr             = "10.0.0.0/16"
     azs                  = ["us-east-1a"]
     public_subnet_cidrs  = ["10.0.0.0/24"]

@@ -21,6 +21,7 @@ public_subnet_cidrs  = ["10.20.0.0/24", "10.20.1.0/24"]
 private_subnet_cidrs = ["10.20.10.0/24", "10.20.11.0/24"]
 single_nat_gateway   = false
 enable_gateway_endpoints = true
+enable_interface_endpoints = true
 enable_flow_logs     = true
 
 allow_http              = false

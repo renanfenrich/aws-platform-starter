@@ -28,6 +28,11 @@ output "gateway_endpoint_ids" {
   value       = [for endpoint in aws_vpc_endpoint.gateway : endpoint.id]
 }
 
+output "interface_endpoint_ids" {
+  description = "IDs of interface VPC endpoints (ECR, CloudWatch Logs, and SSM)."
+  value       = [for endpoint in aws_vpc_endpoint.interface : endpoint.id]
+}
+
 output "flow_logs_log_group_name" {
   description = "CloudWatch log group name for VPC flow logs."
   value       = var.enable_flow_logs ? aws_cloudwatch_log_group.flow_logs[0].name : null

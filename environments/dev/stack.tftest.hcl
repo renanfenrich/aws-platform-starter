@@ -106,6 +106,16 @@ run "dev_ecs_fargate_spot" {
   }
 
   assert {
+    condition     = length(module.network.gateway_endpoint_ids) == 2
+    error_message = "expected gateway endpoints for S3 and DynamoDB"
+  }
+
+  assert {
+    condition     = length(module.network.interface_endpoint_ids) == 0
+    error_message = "expected interface endpoints to be disabled in dev by default"
+  }
+
+  assert {
     condition     = aws_security_group.app[0].tags["Project"] == var.project_name
     error_message = "expected app security group to include Project tag"
   }

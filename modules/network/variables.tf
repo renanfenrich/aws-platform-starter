@@ -3,6 +3,11 @@ variable "name_prefix" {
   description = "Prefix used for naming network resources."
 }
 
+variable "aws_region" {
+  type        = string
+  description = "AWS region for VPC endpoint service names."
+}
+
 variable "vpc_cidr" {
   type        = string
   description = "CIDR block for the VPC."
@@ -53,6 +58,12 @@ variable "enable_gateway_endpoints" {
   type        = bool
   description = "Enable gateway VPC endpoints for S3 and DynamoDB."
   default     = true
+}
+
+variable "enable_interface_endpoints" {
+  type        = bool
+  description = "Enable interface VPC endpoints for ECR, CloudWatch Logs, and SSM."
+  default     = false
 }
 
 variable "enable_flow_logs" {
