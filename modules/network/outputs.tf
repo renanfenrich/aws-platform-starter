@@ -23,6 +23,11 @@ output "nat_gateway_ids" {
   value       = aws_nat_gateway.this[*].id
 }
 
+output "gateway_endpoint_ids" {
+  description = "IDs of gateway VPC endpoints (S3 and DynamoDB)."
+  value       = [for endpoint in aws_vpc_endpoint.gateway : endpoint.id]
+}
+
 output "flow_logs_log_group_name" {
   description = "CloudWatch log group name for VPC flow logs."
   value       = var.enable_flow_logs ? aws_cloudwatch_log_group.flow_logs[0].name : null

@@ -49,6 +49,12 @@ variable "single_nat_gateway" {
   default     = false
 }
 
+variable "enable_gateway_endpoints" {
+  type        = bool
+  description = "Enable gateway VPC endpoints for S3 and DynamoDB."
+  default     = true
+}
+
 variable "enable_flow_logs" {
   type        = bool
   description = "Enable VPC flow logs to CloudWatch Logs."

@@ -21,6 +21,7 @@ vpc_cidr             = "10.10.0.0/16"
 public_subnet_cidrs  = ["10.10.0.0/24", "10.10.1.0/24"]
 private_subnet_cidrs = ["10.10.10.0/24", "10.10.11.0/24"]
 single_nat_gateway   = true
+enable_gateway_endpoints = true
 enable_flow_logs     = false
 
 allow_http              = true

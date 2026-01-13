@@ -1,10 +1,14 @@
+data "aws_region" "current" {}
+
 locals {
-  public_subnet_map   = { for idx, cidr in var.public_subnet_cidrs : idx => { cidr = cidr, az = var.azs[idx] } }
-  private_subnet_map  = { for idx, cidr in var.private_subnet_cidrs : idx => { cidr = cidr, az = var.azs[idx] } }
-  nat_gateway_count   = var.single_nat_gateway ? 1 : length(var.azs)
-  public_subnet_ids   = [for idx in sort(keys(aws_subnet.public)) : aws_subnet.public[idx].id]
-  private_subnet_ids  = [for idx in sort(keys(aws_subnet.private)) : aws_subnet.private[idx].id]
-  nat_gateway_subnets = var.single_nat_gateway ? [local.public_subnet_ids[0]] : local.public_subnet_ids
+  public_subnet_map              = { for idx, cidr in var.public_subnet_cidrs : idx => { cidr = cidr, az = var.azs[idx] } }
+  private_subnet_map             = { for idx, cidr in var.private_subnet_cidrs : idx => { cidr = cidr, az = var.azs[idx] } }
+  nat_gateway_count              = var.single_nat_gateway ? 1 : length(var.azs)
+  public_subnet_ids              = [for idx in sort(keys(aws_subnet.public)) : aws_subnet.public[idx].id]
+  private_subnet_ids             = [for idx in sort(keys(aws_subnet.private)) : aws_subnet.private[idx].id]
+  nat_gateway_subnets            = var.single_nat_gateway ? [local.public_subnet_ids[0]] : local.public_subnet_ids
+  gateway_endpoint_services      = ["s3", "dynamodb"]
+  gateway_endpoint_service_names = { for service in local.gateway_endpoint_services : service => "com.amazonaws.${data.aws_region.current.name}.${service}" }
 }
 
 resource "aws_vpc" "this" {
@@ -116,6 +120,19 @@ resource "aws_route_table_association" "private" {
 
   subnet_id      = each.value.id
   route_table_id = var.single_nat_gateway ? aws_route_table.private[0].id : aws_route_table.private[tonumber(each.key)].id
+}
+
+resource "aws_vpc_endpoint" "gateway" {
+  for_each = var.enable_gateway_endpoints ? local.gateway_endpoint_service_names : {}
+
+  vpc_id            = aws_vpc.this.id
+  service_name      = each.value
+  vpc_endpoint_type = "Gateway"
+  route_table_ids   = aws_route_table.private[*].id
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-vpce-${each.key}"
+  })
 }
 
 data "aws_iam_policy_document" "flow_logs_assume" {
