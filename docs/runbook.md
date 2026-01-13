@@ -128,6 +128,34 @@ RDS manages the master password in Secrets Manager. To rotate:
 1) Trigger a rotation in Secrets Manager.
 2) Update application credentials if the app caches them.
 
+## RDS Restore Procedure
+
+RDS does not restore in place. Always restore a snapshot into a new instance, validate it, and then cut over.
+
+1) Identify the instance and snapshot:
+   - `DB_ID=$(terraform output -raw rds_instance_id)`
+   - Automated backups: `aws rds describe-db-snapshots --db-instance-identifier "$DB_ID" --snapshot-type automated --query 'DBSnapshots[].[DBSnapshotIdentifier,SnapshotCreateTime]' --output table`
+   - Final snapshots (prod default): `terraform output -raw rds_final_snapshot_arn_pattern`
+
+2) Restore to a new instance:
+   - `RESTORE_ID="${DB_ID}-restore-$(date +%Y%m%d%H%M)"`
+   - `aws rds restore-db-instance-from-db-snapshot --db-instance-identifier "$RESTORE_ID" --db-snapshot-identifier "$SNAPSHOT_ID"`
+   - `aws rds wait db-instance-available --db-instance-identifier "$RESTORE_ID"`
+
+3) Fetch the new endpoint and cut over:
+   - `RESTORE_ENDPOINT=$(aws rds describe-db-instances --db-instance-identifier "$RESTORE_ID" --query 'DBInstances[0].Endpoint.Address' --output text)`
+   - Update application configuration/secrets to use the restored endpoint and verify application health.
+
+4) Reconcile with Terraform (optional but recommended):
+   - If you need Terraform to manage the restored instance, plan a controlled replacement so the identifier matches `<project>-<environment>-db`, then import the instance into state.
+   - Dev (`prevent_destroy = false`): `terraform import module.rds.aws_db_instance.this[0] "<db-instance-identifier>"`
+   - Prod (`prevent_destroy = true`): `terraform import module.rds.aws_db_instance.protected[0] "<db-instance-identifier>"`
+
+Warnings:
+- `db_deletion_protection` and `prevent_destroy` block destructive actions; only disable them when you are ready to replace the instance, then re-enable after recovery.
+- Keep `db_skip_final_snapshot = false` in prod so a final snapshot is captured before any deletion.
+- Do not assume Terraform can restore the existing instance in place; it requires a new instance and an import.
+
 ## Investigate Alarms
 
 - ALB 5xx: check target health, ECS task logs, and recent deploys.
