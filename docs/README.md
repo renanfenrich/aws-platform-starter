@@ -1,13 +1,15 @@
 # Documentation
 
-Start with `architecture.md` if you want the walkthrough. The rest are short supporting docs:
+Start with `project-overview.md` for the repo map and environment model, then `architecture.md` for the walkthrough. The rest are short supporting docs:
 
+- `project-overview.md` — repository layout and environment model.
 - `architecture.md` — system walkthrough and diagram.
 - `architecture.mmd` — Mermaid diagram source.
 - `architecture-aws.svg` — AWS icon diagram (optional).
-- `decisions.md` — key design decisions.
-- `finops.md` — cost estimation, enforcement, and monitoring model.
 - `runbook.md` — operational runbook.
-- `well-architected.md` — AWS Well-Architected mapping.
+- `finops.md` — cost estimation, enforcement, and monitoring model.
 - `costs.md` — cost drivers and optimizations.
+- `tests.md` — test coverage and how to run.
+- `decisions.md` — key design decisions.
+- `well-architected.md` — AWS Well-Architected mapping.
 - `interview-talk-track.md` — interview notes and Q&A.

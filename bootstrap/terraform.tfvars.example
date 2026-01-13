@@ -4,6 +4,7 @@ environment   = "dev"
 region_short  = "use1"
 
 state_bucket_name = "aws-platform-starter-state-dev"
+log_bucket_name   = null
 
 sns_email_subscriptions = []
 

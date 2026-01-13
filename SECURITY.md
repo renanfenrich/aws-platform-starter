@@ -10,10 +10,11 @@ If you discover a security issue, please open a private security advisory or con
 - Secrets are managed by AWS Secrets Manager and are never output in plaintext.
 - RDS storage is encrypted with KMS, and the master password is managed by AWS.
 - ALB ingress is restricted to HTTPS by default; HTTP is only enabled for dev.
+- No public SSH is configured; EC2 access is intended through SSM Session Manager.
 
 ## Shared Responsibility
 
-- The Terraform code provides infrastructure controls, but workload security (container image hardening, application patching, WAF, IDS) remains the operator’s responsibility.
+- The Terraform code provides infrastructure controls, but workload security (container image hardening, application patching, WAF rules, IDS) remains the operator’s responsibility.
 - Review IAM policies before extending permissions in production.
 - Monitor CloudWatch alarms and implement an incident response process.
 
@@ -24,6 +25,7 @@ If you discover a security issue, please open a private security advisory or con
 
 ## Recommended Hardening
 
-- Enable ALB access logs and centralize log storage.
-- Add VPC endpoints to reduce NAT usage and restrict egress.
-- Add AWS Backup policies for RDS in production.
+- In dev, enable ALB access logs and VPC flow logs when you need request-level or network visibility.
+- In dev, consider interface VPC endpoints to keep ECR/SSM/Logs traffic inside the VPC.
+- Add AWS Backup policies for RDS in production if required by policy.
+- Add managed WAF rules, centralized log storage, and threat detection for broader security coverage.

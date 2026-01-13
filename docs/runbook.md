@@ -10,24 +10,22 @@ Estimate costs before any deploy and pass the number into Terraform:
 INFRACOST_API_KEY=... make cost
 ```
 
-Capture the estimated monthly cost for the target environment, then export it as `TF_VAR_estimated_monthly_cost`.
+Capture the estimated monthly cost for the target environment, then export it as `TF_VAR_estimated_monthly_cost`. If you need to bypass enforcement for a one-off estimate, use `enforce_cost_controls = false` (as in `infracost.tfvars`).
 
 ## Deploy (Dev)
 
 ```bash
 export TF_VAR_estimated_monthly_cost=123.45
-cd environments/dev
-terraform init -backend-config=backend.hcl
-terraform apply -var-file=terraform.tfvars
+make plan ENV=dev platform=ecs
+make apply ENV=dev platform=ecs
 ```
 
 ## Deploy (Prod)
 
 ```bash
 export TF_VAR_estimated_monthly_cost=123.45
-cd environments/prod
-terraform init -backend-config=backend.hcl
-terraform apply -var-file=terraform.tfvars
+make plan ENV=prod platform=ecs
+make apply ENV=prod platform=ecs
 ```
 
 ## Build and Push an Image to ECR (Manual)
@@ -52,6 +50,7 @@ Update `image_tag` (or set `container_image` for a full override) in `terraform.
 - To tighten ALB log delivery, set `alb_access_logs_source_arns` in `bootstrap/terraform.tfvars` after the ALB exists, then re-apply bootstrap.
 - WAF is opt-in. Set `alb_enable_waf = true` and `alb_waf_acl_arn` to an existing Web ACL ARN in the environment `terraform.tfvars`.
 - Dev flow logs are opt-in. Set `enable_flow_logs = true` in `environments/dev/terraform.tfvars` when needed.
+- Dev interface endpoints are opt-in. Set `enable_interface_endpoints = true` in `environments/dev/terraform.tfvars` if you want ECR/Logs/SSM traffic to stay inside the VPC.
 
 ## Notifications
 
@@ -74,14 +73,14 @@ Each environment creates a CloudWatch dashboard named `<project>-<environment>-o
 
 ## Budget Alerts
 
-1) Set `budget_notification_emails` or `budget_sns_topic_arn` in each environment `terraform.tfvars`.
+1) Set `budget_notification_emails` or `budget_sns_topic_arn` in each environment `terraform.tfvars` (or rely on `alarm_sns_topic_arn`).
 2) Confirm email subscriptions or SNS endpoints as required.
 3) When a budget warning fires, review the latest cost estimate and recent deploys before adjusting capacity.
 
 ## Deploy (Kubernetes Self-Managed)
 
 1) Set `platform = "k8s_self_managed"` in the environment `terraform.tfvars`.
-2) Apply the environment as usual.
+2) Apply the environment as usual; when using the Makefile, pass `platform=k8s_self_managed` so it does not override the tfvars value.
 3) Use the `cluster_access_instructions` output to access the control plane via SSM and apply the demo manifests:
 
 ```bash
@@ -93,6 +92,8 @@ Prod uses the prod overlay:
 ```bash
 kubectl apply -k k8s/overlays/prod
 ```
+
+The control plane bootstrap installs flannel and ingress-nginx. The ALB forwards to the ingress controller NodePort (`k8s_ingress_nodeport`).
 
 Verify basics:
 
@@ -206,4 +207,4 @@ cd environments/dev
 terraform destroy -var-file=terraform.tfvars
 ```
 
-Prod deletions are blocked by `prevent_destroy`.
+Prod deletions are blocked by `prevent_destroy` and `db_deletion_protection`.

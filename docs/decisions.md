@@ -51,13 +51,13 @@ These are the defaults I chose for this repo. Each one is a trade-off, and I kep
    - State buckets enforce `prevent_destroy`; tearing them down requires an explicit config change.
 
 17) **Name prefix length guard**
-   - `project_name` plus `environment` must fit the ALB and target group 32-character limits; tags carry the remaining context.
+   - `project_name` plus `environment` must stay within the 28-character guard so ALB and target group names remain valid; tags carry the remaining context.
 
 18) **FinOps posture per environment**
    - Dev is explicitly `cost_optimized` with spot-first defaults; prod is `stability_first` and requires an opt-in to use Fargate Spot.
 
 19) **Deploy-time cost enforcement**
-   - Deploys require an `estimated_monthly_cost` input and are blocked when the estimate exceeds the hard budget threshold.
+   - When `enforce_cost_controls` is true (default), deploys require `estimated_monthly_cost` and block when the estimate exceeds the hard budget threshold.
 
 20) **Mandatory cost allocation tags + environment budgets**
    - Tagging is enforced across modules, and budgets are scoped by the `Environment` cost allocation tag to keep dev/prod spend distinct.

@@ -1,6 +1,6 @@
 # Kubernetes demo manifests
 
-These manifests are intentionally small but hardened. They target the self-managed kubeadm cluster and assume an ALB that forwards to a NodePort ingress controller service.
+These manifests are intentionally small but hardened. They target the self-managed kubeadm cluster and assume an ALB that forwards to a NodePort ingress controller service. The control plane bootstrap installs flannel and ingress-nginx, and patches the ingress service to the configured NodePort.
 
 ## Layout
 
@@ -28,7 +28,7 @@ The expected flow is:
 
 `ALB -> NodePort ingress controller -> Ingress -> demo-service -> Pods`
 
-This repo does not install an ingress controller. If you choose the direct NodePort pattern instead, patch `k8s/base/service.yaml` to `type: NodePort` and omit the Ingress resource.
+If you choose the direct NodePort pattern instead, patch `k8s/base/service.yaml` to `type: NodePort` and omit the Ingress resource.
 
 ## Image updates
 

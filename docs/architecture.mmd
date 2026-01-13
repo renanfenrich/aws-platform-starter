@@ -4,8 +4,7 @@ flowchart TB
   subgraph VPC
     subgraph PublicSubnets[Public Subnets x2]
       ALB
-      NAT1[NAT GW]
-      NAT2[NAT GW]
+      NAT[NAT GW (1 or 2)]
     end
 
     subgraph PrivateSubnets[Private Subnets x2]
@@ -16,5 +15,4 @@ flowchart TB
 
   ALB --> Compute
   Compute --> RDS
-  Compute --> NAT1
-  Compute --> NAT2
+  Compute --> NAT

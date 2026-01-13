@@ -32,9 +32,9 @@ terraform -chdir=bootstrap apply -var-file=terraform.tfvars
 - `state_bucket_name`
 - `kms_key_arn`
 
-4) Enable native S3 locking by setting `use_lockfile = true` in each backend config.
+4) Ensure native S3 locking is enabled by keeping `use_lockfile = true` in each backend config (the examples already include it).
 
-5) Wire notifications by setting `alarm_sns_topic_arn` in the environment `terraform.tfvars`.
+5) Wire notifications by setting `alarm_sns_topic_arn` in the environment `terraform.tfvars` to the `sns_topic_arn` output.
 
 6) If you enabled ACM, use `acm_certificate_arn` for `acm_certificate_arn` in the environment `terraform.tfvars`.
 

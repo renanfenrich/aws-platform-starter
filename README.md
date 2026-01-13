@@ -11,7 +11,7 @@ This repo exists to show the baseline layout I use for a single-service AWS stac
 - One public entry point (ALB) and one application service.
 - Postgres is the only stateful dependency.
 - Dev and prod are separate Terraform environments; you can run them in one account or split them later, but the repo does not manage multi-account plumbing.
-- You can create VPC, ECS (Fargate, Fargate Spot, EC2 capacity providers), EC2 (self-managed Kubernetes), Auto Scaling, ALB, RDS, KMS, and SSM resources in your AWS account.
+- You can create VPC, ALB, ECS (Fargate/Fargate Spot/EC2 capacity providers), EC2/Auto Scaling, ECR, RDS, KMS, IAM, SSM, CloudWatch, and Budgets resources in your AWS account.
 
 ## Trade-offs I Made
 
@@ -29,7 +29,7 @@ This repo exists to show the baseline layout I use for a single-service AWS stac
 
 ## Architecture Overview
 
-Think of it as a straight line: user -> ALB -> compute -> RDS. The ALB lives in public subnets; compute runs as ECS tasks (Fargate, Fargate Spot, or EC2 capacity providers) or a self-managed Kubernetes cluster on EC2 in private subnets. NAT gateways handle outbound internet access for compute.
+Think of it as a straight line: user -> ALB -> compute -> RDS. The ALB lives in public subnets; compute runs as ECS tasks (Fargate, Fargate Spot, or EC2 capacity providers) or a self-managed Kubernetes cluster on EC2 in private subnets. NAT gateways handle outbound internet access for compute, and interface endpoints (when enabled) keep ECR/Logs/SSM traffic inside the VPC.
 
 - Diagram and walkthrough: `docs/architecture.md`, `docs/architecture.mmd`, and optional generated `docs/architecture-aws.svg`
 - Well-Architected mapping: `docs/well-architected.md`
@@ -41,11 +41,13 @@ Think of it as a straight line: user -> ALB -> compute -> RDS. The ALB lives in 
 - ECS service in private subnets with capacity providers (Fargate default, Fargate Spot in dev, EC2 optional)
 - ECS EC2 capacity provider with a private Auto Scaling group (optional)
 - Self-managed Kubernetes on EC2 with a single control plane and worker Auto Scaling group (optional)
-- ECR repository per environment for application images
-- RDS PostgreSQL with KMS encryption and Secrets Manager for the master password
-- CloudWatch logs and a small set of alarms (ALB 5xx, ECS/EC2 CPU, RDS CPU)
-- Remote state bootstrap with S3 native locking
-- Demo Kubernetes manifests under `k8s/` (namespace, deployment, service, ingress)
+- ECR repository per environment (immutable tags, scan-on-push, lifecycle policy for untagged images)
+- RDS PostgreSQL with KMS encryption and Secrets Manager-managed master password
+- Baseline CloudWatch logs, alarms, and an environment dashboard
+- VPC endpoints for S3/DynamoDB (gateway) and optional interface endpoints (ECR/Logs/SSM)
+- AWS Budgets per environment + deploy-time cost enforcement
+- Remote state bootstrap with S3 native locking, KMS key, SNS topic, and ALB log bucket
+- Demo Kubernetes manifests under `k8s/base` and `k8s/overlays`
 
 ## Autoscaling
 
@@ -62,7 +64,7 @@ Enable or disable it with:
 
 ## Production Hardening
 
-- ALB access logs to S3 (prod default)
+- ALB access logs to S3 (prod default). Set `alb_access_logs_bucket` to the bootstrap output `alb_access_logs_bucket_name`.
 - VPC Flow Logs to CloudWatch (prod default)
 - Optional WAF association for the ALB (off by default)
 
@@ -70,12 +72,15 @@ Enable or disable it with:
 
 RDS uses native automated backups with environment-aware retention (dev 3 days, prod 7 days) and encryption at rest; prod also enforces deletion protection and requires a final snapshot on delete. You can override `db_backup_retention_period`, `db_deletion_protection`, and `db_skip_final_snapshot` per environment, but doing so reduces recoverability; AWS Backup and cross-region DR are intentionally out of scope here.
 
+RDS manages the master password and stores it in Secrets Manager. ECS tasks inject the secret ARN as `DB_SECRET` by default (the value is the JSON payload from Secrets Manager). Kubernetes secrets are not wired in by default; you need to fetch them yourself if you run `k8s_self_managed`.
+
 ## What Is Intentionally Not Included
 
 - Managed WAF rule sets, advanced edge security, or bot protection (WAF attachment is optional but not configured here)
 - Advanced autoscaling policies (multi-metric, request-based, step scaling), blue/green deployments, or canaries
 - Centralized logging or metrics beyond baseline CloudWatch alarms (ALB access logs and VPC Flow Logs are minimal, not a full log platform)
 - Multi-account orchestration or organization-level controls
+- EKS (reserved for future work and explicitly blocked today)
 
 ## How This Would Evolve in a Real Production Environment
 
@@ -98,6 +103,8 @@ If this were running a real product, I would add:
   Makefile
   docs/
   k8s/
+    base/
+    overlays/
   environments/
     dev/
     prod/
@@ -112,14 +119,16 @@ If this were running a real product, I would add:
     rds/
   bootstrap/
   tests/
+    terraform/
+  scripts/
   .github/workflows/
 ```
 
 ## Prerequisites
 
-- Terraform >= 1.6
+- Terraform >= 1.6.0
 - AWS credentials via environment variables, SSO, or profile (no hardcoded keys)
-- Permission to create VPC, ECS, EC2/Auto Scaling, ALB, RDS, KMS, SSM, and supporting resources
+- Permission to create VPC, ECS, EC2/Auto Scaling, ALB, RDS, KMS, SSM, ECR, CloudWatch, and Budget resources
 
 ## Bootstrap First
 
@@ -137,7 +146,7 @@ Use the outputs to update the backend configs:
 - `environments/dev/backend.hcl` (or start from `environments/dev/backend.hcl.example`)
 - `environments/prod/backend.hcl` (or start from `environments/prod/backend.hcl.example`)
 
-Wire notifications by setting `alarm_sns_topic_arn` in each environment `terraform.tfvars`.
+Wire notifications by setting `alarm_sns_topic_arn` in each environment `terraform.tfvars` to the bootstrap `sns_topic_arn` output.
 
 If you enabled ACM in bootstrap, set `acm_certificate_arn` from the bootstrap output.
 
@@ -148,13 +157,11 @@ HTTPS requires an ACM certificate; either supply an existing ARN or enable the o
 Example for dev:
 
 ```bash
-cd environments/dev
-terraform init -backend-config=backend.hcl
-terraform plan -var-file=terraform.tfvars
-terraform apply -var-file=terraform.tfvars
+make plan ENV=dev platform=ecs
+make apply ENV=dev platform=ecs
 ```
 
-Prod is identical with `environments/prod`.
+Prod is identical with `ENV=prod`. The Makefile targets assume `backend.hcl` and `terraform.tfvars` are already populated.
 
 ## Platform Selection
 
@@ -167,13 +174,11 @@ Set `platform` in `terraform.tfvars` to choose the compute layer:
 For Kubernetes:
 
 1) Set `platform = "k8s_self_managed"` in `environments/dev/terraform.tfvars` or `environments/prod/terraform.tfvars`.
-2) Apply the environment as usual.
-3) Use SSM to access the control plane and apply the demo manifests:
+2) Apply the environment as usual; when using the Makefile, pass `platform=k8s_self_managed` so it does not override the tfvars value.
+3) Use the `cluster_access_instructions` output to access the control plane via SSM and apply the demo manifests:
 
 ```bash
-aws ssm start-session --target <control_plane_instance_id> --region us-east-1
-sudo -i
-export KUBECONFIG=/etc/kubernetes/admin.conf
+terraform -chdir=environments/dev output -raw cluster_access_instructions
 kubectl apply -k k8s/overlays/dev
 ```
 
@@ -184,40 +189,43 @@ Use `k8s/overlays/prod` for prod.
 - HTTPS is always enabled; HTTP is allowed only when `allow_http = true` (dev only).
 - RDS master password is managed by AWS and stored in Secrets Manager.
 - ECS tasks run as a non-root user by default (`container_user`).
-- Container images default to the environment ECR repository plus `image_tag`; set `container_image` to override.
+- Container images default to the environment ECR repository plus `image_tag`; set `container_image` to override. The resolved value is in the `resolved_container_image` output.
 - `platform` selects `ecs` or `k8s_self_managed` (with `eks` reserved for future use).
-- `ecs_capacity_mode` switches between `fargate`, `fargate_spot`, and `ec2` capacity providers.
+- `ecs_capacity_mode` switches between `fargate`, `fargate_spot`, and `ec2` capacity providers; Fargate Spot in prod requires `allow_spot_in_prod = true`.
 - ECS settings are ignored when `platform = "k8s_self_managed"`.
 - ECS autoscaling is opt-in via `enable_autoscaling` and uses CPU target tracking; tune min/max/target/cooldowns per environment.
 - Fargate Spot mode uses a weighted capacity provider strategy with FARGATE fallback.
 - EC2 capacity providers use SSM by default; no public SSH ingress is configured.
 - Provide `ec2_user_data` to extend ECS container instance bootstrap when using EC2 capacity.
 - Self-managed Kubernetes uses kubeadm and a NodePort ingress behind the ALB.
-- `prevent_destroy` can be enabled in prod to protect critical resources.
+- Prod defaults enable alarms, flow logs, ALB access logs, and `prevent_destroy` for RDS.
 
 ## CI/CD
 
-GitHub Actions runs formatting, validation, linting, security checks, and tests. It is a quality gate, not a deployment pipeline.
+GitHub Actions runs `fmt-check`, `validate`, `lint`, `tfsec`, `docs-check`, and `terraform test`. An Infracost job runs on PRs when the required secrets are present, then posts a FinOps summary; CI is a quality gate, not a deployment pipeline.
 
 ## Testing
 
-`tests/terraform/network.tftest.hcl` uses Terraform test + mock provider to validate module behavior without AWS credentials.
+`make test` runs `terraform test` for bootstrap, `tests/terraform`, environments, and the core modules (network, ALB, ECS, ECS EC2 capacity, K8s EC2 infra, RDS, observability) with backendless init.
 
 ## Documentation
 
-- `docs/project-overview.md` — repository layout, root stacks, and environment model.
-- `docs/architecture.md` — architecture walkthrough and diagram.
-- `docs/architecture-aws.svg` — optional AWS icon diagram.
-- `docs/runbook.md` — operational runbook.
-- `docs/well-architected.md` — pillar mapping and trade-offs.
-- `docs/costs.md` — cost drivers and optimizations.
-- `docs/decisions.md` — key design decisions.
+- `docs/README.md` — documentation index
+- `docs/project-overview.md` — repository layout and environment model
+- `docs/architecture.md` — architecture walkthrough and diagram
+- `docs/runbook.md` — operational runbook
+- `docs/finops.md` — cost estimation and enforcement model
+- `docs/tests.md` — test coverage and how to run
+- `docs/decisions.md` — key design decisions
+- `docs/well-architected.md` — pillar mapping and trade-offs
+- `docs/costs.md` — cost drivers and optimizations
 
 ## Notes on Costs and Safety
 
 - NAT gateways, compute, and Multi-AZ RDS are the dominant costs in production.
 - Dev defaults are cost-aware (single NAT, smaller instances).
 - Use `make cost` (Infracost) for rough deltas; it requires `INFRACOST_API_KEY` and AWS read-only credentials (see `docs/costs.md`).
+- If `enforce_cost_controls = true` (default), you must provide `estimated_monthly_cost` via `TF_VAR_estimated_monthly_cost` before running plan/apply.
 - Always review changes in `prod` with `prevent_destroy = true`.
 
 ## Next Steps

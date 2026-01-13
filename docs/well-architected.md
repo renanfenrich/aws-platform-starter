@@ -7,7 +7,7 @@ This is a lightweight mapping, not a formal review. It shows how the choices in 
 What this repo covers:
 
 - Terraform for repeatable infrastructure.
-- A short runbook and CI checks for formatting, validation, linting, and security scans.
+- A short runbook and CI checks for formatting, validation, linting, docs, security scans, and tests.
 - Kubernetes access and bootstrap steps via SSM for the self-managed option.
 
 Where it stops:
@@ -21,14 +21,14 @@ What this repo covers:
 
 - Private subnets for ECS tasks (Fargate, Fargate Spot, or EC2 capacity providers) and RDS.
 - Private subnets for Kubernetes control plane and worker nodes, with no public SSH ingress.
-- TLS termination at the ALB.
+- TLS termination at the ALB with optional WAF association.
 - RDS encryption with KMS and managed master password in Secrets Manager.
-- Separate task and execution roles with explicit policies, plus an instance role with SSM access for EC2 capacity providers.
+- Separate task and execution roles with explicit policies, plus instance roles with SSM access for EC2 capacity providers.
 - Kubeadm join command stored in SSM Parameter Store and encrypted with a CMK.
 
 Where it stops:
 
-- No WAF or advanced edge controls.
+- No managed WAF rule sets or bot protection.
 - No centralized log archive or security monitoring stack.
 
 ## Reliability
@@ -52,34 +52,38 @@ Where it stops:
 What this repo covers:
 
 - Explicit sizing for ECS tasks and EC2 instance types when using EC2 capacity providers or Kubernetes nodes.
+- Optional ECS autoscaling (CPU target tracking) for simple elasticity.
 - Basic ALB health checks for service readiness.
 
 Where it stops:
 
-- No autoscaling policies or load testing.
-- No performance profiling or tuning beyond defaults.
+- No load testing or performance profiling beyond defaults.
+- No advanced autoscaling policies or request-based scaling.
 
 ## Cost Optimization
 
 What this repo covers:
 
-- Single NAT in dev, Fargate Spot defaults in dev, and smaller compute sizes to control spend.
-- Configurable log retention and Multi-AZ toggles.
+- Cost posture enforcement (dev = cost optimized, prod = stability first).
+- Infracost estimates + deploy-time cost enforcement.
+- AWS Budgets per environment with warning and forecasted thresholds.
+- Dev defaults optimized for lower spend (single NAT, Fargate Spot, smaller instance sizes).
 
 Where it stops:
 
-- No budgets, cost alerts, or anomaly detection.
 - No reserved capacity or savings plan strategy.
+- No automated rightsizing or scheduled scaling.
 
 ## Sustainability
 
 What this repo covers:
 
 - Smaller defaults in dev and explicit sizing controls.
+- Spot-first defaults in dev to avoid always-on overprovisioning.
 
 Where it stops:
 
-- No scheduled scaling or rightsizing automation.
+- No scheduled scaling or automated idle-time shutdowns.
 
 ## Good Enough for This Scope
 
@@ -87,7 +91,7 @@ For a focused example, I consider this baseline sufficient: repeatable IaC, secu
 
 ## What I Would Add in a Real Company Environment
 
-- WAF, access logs, and a central logging/metrics platform.
+- Managed WAF rules, centralized log/metrics pipelines, and tracing.
 - Deployment automation with safe rollout and rollback strategies.
 - Autoscaling and capacity planning based on real load.
 - Multi-account isolation, backup policies, and DR planning.

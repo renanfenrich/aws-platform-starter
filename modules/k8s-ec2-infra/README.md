@@ -1,6 +1,6 @@
 # Kubernetes EC2 Infrastructure Module
 
-This module provisions a minimal self-managed Kubernetes foundation on EC2: a single control plane instance, a worker Auto Scaling group, and supporting IAM, KMS, and security groups.
+This module provisions a minimal self-managed Kubernetes foundation on EC2: a single control plane instance, a worker Auto Scaling group, and supporting IAM, KMS, and security groups. It renders bootstrap scripts for kubeadm, installs flannel and ingress-nginx, and publishes the join command to SSM.
 
 ## Why This Module Exists
 

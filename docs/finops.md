@@ -5,18 +5,18 @@ This repo treats cost as a system property: estimate before deploy, enforce duri
 ## Cost Lifecycle
 
 ### Pre-deploy: estimate
-- CI runs Infracost across `bootstrap/`, `environments/dev`, and `environments/prod` using `infracost.yml`.
+- CI runs Infracost across `bootstrap/`, `environments/dev`, and `environments/prod` using `infracost.yml` when the required secrets are present.
 - Each environment includes `infracost.tfvars` to disable deploy-time enforcement while Infracost runs, keeping estimates deterministic.
-- The JSON report is stored as a CI artifact and summarized in the PR job output.
+- The PR job writes a summary table via `scripts/finops-ci.sh` and uploads the JSON report as an artifact.
 
 ### Deploy-time: enforce
-- `estimated_monthly_cost` is a required input for `terraform plan/apply` when enforcement is enabled.
+- `enforce_cost_controls` defaults to `true` in the environments; when it is enabled, `estimated_monthly_cost` must be provided.
 - The deploy guardrail compares `estimated_monthly_cost` against the hard budget threshold and blocks the run when it is exceeded.
-- This keeps Terraform responsible for enforcement while CI remains responsible for estimation.
+- This keeps Terraform responsible for enforcement while CI remains responsible for estimation. To bypass enforcement, set `enforce_cost_controls = false` explicitly.
 
 ### Post-deploy: monitor
 - Every environment creates an AWS Budget with warning and forecasted thresholds.
-- Budget alerts route to email and/or SNS, using the same SNS topic used for infrastructure alarms when provided.
+- Budget alerts route to email and/or SNS, using `budget_notification_emails` and/or `budget_sns_topic_arn` (which defaults to `alarm_sns_topic_arn` when set).
 - Anomaly detection is not configured by default; add it only if you want to manage the extra signal and cost category setup.
 
 ## Environment Cost Rules
@@ -58,10 +58,10 @@ Terraform tests assert:
 - Budgets exist per environment.
 - Required tags are present on representative resources.
 - Cost posture rules and spot usage restrictions are enforced.
-- Deploy-time enforcement blocks when estimates exceed hard limits.
+- Deploy-time cost enforcement blocks when estimates exceed hard limits.
 
 ## Known Limitations
 
 - Infracost provides estimates, not exact bills; usage-based charges still require monitoring.
 - AWS cost allocation tags must be manually activated once per account.
-- Budget enforcement blocks deploys only when `estimated_monthly_cost` is provided.
+- Budget enforcement blocks deploys only when `estimated_monthly_cost` is provided and `enforce_cost_controls = true`.

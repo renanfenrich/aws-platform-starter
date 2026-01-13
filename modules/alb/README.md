@@ -1,6 +1,6 @@
 # ALB Module
 
-This module owns the public edge: an internet-facing ALB, a target group, listeners, and the security group rules around them. It expects the VPC, subnets, and ACM certificate to be provided by the environment, and it does not manage DNS or certificates.
+This module owns the public edge: an internet-facing ALB, a target group, listeners, optional access logs, optional WAF association, and the security group rules around them. It expects the VPC, subnets, and ACM certificate to be provided by the environment, and it does not manage DNS or certificates.
 
 ## Why This Module Exists
 

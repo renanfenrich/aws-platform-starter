@@ -1,6 +1,6 @@
 # ECS Module
 
-This module runs the application as an ECS Fargate service. It creates the cluster, task definition, service, IAM roles, and log group. Networking and load balancer wiring are passed in from the environment. It can optionally enable ECS service autoscaling using CPU target tracking.
+This module runs the application as an ECS service (Fargate or EC2). It creates the cluster, task definition, service, IAM roles, and log group. Networking and load balancer wiring are passed in from the environment. It can optionally enable ECS service autoscaling using CPU target tracking.
 
 ## Why This Module Exists
 

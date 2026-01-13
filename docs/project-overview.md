@@ -13,6 +13,9 @@ Documentation is treated as part of the system: architecture, runbook, and decis
 .
 ├── AGENTS.md
 ├── README.md
+├── SECURITY.md
+├── CONTRIBUTING.md
+├── LICENSE
 ├── Makefile
 ├── bootstrap
 │   ├── README.md
@@ -21,6 +24,7 @@ Documentation is treated as part of the system: architecture, runbook, and decis
 │   ├── outputs.tf
 │   ├── versions.tf
 │   ├── provider.tf
+│   ├── terraform.tfvars
 │   ├── terraform.tfvars.example
 │   └── bootstrap.tftest.hcl
 ├── environments
@@ -32,8 +36,9 @@ Documentation is treated as part of the system: architecture, runbook, and decis
 │   │   ├── variables.tf
 │   │   ├── outputs.tf
 │   │   ├── versions.tf
-│   │   ├── stack.tftest.hcl
-│   │   └── infracost.tfvars
+│   │   ├── terraform.tfvars
+│   │   ├── infracost.tfvars
+│   │   └── stack.tftest.hcl
 │   └── prod
 │       ├── backend.tf
 │       ├── backend.hcl
@@ -42,14 +47,16 @@ Documentation is treated as part of the system: architecture, runbook, and decis
 │       ├── variables.tf
 │       ├── outputs.tf
 │       ├── versions.tf
-│       ├── stack.tftest.hcl
-│       └── infracost.tfvars
+│       ├── terraform.tfvars
+│       ├── infracost.tfvars
+│       └── stack.tftest.hcl
 ├── modules
 │   ├── alb
 │   │   ├── main.tf
 │   │   ├── variables.tf
 │   │   ├── outputs.tf
 │   │   ├── versions.tf
+│   │   ├── alb.tftest.hcl
 │   │   └── README.md
 │   ├── budget
 │   │   ├── main.tf
@@ -98,6 +105,7 @@ Documentation is treated as part of the system: architecture, runbook, and decis
 │   │   ├── variables.tf
 │   │   ├── outputs.tf
 │   │   ├── versions.tf
+│   │   ├── observability.tftest.hcl
 │   │   └── README.md
 │   └── rds
 │       ├── main.tf
@@ -107,16 +115,17 @@ Documentation is treated as part of the system: architecture, runbook, and decis
 │       ├── rds.tftest.hcl
 │       └── README.md
 ├── docs
+│   ├── README.md
+│   ├── project-overview.md
 │   ├── architecture.md
 │   ├── architecture.mmd
-│   ├── decisions.md
+│   ├── runbook.md
 │   ├── finops.md
 │   ├── costs.md
-│   ├── runbook.md
 │   ├── tests.md
+│   ├── decisions.md
 │   ├── well-architected.md
-│   ├── README.md
-│   └── project-overview.md
+│   └── interview-talk-track.md
 ├── tests
 │   └── terraform
 │       ├── main.tf
@@ -124,25 +133,24 @@ Documentation is treated as part of the system: architecture, runbook, and decis
 │       ├── compute_mode.tftest.hcl
 │       └── network.tftest.hcl
 ├── k8s
-│   ├── namespace.yaml
-│   ├── deployment.yaml
-│   ├── service.yaml
-│   └── ingress.yaml
+│   ├── README.md
+│   ├── base
+│   └── overlays
+├── scripts
+│   └── finops-ci.sh
 ├── .github
 │   └── workflows
 │       └── ci.yml
 ├── infracost.yml
 ├── infracost-usage-bootstrap.yml
 ├── infracost-usage-dev.yml
-├── infracost-usage-prod.yml
-└── scripts
-    └── finops-ci.sh
+└── infracost-usage-prod.yml
 ```
 
-Note: local state, lockfiles, generated caches, and environment-specific values are excluded (for example: `.terraform/`, `.infracost/`, `terraform.tfstate*`, and `terraform.tfvars`). Non-infra docs like interview notes or social drafts are also omitted for focus.
+Note: local caches and state (for example: `.terraform/`, `.infracost/`, and `terraform.tfstate*`) are ignored by git and are not part of the repo. The committed `terraform.tfvars` and `backend.hcl` files are placeholders; replace placeholder values (for example `CHANGE_ME` or zeroed ARNs) with your own.
 
 ## Key Directories and Responsibilities
-- `bootstrap/`: One-time/account prerequisites (state bucket + logging bucket, KMS key, SNS topic, optional ACM). Outputs feed `backend.hcl` and environment notifications/certificates.
+- `bootstrap/`: One-time/account prerequisites (state bucket + logging bucket, ALB access log bucket, KMS key, SNS topic, optional ACM). Outputs feed `backend.hcl` and environment notifications/certificates.
 - `environments/dev/`: Dev root stack wiring modules together, plus environment-specific tfvars/backends and stack tests.
 - `environments/prod/`: Prod root stack with the same module wiring as dev, but stricter defaults for resilience and protection.
 - `modules/`: Focused building blocks with single responsibilities.
@@ -152,25 +160,30 @@ Note: local state, lockfiles, generated caches, and environment-specific values 
 - `modules/ecs-ec2-capacity`: ECS EC2 capacity provider backed by an Auto Scaling group.
 - `modules/ecr`: ECR repository for application images, scanning, and lifecycle policy.
 - `modules/k8s-ec2-infra`: Self-managed Kubernetes on EC2 (control plane + workers, IAM, KMS, SGs).
-- `modules/network`: VPC, subnets, routing, NAT gateways, and optional flow logs.
-- `modules/observability`: Baseline CloudWatch alarms for ALB, ECS/EC2, and RDS.
+- `modules/network`: VPC, subnets, routing, NAT gateways, VPC endpoints, and optional flow logs.
+- `modules/observability`: Baseline CloudWatch alarms + dashboard for ALB, ECS/EC2, and RDS.
 - `modules/rds`: Encrypted PostgreSQL instance, subnet group, KMS key, and SG rules.
 - `docs/`: Architecture, decisions, runbook, FinOps guidance, and test strategy.
 - `tests/terraform/`: Terraform test suites covering selectors and module behavior without a live backend.
-- `k8s/`: Demo manifests for the self-managed Kubernetes option.
+- `k8s/`: Demo manifests (Kustomize base + overlays) for the self-managed Kubernetes option.
+- `scripts/`: CI helpers (FinOps summary).
 
 ## Environment Model
 Dev and prod are separate root stacks with environment-scoped configuration files.
 Defaults in tfvars reinforce cost and safety posture differences:
-- Dev emphasizes cost optimization (spot-capable ECS, single NAT gateway, HTTP listener allowed, shorter retention).
-- Prod favors stability (on-demand ECS by default, multi-AZ RDS, deletion protection, prevent_destroy).
+- Dev emphasizes cost optimization (Fargate Spot default, single NAT gateway, HTTP listener allowed, shorter log retention, alarms optional).
+- Prod favors stability (Fargate default, multi-NAT, Multi-AZ RDS, deletion protection + final snapshot, alarms enforced, `prevent_destroy = true`).
+- Interface VPC endpoints and VPC Flow Logs are enabled by default in prod and opt-in in dev.
 
+## Selectors and Modes
 Platform selection is a single variable shared by both environments:
-- Defined in `environments/dev/variables.tf` and `environments/prod/variables.tf`.
 - Allowed values: `ecs`, `k8s_self_managed`, `eks` (reserved and blocked by preconditions).
 - Defaults: `ecs` in both environment tfvars.
 - One active platform per environment; ECS and K8s modules are mutually exclusive by design.
 
+ECS capacity modes are another guarded selector:
+- `ecs_capacity_mode`: `fargate`, `fargate_spot`, or `ec2`.
+- Fargate Spot in prod requires `allow_spot_in_prod = true`.
 
 ## Portfolio Commit Workflow
 This repo is used as a portfolio artifact, so commit history matters as much as the code.
@@ -179,15 +192,20 @@ When curating or rebuilding history, follow these defaults:
 - Keep commits coherent and ordered; each commit should be buildable when feasible.
 - Prefer folder-based staging; use `git add -p` only when a file mixes concerns.
 - Run relevant Makefile checks before each commit (fmt/validate/lint/docs-check/test).
-- Never commit local configs, state, or secrets (for example: `backend.hcl`, `.terraform/`, `terraform.tfstate*`).
-- Close by reviewing the git log for senior signal and refreshing `docs/interview-talk-track.md` for Project 1.
+- Do not commit real account IDs, ARNs, state, or secrets; the placeholder tfvars/backends are safe to keep.
 
 ## How to Navigate and Run
 - Format: `make fmt`
+- Format (check): `make fmt-check`
 - Validate (backendless init): `make validate`
 - Lint: `make lint`
+- Security scan: `make security`
+- Docs generation/check: `make docs`, `make docs-check`
+- Cost estimate: `make cost`
 - Tests: `make test`
-- Plan dev (requires populated `backend.hcl`): `make plan ENV=dev platform=ecs`
-- Plan prod (requires populated `backend.hcl`): `make plan ENV=prod platform=ecs`
+- Plan dev: `make plan ENV=dev platform=ecs`
+- Apply dev: `make apply ENV=dev platform=ecs`
+- Plan prod: `make plan ENV=prod platform=ecs`
+- Apply prod: `make apply ENV=prod platform=ecs`
 
 The plan/apply workflow expects bootstrap outputs to be wired into each environment backend config and tfvars before running.
