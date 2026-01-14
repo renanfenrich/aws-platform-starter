@@ -19,7 +19,7 @@ variable "repository_name_override" {
   default     = null
 
   validation {
-    condition     = var.repository_name_override == null || length(trimspace(var.repository_name_override)) > 0
+    condition     = var.repository_name_override == null ? true : length(trimspace(var.repository_name_override)) > 0
     error_message = "repository_name_override must be null or a non-empty string."
   }
 }
