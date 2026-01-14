@@ -62,10 +62,10 @@ locals {
     TagKeyValue = [format("Environment$%s", var.environment)]
   }
   budget_sns_topic_arn     = length(trimspace(var.budget_sns_topic_arn)) > 0 ? var.budget_sns_topic_arn : var.alarm_sns_topic_arn
-  budget_hard_limit_usd     = var.budget_limit_usd * (var.budget_hard_limit_percent / 100)
-  estimated_cost_label      = var.estimated_monthly_cost != null ? format("%.2f", var.estimated_monthly_cost) : "unset"
-  container_image_input     = var.container_image == null ? "" : trimspace(var.container_image)
-  container_image_override  = length(local.container_image_input) > 0
+  budget_hard_limit_usd    = var.budget_limit_usd * (var.budget_hard_limit_percent / 100)
+  estimated_cost_label     = var.estimated_monthly_cost != null ? format("%.2f", var.estimated_monthly_cost) : "unset"
+  container_image_input    = var.container_image == null ? "" : trimspace(var.container_image)
+  container_image_override = length(local.container_image_input) > 0
   tags = merge(
     {
       Project     = var.project_name
