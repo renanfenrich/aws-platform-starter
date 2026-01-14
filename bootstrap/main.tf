@@ -5,8 +5,8 @@ locals {
   alb_access_logs_bucket_name_input = var.alb_access_logs_bucket_name == null ? "" : trimspace(var.alb_access_logs_bucket_name)
   log_bucket_name                   = length(local.log_bucket_name_input) > 0 ? var.log_bucket_name : "${var.state_bucket_name}-logs"
   alb_access_logs_bucket_name       = length(local.alb_access_logs_bucket_name_input) > 0 ? var.alb_access_logs_bucket_name : lower("${var.project_name}-${var.environment}-${data.aws_caller_identity.current.account_id}-${var.region_short}-alb-logs")
-  name_prefix                 = "${var.project_name}-${var.environment}"
-  sns_topic_name              = "${local.name_prefix}-${var.region_short}-infra-alerts"
+  name_prefix                       = "${var.project_name}-${var.environment}"
+  sns_topic_name                    = "${local.name_prefix}-${var.region_short}-infra-alerts"
   sns_emails = toset([
     for email in var.sns_email_subscriptions : trimspace(email)
     if length(trimspace(email)) > 0
