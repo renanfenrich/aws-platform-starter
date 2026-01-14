@@ -10,6 +10,7 @@ Start with `project-overview.md` for the repo map and environment model, then `a
 - `finops.md` — cost estimation, enforcement, and monitoring model.
 - `costs.md` — cost drivers and optimizations.
 - `tests.md` — test coverage and how to run.
+- `github-actions.md` — GitHub Actions setup and required secrets.
 - `decisions.md` — key design decisions.
 - `well-architected.md` — AWS Well-Architected mapping.
 - `interview-talk-track.md` — interview notes and Q&A.

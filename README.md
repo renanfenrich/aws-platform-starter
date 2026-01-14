@@ -202,7 +202,7 @@ Use `k8s/overlays/prod` for prod.
 
 ## CI/CD
 
-GitHub Actions runs `fmt-check`, `validate`, `lint`, `tfsec`, `docs-check`, and `terraform test`. An Infracost job runs on PRs when the required secrets are present, then posts a FinOps summary; CI is a quality gate, not a deployment pipeline.
+GitHub Actions runs `fmt-check`, `validate`, `lint`, `tfsec`, `docs-check`, and `terraform test`. An Infracost job runs on PRs when the required secrets are present, then posts a FinOps summary; CI is a quality gate, not a deployment pipeline. Repo setup steps and required secrets are documented in `docs/github-actions.md`.
 
 ## Testing
 
