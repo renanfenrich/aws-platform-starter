@@ -1,8 +1,10 @@
 data "aws_caller_identity" "current" {}
 
 locals {
-  log_bucket_name             = var.log_bucket_name != null && length(trimspace(var.log_bucket_name)) > 0 ? var.log_bucket_name : "${var.state_bucket_name}-logs"
-  alb_access_logs_bucket_name = var.alb_access_logs_bucket_name != null && length(trimspace(var.alb_access_logs_bucket_name)) > 0 ? var.alb_access_logs_bucket_name : lower("${var.project_name}-${var.environment}-${data.aws_caller_identity.current.account_id}-${var.region_short}-alb-logs")
+  log_bucket_name_input             = var.log_bucket_name == null ? "" : trimspace(var.log_bucket_name)
+  alb_access_logs_bucket_name_input = var.alb_access_logs_bucket_name == null ? "" : trimspace(var.alb_access_logs_bucket_name)
+  log_bucket_name                   = length(local.log_bucket_name_input) > 0 ? var.log_bucket_name : "${var.state_bucket_name}-logs"
+  alb_access_logs_bucket_name       = length(local.alb_access_logs_bucket_name_input) > 0 ? var.alb_access_logs_bucket_name : lower("${var.project_name}-${var.environment}-${data.aws_caller_identity.current.account_id}-${var.region_short}-alb-logs")
   name_prefix                 = "${var.project_name}-${var.environment}"
   sns_topic_name              = "${local.name_prefix}-${var.region_short}-infra-alerts"
   sns_emails = toset([
