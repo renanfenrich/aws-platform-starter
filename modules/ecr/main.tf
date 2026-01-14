@@ -1,5 +1,6 @@
 locals {
-  repository_name = var.repository_name_override != null && length(trimspace(var.repository_name_override)) > 0 ? var.repository_name_override : "${var.name_prefix}-${var.service_name}"
+  repository_name_input = var.repository_name_override == null ? "" : trimspace(var.repository_name_override)
+  repository_name       = length(local.repository_name_input) > 0 ? var.repository_name_override : "${var.name_prefix}-${var.service_name}"
 }
 
 resource "aws_ecr_repository" "this" {
