@@ -126,7 +126,7 @@ If this were running a real product, I would add:
 
 ## Prerequisites
 
-- Terraform >= 1.6.0
+- Terraform >= 1.11.0
 - AWS credentials via environment variables, SSO, or profile (no hardcoded keys)
 - Permission to create VPC, ECS, EC2/Auto Scaling, ALB, RDS, KMS, SSM, ECR, CloudWatch, and Budget resources
 

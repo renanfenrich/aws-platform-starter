@@ -97,11 +97,6 @@ variable "acm_domain_name" {
   type        = string
   description = "Optional domain name for ACM certificate (requires acm_zone_id)."
   default     = ""
-
-  validation {
-    condition     = (length(trimspace(var.acm_domain_name)) == 0 && length(trimspace(var.acm_zone_id)) == 0) || (length(trimspace(var.acm_domain_name)) > 0 && length(trimspace(var.acm_zone_id)) > 0)
-    error_message = "acm_domain_name and acm_zone_id must be set together to enable ACM DNS validation."
-  }
 }
 
 variable "acm_zone_id" {
