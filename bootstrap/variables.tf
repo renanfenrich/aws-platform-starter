@@ -50,7 +50,7 @@ variable "alb_access_logs_bucket_name" {
   default     = null
 
   validation {
-    condition     = var.alb_access_logs_bucket_name == null || length(trimspace(var.alb_access_logs_bucket_name)) > 0
+    condition     = var.alb_access_logs_bucket_name == null ? true : length(trimspace(var.alb_access_logs_bucket_name)) > 0
     error_message = "alb_access_logs_bucket_name must be null or a non-empty string."
   }
 }
