@@ -111,6 +111,62 @@ variable "acm_subject_alternative_names" {
   default     = []
 }
 
+variable "enable_github_oidc_role" {
+  type        = bool
+  description = "Enable the GitHub Actions OIDC provider and IAM role."
+  default     = false
+}
+
+variable "github_oidc_role_name" {
+  type        = string
+  description = "Optional name for the GitHub Actions OIDC role."
+  default     = null
+
+  validation {
+    condition     = var.github_oidc_role_name == null ? true : length(trimspace(var.github_oidc_role_name)) > 0
+    error_message = "github_oidc_role_name must be null or a non-empty string."
+  }
+}
+
+variable "github_oidc_subjects" {
+  type        = list(string)
+  description = "GitHub Actions subject claims allowed to assume the OIDC role."
+  default     = []
+
+  validation {
+    condition = alltrue([
+      for subject in var.github_oidc_subjects : length(trimspace(subject)) > 0
+    ])
+    error_message = "github_oidc_subjects must not contain empty values."
+  }
+}
+
+variable "github_oidc_role_policy_arns" {
+  type        = list(string)
+  description = "IAM policy ARNs to attach to the GitHub Actions OIDC role."
+  default     = []
+
+  validation {
+    condition = alltrue([
+      for arn in var.github_oidc_role_policy_arns : length(trimspace(arn)) > 0
+    ])
+    error_message = "github_oidc_role_policy_arns must not contain empty values."
+  }
+}
+
+variable "github_oidc_thumbprints" {
+  type        = list(string)
+  description = "Thumbprints for the GitHub Actions OIDC provider."
+  default     = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
+
+  validation {
+    condition = alltrue([
+      for thumbprint in var.github_oidc_thumbprints : length(trimspace(thumbprint)) > 0
+    ])
+    error_message = "github_oidc_thumbprints must not contain empty values."
+  }
+}
+
 variable "tags" {
   type        = map(string)
   description = "Tags considered for bootstrap resources."

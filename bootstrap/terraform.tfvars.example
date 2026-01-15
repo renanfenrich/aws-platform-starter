@@ -17,6 +17,13 @@ acm_domain_name = ""
 acm_zone_id     = ""
 acm_subject_alternative_names = []
 
+# Optional GitHub Actions OIDC role for CI.
+enable_github_oidc_role = false
+github_oidc_role_name   = null
+github_oidc_subjects    = []
+github_oidc_role_policy_arns = []
+github_oidc_thumbprints = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
+
 force_destroy        = false
 kms_deletion_window_in_days = 30
 

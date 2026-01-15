@@ -11,8 +11,10 @@ locals {
     for email in var.sns_email_subscriptions : trimspace(email)
     if length(trimspace(email)) > 0
   ])
-  create_acm_certificate = length(trimspace(var.acm_domain_name)) > 0
-  create_acm_validation  = local.create_acm_certificate && length(trimspace(var.acm_zone_id)) > 0
+  create_acm_certificate      = length(trimspace(var.acm_domain_name)) > 0
+  create_acm_validation       = local.create_acm_certificate && length(trimspace(var.acm_zone_id)) > 0
+  github_oidc_role_name_input = var.github_oidc_role_name == null ? "" : trimspace(var.github_oidc_role_name)
+  github_oidc_role_name       = length(local.github_oidc_role_name_input) > 0 ? var.github_oidc_role_name : "${local.name_prefix}-${var.region_short}-github-oidc"
 }
 
 data "aws_iam_policy_document" "state_kms" {
@@ -447,4 +449,62 @@ resource "aws_acm_certificate_validation" "app" {
 
   certificate_arn         = aws_acm_certificate.app[0].arn
   validation_record_fqdns = [for record in aws_route53_record.acm_validation : record.fqdn]
+}
+
+resource "aws_iam_openid_connect_provider" "github_oidc" {
+  count = var.enable_github_oidc_role ? 1 : 0
+
+  url             = "https://token.actions.githubusercontent.com"
+  client_id_list  = ["sts.amazonaws.com"]
+  thumbprint_list = var.github_oidc_thumbprints
+
+  tags = merge(var.tags, {
+    Name = "${local.name_prefix}-${var.region_short}-github-oidc-provider"
+  })
+}
+
+data "aws_iam_policy_document" "github_oidc_assume_role" {
+  count = var.enable_github_oidc_role ? 1 : 0
+
+  statement {
+    sid     = "AllowGitHubActionsOidc"
+    effect  = "Allow"
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type        = "Federated"
+      identifiers = [aws_iam_openid_connect_provider.github_oidc[0].arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringLike"
+      variable = "token.actions.githubusercontent.com:sub"
+      values   = var.github_oidc_subjects
+    }
+  }
+}
+
+resource "aws_iam_role" "github_oidc" {
+  count = var.enable_github_oidc_role ? 1 : 0
+
+  name               = local.github_oidc_role_name
+  assume_role_policy = data.aws_iam_policy_document.github_oidc_assume_role[0].json
+  description        = "GitHub Actions OIDC role for CI workflows."
+
+  tags = merge(var.tags, {
+    Name = local.github_oidc_role_name
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "github_oidc" {
+  for_each = var.enable_github_oidc_role ? toset(var.github_oidc_role_policy_arns) : toset([])
+
+  role       = aws_iam_role.github_oidc[0].name
+  policy_arn = each.value
 }

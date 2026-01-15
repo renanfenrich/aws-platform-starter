@@ -21,7 +21,18 @@ If `INFRACOST_API_KEY` is missing, or AWS credentials are not set, the Infracost
 
 ## AWS OIDC Role (Recommended)
 
-Create an IAM OIDC provider for `token.actions.githubusercontent.com` with audience `sts.amazonaws.com`, then create a role that GitHub Actions can assume and attach a read-only policy appropriate for cost estimation.
+The bootstrap stack can create the OIDC provider and role. Enable it and scope the subjects to the repo/refs you expect:
+
+```hcl
+enable_github_oidc_role    = true
+github_oidc_subjects       = ["repo:OWNER/REPO:pull_request", "repo:OWNER/REPO:ref:refs/heads/main"]
+github_oidc_role_policy_arns = ["arn:aws:iam::ACCOUNT_ID:policy/ci-readonly"]
+```
+
+Apply bootstrap, then set `AWS_ROLE_ARN` to the `github_oidc_role_arn` output.
+If GitHub rotates certificates, update `github_oidc_thumbprints` in bootstrap.
+
+If you cannot use bootstrap, create an IAM OIDC provider for `token.actions.githubusercontent.com` with audience `sts.amazonaws.com`, then create a role that GitHub Actions can assume and attach a least-privilege policy appropriate for cost estimation.
 
 Example trust policy (adjust `ACCOUNT_ID`, `OWNER`, `REPO`, and branch name):
 

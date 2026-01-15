@@ -9,6 +9,7 @@ I keep bootstrap separate to avoid circular dependencies. This stack creates the
 - S3 bucket for ALB access logs (SSE-KMS, lifecycle rules, restricted delivery policy).
 - KMS key for state, logs, and SNS encryption.
 - SNS topic for infrastructure notifications (optional email subscriptions).
+- Optional GitHub Actions OIDC provider and IAM role for CI.
 - Optional ACM certificate with DNS validation when a hosted zone ID is supplied.
 
 ## Usage
@@ -40,6 +41,8 @@ terraform -chdir=bootstrap apply -var-file=terraform.tfvars
 
 7) For ALB access logs, set `alb_access_logs_bucket` in the prod environment `terraform.tfvars` to the `alb_access_logs_bucket_name` output.
 
+8) If you enabled the GitHub Actions OIDC role, set the repo secret `AWS_ROLE_ARN` to `github_oidc_role_arn`.
+
 ## Notes
 
 - The state bucket has versioning, CMK encryption, access logging, and public access blocking enabled.
@@ -51,6 +54,9 @@ terraform -chdir=bootstrap apply -var-file=terraform.tfvars
 - Restrict ALB log delivery to specific load balancers by setting `alb_access_logs_source_arns` after the ALB exists.
 - SNS topic name is `${project_name}-${environment}-${region_short}-infra-alerts`.
 - SNS email subscriptions require confirmation from each recipient.
+- The GitHub Actions OIDC role is opt-in; set `enable_github_oidc_role` and scope access with `github_oidc_subjects`.
+- The OIDC role name defaults to `${project_name}-${environment}-${region_short}-github-oidc` unless overridden.
+- Attach permissions via `github_oidc_role_policy_arns`; the role has no permissions otherwise.
 - Route53 hosted zones are not created here; supply an existing hosted zone ID to enable ACM DNS validation.
 
 ## Destroy (use caution)

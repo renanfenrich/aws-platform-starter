@@ -27,3 +27,18 @@ output "acm_certificate_arn" {
   description = "ACM certificate ARN when created (null if not enabled)."
   value       = length(aws_acm_certificate.app) > 0 ? aws_acm_certificate.app[0].arn : null
 }
+
+output "github_oidc_provider_arn" {
+  description = "GitHub Actions OIDC provider ARN when enabled (null if not enabled)."
+  value       = try(aws_iam_openid_connect_provider.github_oidc[0].arn, null)
+}
+
+output "github_oidc_role_name" {
+  description = "GitHub Actions OIDC role name when enabled (null if not enabled)."
+  value       = try(aws_iam_role.github_oidc[0].name, null)
+}
+
+output "github_oidc_role_arn" {
+  description = "GitHub Actions OIDC role ARN when enabled (null if not enabled)."
+  value       = try(aws_iam_role.github_oidc[0].arn, null)
+}
