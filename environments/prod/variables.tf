@@ -551,6 +551,95 @@ variable "log_retention_in_days" {
   default     = 30
 }
 
+variable "enable_serverless_api" {
+  type        = bool
+  description = "Enable the optional API Gateway + Lambda serverless API."
+  default     = false
+}
+
+variable "serverless_api_log_retention_days" {
+  type        = number
+  description = "Retention for serverless API logs."
+  default     = 90
+
+  validation {
+    condition = contains([
+      1,
+      3,
+      5,
+      7,
+      14,
+      30,
+      60,
+      90,
+      120,
+      150,
+      180,
+      365,
+      400,
+      545,
+      731,
+      1827,
+      3653
+    ], var.serverless_api_log_retention_days)
+    error_message = "serverless_api_log_retention_days must be a valid CloudWatch Logs retention value."
+  }
+}
+
+variable "serverless_api_enable_xray" {
+  type        = bool
+  description = "Enable X-Ray tracing for the serverless API."
+  default     = false
+}
+
+variable "serverless_api_cors_allowed_origins" {
+  type        = list(string)
+  description = "Allowed CORS origins for the serverless API (empty list disables CORS)."
+  default     = []
+
+  validation {
+    condition = alltrue([
+      for origin in var.serverless_api_cors_allowed_origins : length(trimspace(origin)) > 0
+    ])
+    error_message = "serverless_api_cors_allowed_origins must not contain empty values."
+  }
+}
+
+variable "serverless_api_additional_route_keys" {
+  type        = list(string)
+  description = "Additional serverless API route keys (for example, GET /info)."
+  default     = []
+
+  validation {
+    condition = alltrue([
+      for route in var.serverless_api_additional_route_keys : length(trimspace(route)) > 0
+    ])
+    error_message = "serverless_api_additional_route_keys must not contain empty values."
+  }
+}
+
+variable "serverless_api_enable_rds_access" {
+  type        = bool
+  description = "Allow the serverless API Lambda to reach RDS on port 5432."
+  default     = false
+
+  validation {
+    condition     = !var.serverless_api_enable_rds_access || var.enable_serverless_api
+    error_message = "serverless_api_enable_rds_access requires enable_serverless_api to be true."
+  }
+}
+
+variable "serverless_api_rds_secret_arn" {
+  type        = string
+  description = "Optional Secrets Manager ARN passed to the serverless API Lambda."
+  default     = null
+
+  validation {
+    condition     = var.serverless_api_rds_secret_arn == null || length(trimspace(var.serverless_api_rds_secret_arn)) > 0
+    error_message = "serverless_api_rds_secret_arn must be null or a non-empty string."
+  }
+}
+
 variable "ec2_instance_type" {
   type        = string
   description = "EC2 instance type for ECS capacity provider instances."

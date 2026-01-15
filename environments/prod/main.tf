@@ -140,6 +140,24 @@ module "network" {
   tags                        = local.tags
 }
 
+module "serverless_api" {
+  count  = var.enable_serverless_api ? 1 : 0
+  source = "../../modules/apigw-lambda"
+
+  name_prefix           = local.name_prefix
+  environment           = var.environment
+  vpc_id                = module.network.vpc_id
+  vpc_subnet_ids        = module.network.private_subnet_ids
+  log_retention_days    = var.serverless_api_log_retention_days
+  enable_xray           = var.serverless_api_enable_xray
+  cors_allowed_origins  = var.serverless_api_cors_allowed_origins
+  additional_route_keys = var.serverless_api_additional_route_keys
+  enable_rds_access     = var.serverless_api_enable_rds_access
+  rds_security_group_id = var.serverless_api_enable_rds_access ? module.rds.db_security_group_id : null
+  rds_secret_arn        = var.serverless_api_rds_secret_arn
+  tags                  = local.tags
+}
+
 resource "aws_security_group" "app" {
   count = local.platform_is_ecs ? 1 : 0
 
@@ -204,32 +222,33 @@ module "alb" {
 module "rds" {
   source = "../../modules/rds"
 
-  name_prefix                     = local.name_prefix
-  vpc_id                          = module.network.vpc_id
-  private_subnet_ids              = module.network.private_subnet_ids
-  app_security_group_id           = local.platform_is_k8s ? module.k8s_ec2_infra[0].worker_security_group_id : local.platform_is_ecs ? aws_security_group.app[0].id : "sg-00000000000000000"
-  db_name                         = var.db_name
-  db_username                     = var.db_username
-  db_port                         = var.db_port
-  engine                          = var.db_engine
-  engine_version                  = var.db_engine_version
-  instance_class                  = var.db_instance_class
-  allocated_storage               = var.db_allocated_storage
-  max_allocated_storage           = var.db_max_allocated_storage
-  storage_type                    = var.db_storage_type
-  multi_az                        = var.db_multi_az
-  backup_retention_period         = var.db_backup_retention_period
-  maintenance_window              = var.db_maintenance_window
-  backup_window                   = var.db_backup_window
-  deletion_protection             = var.db_deletion_protection
-  skip_final_snapshot             = var.db_skip_final_snapshot
-  final_snapshot_identifier       = var.db_final_snapshot_identifier
-  apply_immediately               = var.db_apply_immediately
-  publicly_accessible             = false
-  enabled_cloudwatch_logs_exports = var.db_log_exports
-  kms_deletion_window_in_days     = var.kms_deletion_window_in_days
-  prevent_destroy                 = var.prevent_destroy
-  tags                            = local.tags
+  name_prefix                           = local.name_prefix
+  vpc_id                                = module.network.vpc_id
+  private_subnet_ids                    = module.network.private_subnet_ids
+  app_security_group_id                 = local.platform_is_k8s ? module.k8s_ec2_infra[0].worker_security_group_id : local.platform_is_ecs ? aws_security_group.app[0].id : "sg-00000000000000000"
+  additional_ingress_security_group_ids = var.enable_serverless_api && var.serverless_api_enable_rds_access ? [module.serverless_api[0].lambda_security_group_id] : []
+  db_name                               = var.db_name
+  db_username                           = var.db_username
+  db_port                               = var.db_port
+  engine                                = var.db_engine
+  engine_version                        = var.db_engine_version
+  instance_class                        = var.db_instance_class
+  allocated_storage                     = var.db_allocated_storage
+  max_allocated_storage                 = var.db_max_allocated_storage
+  storage_type                          = var.db_storage_type
+  multi_az                              = var.db_multi_az
+  backup_retention_period               = var.db_backup_retention_period
+  maintenance_window                    = var.db_maintenance_window
+  backup_window                         = var.db_backup_window
+  deletion_protection                   = var.db_deletion_protection
+  skip_final_snapshot                   = var.db_skip_final_snapshot
+  final_snapshot_identifier             = var.db_final_snapshot_identifier
+  apply_immediately                     = var.db_apply_immediately
+  publicly_accessible                   = false
+  enabled_cloudwatch_logs_exports       = var.db_log_exports
+  kms_deletion_window_in_days           = var.kms_deletion_window_in_days
+  prevent_destroy                       = var.prevent_destroy
+  tags                                  = local.tags
 }
 
 locals {

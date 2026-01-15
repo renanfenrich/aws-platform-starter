@@ -18,6 +18,19 @@ variable "app_security_group_id" {
   description = "Security group ID for application tasks that need DB access."
 }
 
+variable "additional_ingress_security_group_ids" {
+  type        = list(string)
+  description = "Additional security group IDs allowed to access the database."
+  default     = []
+
+  validation {
+    condition = alltrue([
+      for sg_id in var.additional_ingress_security_group_ids : length(trimspace(sg_id)) > 0
+    ])
+    error_message = "additional_ingress_security_group_ids must not contain empty values."
+  }
+}
+
 variable "db_name" {
   type        = string
   description = "Database name."

@@ -18,6 +18,11 @@ output "db_security_group_id" {
   value       = aws_security_group.db.id
 }
 
+output "additional_ingress_security_group_ids" {
+  description = "Additional security group IDs allowed to access the database."
+  value       = var.additional_ingress_security_group_ids
+}
+
 output "master_user_secret_arn" {
   description = "Secrets Manager ARN for the RDS master user secret."
   value       = var.prevent_destroy ? aws_db_instance.protected[0].master_user_secret[0].secret_arn : aws_db_instance.this[0].master_user_secret[0].secret_arn

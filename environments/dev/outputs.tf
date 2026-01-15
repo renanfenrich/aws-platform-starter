@@ -63,6 +63,16 @@ output "resolved_container_image" {
   value       = local.resolved_container_image
 }
 
+output "serverless_api_endpoint" {
+  description = "Serverless API endpoint (null when disabled)."
+  value       = var.enable_serverless_api ? module.serverless_api[0].api_endpoint : null
+}
+
+output "serverless_api_lambda_name" {
+  description = "Serverless API Lambda function name (null when disabled)."
+  value       = var.enable_serverless_api ? module.serverless_api[0].lambda_function_name : null
+}
+
 output "vpc_id" {
   description = "VPC ID."
   value       = module.network.vpc_id

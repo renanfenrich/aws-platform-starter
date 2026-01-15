@@ -103,3 +103,8 @@ These are the defaults I chose for this repo. Each one is a trade-off, and I kep
 31) **No centralized logging platform**
    - CloudWatch Logs per service keeps the footprint small and operationally simple.
    - Running OpenSearch/ELK is out of scope for this repo’s size and cost posture.
+
+32) **Optional HTTP API + Lambda ingress**
+   - I use API Gateway HTTP APIs instead of REST APIs because the feature set is sufficient for a single Lambda and the cost/latency profile is better.
+   - Authentication is intentionally not wired by default; add a JWT or Lambda authorizer if you need it.
+   - The serverless path is opt-in to keep the core ECS/Kubernetes flow unchanged; VPC-attached Lambda trades cold-start latency and NAT cost for private network access.

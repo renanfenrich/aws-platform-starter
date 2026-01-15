@@ -65,6 +65,18 @@ resource "aws_security_group_rule" "db_ingress" {
   description              = "DB access from application security group"
 }
 
+resource "aws_security_group_rule" "db_ingress_additional" {
+  count = length(var.additional_ingress_security_group_ids)
+
+  type                     = "ingress"
+  from_port                = var.db_port
+  to_port                  = var.db_port
+  protocol                 = "tcp"
+  source_security_group_id = var.additional_ingress_security_group_ids[count.index]
+  security_group_id        = aws_security_group.db.id
+  description              = "DB access from additional security groups"
+}
+
 resource "aws_db_instance" "this" {
   count = var.prevent_destroy ? 0 : 1
 

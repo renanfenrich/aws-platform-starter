@@ -184,6 +184,106 @@ run "dev_ecs_fargate_spot" {
     condition     = var.log_retention_in_days == 7
     error_message = "expected dev log retention to default to 7 days"
   }
+
+  assert {
+    condition     = length(module.serverless_api) == 0
+    error_message = "expected serverless API to be disabled by default"
+  }
+
+  assert {
+    condition     = output.serverless_api_endpoint == null
+    error_message = "expected serverless API endpoint output to be null when disabled"
+  }
+}
+
+run "dev_serverless_api_enabled" {
+  command = plan
+
+  variables {
+    service_name                     = "platform"
+    owner                            = "platform-team"
+    cost_center                      = "platform"
+    cost_posture                     = "cost_optimized"
+    budget_limit_usd                 = 150
+    budget_warning_threshold_percent = 85
+    budget_hard_limit_percent        = 95
+    budget_notification_emails       = ["platform-alerts@example.com"]
+    estimated_monthly_cost           = 50
+    platform                         = "ecs"
+    ecs_capacity_mode                = "fargate_spot"
+    acm_certificate_arn              = "arn:aws:acm:us-east-1:123456789012:certificate/00000000-0000-0000-0000-000000000000"
+    enable_serverless_api            = true
+    serverless_api_enable_rds_access = true
+  }
+
+  override_data {
+    target = data.aws_availability_zones.available
+    values = {
+      names = ["us-east-1a", "us-east-1b"]
+    }
+  }
+
+  override_data {
+    target = module.ecs[0].data.aws_region.current
+    values = {
+      name = "us-east-1"
+    }
+  }
+
+  override_data {
+    target = module.ecs[0].data.aws_iam_policy_document.task_assume
+    values = {
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
+    }
+  }
+
+  override_data {
+    target = module.ecs[0].data.aws_iam_policy_document.task_execution_exec[0]
+    values = {
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
+    }
+  }
+
+  override_data {
+    target = module.ecs[0].data.aws_iam_policy_document.task_execution_secrets[0]
+    values = {
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
+    }
+  }
+
+  override_data {
+    target = module.serverless_api[0].data.aws_iam_policy_document.lambda_assume
+    values = {
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
+    }
+  }
+
+  override_data {
+    target = module.serverless_api[0].data.aws_iam_policy_document.lambda_policy
+    values = {
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
+    }
+  }
+
+  assert {
+    condition     = length(module.serverless_api) == 1
+    error_message = "expected serverless API module to be created"
+  }
+
+  assert {
+    condition     = output.serverless_api_lambda_name == "${var.project_name}-${var.environment}-serverless-api"
+    error_message = "expected serverless API Lambda name to match name_prefix"
+  }
+
+  assert {
+    condition     = module.serverless_api[0].stage_name == "$default"
+    error_message = "expected serverless API stage to use $default"
+  }
+
+  assert {
+    condition     = length(module.rds.additional_ingress_security_group_ids) == 1
+    error_message = "expected RDS to allow ingress from the serverless API security group"
+  }
 }
 
 run "dev_ecs_fargate" {

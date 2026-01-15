@@ -37,11 +37,13 @@ No modules.
 | [aws_kms_key.db_protected](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_key) | resource |
 | [aws_security_group.db](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_security_group_rule.db_ingress](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
+| [aws_security_group_rule.db_ingress_additional](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_additional_ingress_security_group_ids"></a> [additional\_ingress\_security\_group\_ids](#input\_additional\_ingress\_security\_group\_ids) | Additional security group IDs allowed to access the database. | `list(string)` | `[]` | no |
 | <a name="input_allocated_storage"></a> [allocated\_storage](#input\_allocated\_storage) | Allocated storage in GB. | `number` | `20` | no |
 | <a name="input_app_security_group_id"></a> [app\_security\_group\_id](#input\_app\_security\_group\_id) | Security group ID for application tasks that need DB access. | `string` | n/a | yes |
 | <a name="input_apply_immediately"></a> [apply\_immediately](#input\_apply\_immediately) | Apply changes immediately. | `bool` | `false` | no |
@@ -73,6 +75,7 @@ No modules.
 
 | Name | Description |
 |------|-------------|
+| <a name="output_additional_ingress_security_group_ids"></a> [additional\_ingress\_security\_group\_ids](#output\_additional\_ingress\_security\_group\_ids) | Additional security group IDs allowed to access the database. |
 | <a name="output_db_endpoint"></a> [db\_endpoint](#output\_db\_endpoint) | RDS endpoint. |
 | <a name="output_db_instance_id"></a> [db\_instance\_id](#output\_db\_instance\_id) | RDS instance identifier. |
 | <a name="output_db_port"></a> [db\_port](#output\_db\_port) | RDS port. |

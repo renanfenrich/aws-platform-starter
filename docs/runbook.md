@@ -28,6 +28,39 @@ make plan ENV=prod platform=ecs
 make apply ENV=prod platform=ecs
 ```
 
+## Serverless API (Optional)
+
+1) Set `enable_serverless_api = true` in the environment `terraform.tfvars`.
+2) Optional tuning:
+   - `serverless_api_log_retention_days`
+   - `serverless_api_cors_allowed_origins`
+   - `serverless_api_enable_xray`
+   - `serverless_api_additional_route_keys`
+   - `serverless_api_enable_rds_access` (requires RDS access and a private path to the database)
+3) Apply the environment.
+
+`serverless_api_enable_xray` enables tracing on the Lambda function only.
+
+Fetch the endpoint:
+
+```bash
+API_ENDPOINT=$(terraform output -raw serverless_api_endpoint)
+```
+
+Test the default routes:
+
+```bash
+curl "${API_ENDPOINT}/health"
+curl -X POST "${API_ENDPOINT}/echo" -H "content-type: application/json" -d '{"ok":true}'
+```
+
+Logs land in:
+
+- `/aws/apigateway/<project>-<environment>-serverless-api`
+- `/aws/lambda/<project>-<environment>-serverless-api`
+
+When Lambda runs inside private subnets, it still needs NAT or relevant VPC endpoints to reach AWS APIs.
+
 ## Build and Push an Image to ECR (Manual)
 
 From the environment directory (set `AWS_REGION` to match `aws_region` in your tfvars):
