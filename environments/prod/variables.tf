@@ -258,6 +258,131 @@ variable "k8s_join_parameter_name" {
   default     = ""
 }
 
+variable "eks_cluster_version" {
+  type        = string
+  description = "Kubernetes version for the EKS control plane (major.minor)."
+  default     = "1.29"
+
+  validation {
+    condition     = length(trimspace(var.eks_cluster_version)) > 0
+    error_message = "eks_cluster_version must not be empty."
+  }
+}
+
+variable "eks_node_instance_type" {
+  type        = string
+  description = "Instance type for the EKS managed node group."
+  default     = "t3.small"
+
+  validation {
+    condition     = length(trimspace(var.eks_node_instance_type)) > 0
+    error_message = "eks_node_instance_type must not be empty."
+  }
+}
+
+variable "eks_node_desired_capacity" {
+  type        = number
+  description = "Desired size of the EKS node group."
+  default     = 1
+}
+
+variable "eks_node_min_size" {
+  type        = number
+  description = "Minimum size of the EKS node group."
+  default     = 1
+}
+
+variable "eks_node_max_size" {
+  type        = number
+  description = "Maximum size of the EKS node group."
+  default     = 2
+}
+
+variable "eks_node_disk_size" {
+  type        = number
+  description = "Disk size (GiB) for EKS nodes."
+  default     = 20
+}
+
+variable "eks_node_ami_type" {
+  type        = string
+  description = "AMI type for the EKS managed node group."
+  default     = "AL2_x86_64"
+
+  validation {
+    condition = contains([
+      "AL2_x86_64",
+      "AL2_x86_64_GPU",
+      "AL2_ARM_64",
+      "AL2023_x86_64_STANDARD",
+      "AL2023_ARM_64_STANDARD"
+    ], var.eks_node_ami_type)
+    error_message = "eks_node_ami_type must be a supported EKS AMI type."
+  }
+}
+
+variable "eks_ingress_nodeport" {
+  type        = number
+  description = "NodePort used by the EKS ingress controller."
+  default     = 30080
+
+  validation {
+    condition     = var.eks_ingress_nodeport >= 30000 && var.eks_ingress_nodeport <= 32767
+    error_message = "eks_ingress_nodeport must be within the NodePort range (30000-32767)."
+  }
+}
+
+variable "eks_endpoint_public_access" {
+  type        = bool
+  description = "Enable public access to the EKS API endpoint."
+  default     = false
+}
+
+variable "eks_endpoint_public_access_cidrs" {
+  type        = list(string)
+  description = "CIDR allowlist for the public EKS API endpoint."
+  default     = []
+
+  validation {
+    condition     = !var.eks_endpoint_public_access || length(var.eks_endpoint_public_access_cidrs) > 0
+    error_message = "eks_endpoint_public_access_cidrs must be set when eks_endpoint_public_access is true."
+  }
+}
+
+variable "eks_enable_admin_runner" {
+  type        = bool
+  description = "Enable the admin runner EC2 instance for kubectl access."
+  default     = true
+}
+
+variable "eks_admin_runner_instance_type" {
+  type        = string
+  description = "Instance type for the EKS admin runner."
+  default     = "t3.micro"
+
+  validation {
+    condition     = length(trimspace(var.eks_admin_runner_instance_type)) > 0
+    error_message = "eks_admin_runner_instance_type must not be empty."
+  }
+}
+
+variable "eks_admin_runner_ami_id" {
+  type        = string
+  description = "Optional AMI ID override for the EKS admin runner."
+  default     = null
+
+  validation {
+    condition     = var.eks_admin_runner_ami_id == null || length(trimspace(var.eks_admin_runner_ami_id)) > 0
+    error_message = "eks_admin_runner_ami_id must be null or a non-empty string."
+  }
+}
+
+variable "eks_admin_runner_ami_ssm_parameter" {
+  type        = string
+  description = "SSM parameter path for the EKS admin runner AMI."
+  default     = "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64"
+}
+
 variable "aws_region" {
   type        = string
   description = "AWS region to deploy into."

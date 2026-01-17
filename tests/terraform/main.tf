@@ -19,7 +19,7 @@ variable "ecs_capacity_mode" {
 
 variable "platform" {
   type        = string
-  description = "Platform selection (ecs or k8s_self_managed)."
+  description = "Platform selection (ecs, k8s_self_managed, or eks)."
   default     = "ecs"
 }
 
@@ -28,6 +28,7 @@ locals {
   alb_security_group_id      = "sg-0123456789abcdef0"
   platform_is_ecs            = var.platform == "ecs"
   platform_is_k8s            = var.platform == "k8s_self_managed"
+  platform_is_eks            = var.platform == "eks"
   ecs_cluster_name           = "test-ecs"
   ec2_capacity_provider_name = "test-ecs-ec2"
   base_capacity_providers    = ["FARGATE", "FARGATE_SPOT"]
@@ -161,6 +162,34 @@ module "k8s_ec2_infra" {
   worker_max_size             = 1
   ami_id                      = "ami-1234567890abcdef0"
   enable_detailed_monitoring  = false
+  tags = {
+    Project     = "test"
+    Environment = "test"
+    Service     = "test"
+    Owner       = "test"
+    CostCenter  = "test"
+    ManagedBy   = "Terraform"
+    Repository  = "aws-platform-starter"
+  }
+}
+
+module "eks" {
+  count  = local.platform_is_eks ? 1 : 0
+  source = "../../modules/eks"
+
+  name_prefix           = "test"
+  cluster_name          = "test-eks"
+  vpc_id                = module.network.vpc_id
+  vpc_cidr              = module.network.vpc_cidr
+  private_subnet_ids    = module.network.private_subnet_ids
+  alb_security_group_id = local.alb_security_group_id
+  alb_target_group_arn  = local.target_group_arn
+  node_instance_type    = "t3.small"
+  node_desired_capacity = 1
+  node_min_size         = 1
+  node_max_size         = 2
+  admin_runner_ami_id   = "ami-1234567890abcdef0"
+  enable_admin_runner   = false
   tags = {
     Project     = "test"
     Environment = "test"

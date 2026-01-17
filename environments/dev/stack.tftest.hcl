@@ -546,6 +546,11 @@ run "dev_k8s" {
     condition     = output.ecs_cluster_name == null
     error_message = "expected ecs cluster output to be null for k8s"
   }
+
+  assert {
+    condition     = output.k8s_ingress_nodeport == var.k8s_ingress_nodeport
+    error_message = "expected k8s ingress nodeport output to match input"
+  }
 }
 
 run "dev_invalid_platform" {
@@ -634,7 +639,7 @@ run "dev_invalid_ecs_capacity_mode" {
   expect_failures = [var.ecs_capacity_mode]
 }
 
-run "dev_eks_reserved" {
+run "dev_eks" {
   command = plan
 
   variables {
@@ -658,9 +663,77 @@ run "dev_eks_reserved" {
     }
   }
 
+  override_data {
+    target = module.eks[0].data.aws_region.current
+    values = {
+      name = "us-east-1"
+    }
+  }
 
+  override_data {
+    target = module.eks[0].data.aws_ssm_parameter.admin_runner_ami[0]
+    values = {
+      value = "ami-1234567890abcdef0"
+    }
+  }
 
-  expect_failures = [terraform_data.eks_not_implemented]
+  override_data {
+    target = module.eks[0].data.aws_iam_policy_document.cluster_assume
+    values = {
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
+    }
+  }
+
+  override_data {
+    target = module.eks[0].data.aws_iam_policy_document.node_assume
+    values = {
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
+    }
+  }
+
+  override_data {
+    target = module.eks[0].data.aws_iam_policy_document.admin_runner_assume[0]
+    values = {
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
+    }
+  }
+
+  override_data {
+    target = module.eks[0].data.aws_iam_policy_document.admin_runner_eks[0]
+    values = {
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
+    }
+  }
+
+  assert {
+    condition     = output.platform == "eks"
+    error_message = "expected platform output to be eks"
+  }
+
+  assert {
+    condition     = length(module.eks) == 1
+    error_message = "expected eks module to be created"
+  }
+
+  assert {
+    condition     = length(module.ecs) == 0
+    error_message = "expected ECS module to be skipped for eks"
+  }
+
+  assert {
+    condition     = length(module.k8s_ec2_infra) == 0
+    error_message = "expected k8s module to be skipped for eks"
+  }
+
+  assert {
+    condition     = output.k8s_ingress_nodeport == var.eks_ingress_nodeport
+    error_message = "expected eks ingress nodeport output to match input"
+  }
+
+  assert {
+    condition     = output.k8s_control_plane_private_ip == null
+    error_message = "expected k8s control plane output to be null for eks"
+  }
 }
 
 run "dev_invalid_cost_posture" {

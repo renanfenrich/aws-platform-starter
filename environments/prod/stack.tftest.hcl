@@ -599,6 +599,123 @@ run "prod_k8s" {
     condition     = output.ecs_cluster_name == null
     error_message = "expected ecs cluster output to be null for k8s"
   }
+
+  assert {
+    condition     = output.k8s_ingress_nodeport == var.k8s_ingress_nodeport
+    error_message = "expected k8s ingress nodeport output to match input"
+  }
+}
+
+run "prod_eks" {
+  command = plan
+
+  variables {
+    service_name                     = "platform"
+    owner                            = "platform-team"
+    cost_center                      = "platform"
+    cost_posture                     = "stability_first"
+    budget_limit_usd                 = 400
+    budget_warning_threshold_percent = 75
+    budget_hard_limit_percent        = 90
+    budget_notification_emails       = ["platform-alerts@example.com"]
+    estimated_monthly_cost           = 200
+    platform                         = "eks"
+    acm_certificate_arn              = "arn:aws:acm:us-east-1:123456789012:certificate/00000000-0000-0000-0000-000000000000"
+    alb_access_logs_bucket           = "example-alb-access-logs"
+  }
+
+  override_data {
+    target = data.aws_availability_zones.available
+    values = {
+      names = ["us-east-1a", "us-east-1b"]
+    }
+  }
+
+  override_data {
+    target = module.network.data.aws_iam_policy_document.flow_logs_assume
+    values = {
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
+    }
+  }
+
+  override_data {
+    target = module.network.data.aws_iam_policy_document.flow_logs
+    values = {
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
+    }
+  }
+
+  override_data {
+    target = module.eks[0].data.aws_region.current
+    values = {
+      name = "us-east-1"
+    }
+  }
+
+  override_data {
+    target = module.eks[0].data.aws_ssm_parameter.admin_runner_ami[0]
+    values = {
+      value = "ami-1234567890abcdef0"
+    }
+  }
+
+  override_data {
+    target = module.eks[0].data.aws_iam_policy_document.cluster_assume
+    values = {
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
+    }
+  }
+
+  override_data {
+    target = module.eks[0].data.aws_iam_policy_document.node_assume
+    values = {
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
+    }
+  }
+
+  override_data {
+    target = module.eks[0].data.aws_iam_policy_document.admin_runner_assume[0]
+    values = {
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
+    }
+  }
+
+  override_data {
+    target = module.eks[0].data.aws_iam_policy_document.admin_runner_eks[0]
+    values = {
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
+    }
+  }
+
+  assert {
+    condition     = output.platform == "eks"
+    error_message = "expected platform output to be eks"
+  }
+
+  assert {
+    condition     = length(module.eks) == 1
+    error_message = "expected eks module to be created"
+  }
+
+  assert {
+    condition     = length(module.ecs) == 0
+    error_message = "expected ECS module to be skipped for eks"
+  }
+
+  assert {
+    condition     = length(module.k8s_ec2_infra) == 0
+    error_message = "expected k8s module to be skipped for eks"
+  }
+
+  assert {
+    condition     = output.k8s_ingress_nodeport == var.eks_ingress_nodeport
+    error_message = "expected eks ingress nodeport output to match input"
+  }
+
+  assert {
+    condition     = output.k8s_control_plane_private_ip == null
+    error_message = "expected k8s control plane output to be null for eks"
+  }
 }
 
 run "prod_invalid_allow_http" {

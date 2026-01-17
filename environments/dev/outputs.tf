@@ -63,6 +63,11 @@ output "resolved_container_image" {
   value       = local.resolved_container_image
 }
 
+output "k8s_ingress_nodeport" {
+  description = "Ingress NodePort for Kubernetes platforms (k8s_self_managed or eks)."
+  value       = local.platform_is_eks ? var.eks_ingress_nodeport : local.platform_is_k8s ? var.k8s_ingress_nodeport : null
+}
+
 output "serverless_api_endpoint" {
   description = "Serverless API endpoint (null when disabled)."
   value       = var.enable_serverless_api ? module.serverless_api[0].api_endpoint : null
@@ -85,7 +90,7 @@ output "private_subnet_ids" {
 
 output "compute_sg_id" {
   description = "Security group ID for compute."
-  value       = local.platform_is_k8s ? module.k8s_ec2_infra[0].worker_security_group_id : local.platform_is_ecs ? aws_security_group.app[0].id : null
+  value       = local.platform_is_eks ? module.eks[0].node_security_group_id : local.platform_is_k8s ? module.k8s_ec2_infra[0].worker_security_group_id : local.platform_is_ecs ? aws_security_group.app[0].id : null
 }
 
 output "service_identifier" {
@@ -114,7 +119,7 @@ output "k8s_node_asg_name" {
 }
 
 output "cluster_access_instructions" {
-  description = "How to access the Kubernetes cluster when platform = k8s_self_managed."
+  description = "How to access the Kubernetes cluster when platform = k8s_self_managed or eks."
   value = local.platform_is_k8s ? (
     var.k8s_enable_ssm ? <<-EOT
       aws ssm start-session --target ${module.k8s_ec2_infra[0].control_plane_instance_id} --region ${var.aws_region}
@@ -123,7 +128,7 @@ output "cluster_access_instructions" {
       kubectl get nodes
     EOT
     : "SSM access is disabled (k8s_enable_ssm = false). Provide a private access path to the control plane to use kubectl."
-  ) : null
+  ) : local.platform_is_eks ? module.eks[0].cluster_access_instructions : null
 }
 
 output "rds_endpoint" {

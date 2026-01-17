@@ -19,8 +19,10 @@ locals {
   platform_is_ecs            = var.platform == "ecs"
   platform_is_k8s            = var.platform == "k8s_self_managed"
   platform_is_eks            = var.platform == "eks"
-  alb_target_port            = local.platform_is_k8s ? var.k8s_ingress_nodeport : var.container_port
-  alb_target_type            = local.platform_is_k8s ? "instance" : "ip"
+  platform_is_k8s_or_eks     = local.platform_is_k8s || local.platform_is_eks
+  ingress_nodeport           = local.platform_is_eks ? var.eks_ingress_nodeport : var.k8s_ingress_nodeport
+  alb_target_port            = local.platform_is_k8s_or_eks ? local.ingress_nodeport : var.container_port
+  alb_target_type            = local.platform_is_k8s_or_eks ? "instance" : "ip"
   ecs_cluster_name           = "${local.name_prefix}-ecs"
   ec2_desired_capacity       = var.ec2_desired_capacity != null ? var.ec2_desired_capacity : var.desired_count
   ec2_min_size               = var.ec2_min_size != null ? var.ec2_min_size : local.ec2_desired_capacity
@@ -55,8 +57,9 @@ locals {
   ecs_service_capacity_provider_strategy = local.ecs_default_capacity_provider_strategy
   ecs_requires_compatibilities           = var.ecs_capacity_mode == "ec2" ? ["EC2"] : ["FARGATE"]
   ecs_ec2_enabled                        = local.platform_is_ecs && var.ecs_capacity_mode == "ec2"
-  enable_ec2_cpu_alarm                   = local.ecs_ec2_enabled || local.platform_is_k8s
+  enable_ec2_cpu_alarm                   = local.ecs_ec2_enabled || local.platform_is_k8s || local.platform_is_eks
   k8s_cluster_name                       = "${local.name_prefix}-k8s"
+  eks_cluster_name                       = "${local.name_prefix}-eks"
   k8s_join_parameter_name                = length(trimspace(var.k8s_join_parameter_name)) > 0 ? var.k8s_join_parameter_name : "/${local.name_prefix}/k8s/join-command"
   budget_cost_filters = {
     TagKeyValue = [format("Environment$%s", var.environment)]
@@ -110,17 +113,6 @@ module "ecr" {
   name_prefix  = local.name_prefix
   service_name = var.service_name
   tags         = local.tags
-}
-
-resource "terraform_data" "eks_not_implemented" {
-  count = local.platform_is_eks ? 1 : 0
-
-  lifecycle {
-    precondition {
-      condition     = var.platform != "eks"
-      error_message = "platform = \"eks\" is reserved for future use and is not implemented yet."
-    }
-  }
 }
 
 module "network" {
@@ -225,7 +217,7 @@ module "rds" {
   name_prefix                           = local.name_prefix
   vpc_id                                = module.network.vpc_id
   private_subnet_ids                    = module.network.private_subnet_ids
-  app_security_group_id                 = local.platform_is_k8s ? module.k8s_ec2_infra[0].worker_security_group_id : local.platform_is_ecs ? aws_security_group.app[0].id : "sg-00000000000000000"
+  app_security_group_id                 = local.platform_is_eks ? module.eks[0].node_security_group_id : local.platform_is_k8s ? module.k8s_ec2_infra[0].worker_security_group_id : local.platform_is_ecs ? aws_security_group.app[0].id : "sg-00000000000000000"
   additional_ingress_security_group_ids = var.enable_serverless_api && var.serverless_api_enable_rds_access ? [module.serverless_api[0].lambda_security_group_id] : []
   db_name                               = var.db_name
   db_username                           = var.db_username
@@ -356,6 +348,34 @@ module "k8s_ec2_infra" {
   tags                        = local.tags
 }
 
+module "eks" {
+  count  = local.platform_is_eks ? 1 : 0
+  source = "../../modules/eks"
+
+  name_prefix                    = local.name_prefix
+  cluster_name                   = local.eks_cluster_name
+  cluster_version                = var.eks_cluster_version
+  vpc_id                         = module.network.vpc_id
+  vpc_cidr                       = module.network.vpc_cidr
+  private_subnet_ids             = module.network.private_subnet_ids
+  alb_security_group_id          = module.alb.alb_security_group_id
+  alb_target_group_arn           = module.alb.target_group_arn
+  ingress_nodeport               = var.eks_ingress_nodeport
+  node_instance_type             = var.eks_node_instance_type
+  node_desired_capacity          = var.eks_node_desired_capacity
+  node_min_size                  = var.eks_node_min_size
+  node_max_size                  = var.eks_node_max_size
+  node_disk_size                 = var.eks_node_disk_size
+  node_ami_type                  = var.eks_node_ami_type
+  endpoint_public_access         = var.eks_endpoint_public_access
+  endpoint_public_access_cidrs   = var.eks_endpoint_public_access_cidrs
+  enable_admin_runner            = var.eks_enable_admin_runner
+  admin_runner_instance_type     = var.eks_admin_runner_instance_type
+  admin_runner_ami_id            = var.eks_admin_runner_ami_id
+  admin_runner_ami_ssm_parameter = var.eks_admin_runner_ami_ssm_parameter
+  tags                           = local.tags
+}
+
 module "observability" {
   source = "../../modules/observability"
 
@@ -367,7 +387,7 @@ module "observability" {
   ecs_service_name              = local.platform_is_ecs ? module.ecs[0].service_name : ""
   enable_ecs_cpu_alarm          = local.platform_is_ecs
   enable_ec2_cpu_alarm          = local.enable_ec2_cpu_alarm
-  ec2_asg_name                  = local.ecs_ec2_enabled ? module.ecs_ec2_capacity[0].autoscaling_group_name : local.platform_is_k8s ? module.k8s_ec2_infra[0].worker_autoscaling_group_name : ""
+  ec2_asg_name                  = local.ecs_ec2_enabled ? module.ecs_ec2_capacity[0].autoscaling_group_name : local.platform_is_eks ? module.eks[0].node_group_autoscaling_group_name : local.platform_is_k8s ? module.k8s_ec2_infra[0].worker_autoscaling_group_name : ""
   enable_alarms                 = var.enable_alarms
   alarm_sns_topic_arn           = var.alarm_sns_topic_arn
   alb_5xx_threshold             = var.alb_5xx_threshold
