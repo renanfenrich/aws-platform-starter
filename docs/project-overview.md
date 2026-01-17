@@ -83,6 +83,15 @@ Documentation is treated as part of the system: architecture, runbook, and decis
 │   │   ├── outputs.tf
 │   │   ├── versions.tf
 │   │   └── README.md
+│   ├── eks
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   ├── outputs.tf
+│   │   ├── versions.tf
+│   │   ├── eks.tftest.hcl
+│   │   ├── templates
+│   │   │   └── admin-runner-user-data.sh.tpl
+│   │   └── README.md
 │   ├── k8s-ec2-infra
 │   │   ├── main.tf
 │   │   ├── variables.tf
@@ -159,13 +168,14 @@ Note: local caches and state (for example: `.terraform/`, `.infracost/`, and `te
 - `modules/ecs`: ECS cluster, task definition, service, IAM, and logs for Fargate/EC2 modes.
 - `modules/ecs-ec2-capacity`: ECS EC2 capacity provider backed by an Auto Scaling group.
 - `modules/ecr`: ECR repository for application images, scanning, and lifecycle policy.
+- `modules/eks`: EKS cluster, managed node group, and admin runner for SSM-based access.
 - `modules/k8s-ec2-infra`: Self-managed Kubernetes on EC2 (control plane + workers, IAM, KMS, SGs).
 - `modules/network`: VPC, subnets, routing, NAT gateways, VPC endpoints, and optional flow logs.
 - `modules/observability`: Baseline CloudWatch alarms + dashboard for ALB, ECS/EC2, and RDS.
 - `modules/rds`: Encrypted PostgreSQL instance, subnet group, KMS key, and SG rules.
 - `docs/`: Architecture, decisions, runbook, FinOps guidance, and test strategy.
 - `tests/terraform/`: Terraform test suites covering selectors and module behavior without a live backend.
-- `k8s/`: Demo manifests (Kustomize base + overlays) for the self-managed Kubernetes option.
+- `k8s/`: Demo manifests (Kustomize base + overlays) for the Kubernetes options.
 - `scripts/`: CI helpers (FinOps summary).
 
 ## Environment Model
@@ -177,9 +187,9 @@ Defaults in tfvars reinforce cost and safety posture differences:
 
 ## Selectors and Modes
 Platform selection is a single variable shared by both environments:
-- Allowed values: `ecs`, `k8s_self_managed`, `eks` (reserved and blocked by preconditions).
+- Allowed values: `ecs`, `k8s_self_managed`, `eks`.
 - Defaults: `ecs` in both environment tfvars.
-- One active platform per environment; ECS and K8s modules are mutually exclusive by design.
+- One active platform per environment; ECS and Kubernetes modules are mutually exclusive by design.
 
 ECS capacity modes are another guarded selector:
 - `ecs_capacity_mode`: `fargate`, `fargate_spot`, or `ec2`.

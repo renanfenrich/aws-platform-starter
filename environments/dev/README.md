@@ -32,7 +32,7 @@ make apply ENV=dev platform=ecs
 
 ## Common Toggles
 
-- Switch to Kubernetes: set `platform = "k8s_self_managed"`.
+- Switch to Kubernetes: set `platform = "k8s_self_managed"` or `platform = "eks"`.
 - Enable alarms: set `enable_alarms = true` and wire `alarm_sns_topic_arn`.
 - Enable flow logs: set `enable_flow_logs = true`.
 - Enable interface endpoints: set `enable_interface_endpoints = true`.
@@ -41,6 +41,6 @@ make apply ENV=dev platform=ecs
 ## Guardrails
 
 - `cost_posture` must be `cost_optimized` in dev.
-- `platform` is limited to `ecs` or `k8s_self_managed`; `eks` is reserved and blocked.
+- `platform` must be `ecs`, `k8s_self_managed`, or `eks`.
 - Budget notifications require `budget_notification_emails`, `budget_sns_topic_arn`, or `alarm_sns_topic_arn`.
 - Deploys fail when `enforce_cost_controls = true` and `estimated_monthly_cost` is missing or above the hard limit.

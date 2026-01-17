@@ -30,7 +30,7 @@ These are the defaults I chose for this repo. Each one is a trade-off, and I kep
    - I rely on `default_tags` so ownership and environment context are always present without repeating tags in every module.
 
 10) **Platform selector with ECS default**
-   - `platform` allows `ecs` or `k8s_self_managed` today, with `eks` reserved for future work. ECS remains the default to preserve existing behavior.
+   - `platform` allows `ecs`, `k8s_self_managed`, or `eks`. ECS remains the default to preserve existing behavior.
 
 11) **Self-managed Kubernetes via kubeadm**
    - The Kubernetes option uses a single control plane instance and a worker Auto Scaling group. It is deliberately simple and non-HA, which keeps the repo deterministic and easy to reason about.
@@ -108,3 +108,8 @@ These are the defaults I chose for this repo. Each one is a trade-off, and I kep
    - I use API Gateway HTTP APIs instead of REST APIs because the feature set is sufficient for a single Lambda and the cost/latency profile is better.
    - Authentication is intentionally not wired by default; add a JWT or Lambda authorizer if you need it.
    - The serverless path is opt-in to keep the core ECS/Kubernetes flow unchanged; VPC-attached Lambda trades cold-start latency and NAT cost for private network access.
+
+33) **EKS as a managed Kubernetes option**
+   - I added EKS to offload control plane operations while keeping the API endpoint private by default and accessible via the SSM admin runner.
+   - Ingress stays behind the existing ALB and a fixed NodePort to avoid creating a second public ALB and to keep edge behavior consistent.
+   - The footprint stays minimal: only core EKS add-ons (vpc-cni, coredns, kube-proxy) and no extra controllers beyond ingress.

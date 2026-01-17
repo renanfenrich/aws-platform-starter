@@ -114,6 +114,7 @@ No modules.
 | <a name="output_control_plane_user_data"></a> [control\_plane\_user\_data](#output\_control\_plane\_user\_data) | Rendered user data for the control plane instance. |
 | <a name="output_join_parameter_kms_key_arn"></a> [join\_parameter\_kms\_key\_arn](#output\_join\_parameter\_kms\_key\_arn) | KMS key ARN used to encrypt the join parameter. |
 | <a name="output_join_parameter_name"></a> [join\_parameter\_name](#output\_join\_parameter\_name) | SSM parameter name that stores the kubeadm join command. |
+| <a name="output_log_group_name"></a> [log\_group\_name](#output\_log\_group\_name) | CloudWatch log group name for Kubernetes logs. |
 | <a name="output_worker_autoscaling_group_name"></a> [worker\_autoscaling\_group\_name](#output\_worker\_autoscaling\_group\_name) | Auto Scaling group name for Kubernetes workers. |
 | <a name="output_worker_instance_profile_arn"></a> [worker\_instance\_profile\_arn](#output\_worker\_instance\_profile\_arn) | IAM instance profile ARN for worker nodes. |
 | <a name="output_worker_security_group_id"></a> [worker\_security\_group\_id](#output\_worker\_security\_group\_id) | Security group ID for worker nodes. |

@@ -8,8 +8,8 @@ This repo uses `terraform test` with mock providers and backendless init to keep
 | Stack | Test harness | Modes covered | Regression targets |
 | --- | --- | --- | --- |
 | `bootstrap/` | `bootstrap/bootstrap.tftest.hcl` | N/A | State bucket encryption, public access block, SNS KMS encryption |
-| `environments/dev/` | `environments/dev/stack.tftest.hcl` | `platform=ecs` (`fargate`, `fargate_spot`, `ec2`), `platform=k8s_self_managed` | Selector wiring, ECR defaults, VPC endpoint defaults, tag propagation on app SG, ECS vs K8s outputs, reserved `eks` guard, budget creation, cost posture validation, deploy-time cost enforcement |
-| `environments/prod/` | `environments/prod/stack.tftest.hcl` | `platform=ecs` (`fargate`, `fargate_spot`, `ec2`), `platform=k8s_self_managed` | Selector wiring, HTTP listener disabled in prod, VPC endpoints and flow logs enabled, ECS vs K8s outputs, budget creation, spot override guard, cost posture validation, deploy-time cost enforcement |
+| `environments/dev/` | `environments/dev/stack.tftest.hcl` | `platform=ecs` (`fargate`, `fargate_spot`, `ec2`), `platform=k8s_self_managed`, `platform=eks` | Selector wiring, ECR defaults, VPC endpoint defaults, tag propagation on app SG, ECS vs K8s/EKS outputs, NodePort output wiring, budget creation, cost posture validation, deploy-time cost enforcement |
+| `environments/prod/` | `environments/prod/stack.tftest.hcl` | `platform=ecs` (`fargate`, `fargate_spot`, `ec2`), `platform=k8s_self_managed`, `platform=eks` | Selector wiring, HTTP listener disabled in prod, VPC endpoints and flow logs enabled, ECS vs K8s/EKS outputs, NodePort output wiring, budget creation, spot override guard, cost posture validation, deploy-time cost enforcement |
 
 ### Modules
 | Module | Test harness | Key assertions |
@@ -18,6 +18,7 @@ This repo uses `terraform test` with mock providers and backendless init to keep
 | `modules/alb` | `modules/alb/alb.tftest.hcl` | HTTPS listener + ACM, HTTP-only when enabled, subnet wiring, SG ingress, target group config, tags, input validation |
 | `modules/ecs` | `modules/ecs/ecs.tftest.hcl` | No public IPs, container insights default, autoscaling toggles, tag presence, input validation |
 | `modules/ecs-ec2-capacity` | `modules/ecs-ec2-capacity/ecs-ec2-capacity.tftest.hcl` | No public IPs, IMDSv2 required, tag propagation |
+| `modules/eks` | `modules/eks/eks.tftest.hcl` | Private API endpoint default, node group subnet wiring, no public SSH, tags |
 | `modules/k8s-ec2-infra` | `modules/k8s-ec2-infra/k8s-ec2-infra.tftest.hcl` | No public SSH, KMS key rotation, name_prefix, input validation |
 | `modules/rds` | `modules/rds/rds.tftest.hcl` | Storage encryption, private by default, managed credentials, KMS rotation, name_prefix, tags |
 | `modules/observability` | `modules/observability/observability.tftest.hcl` | Alarm thresholds/evaluation periods, SNS actions, missing-data behavior, input validation |
@@ -25,7 +26,7 @@ This repo uses `terraform test` with mock providers and backendless init to keep
 ### Selector coverage
 | Selector | Values covered |
 | --- | --- |
-| `platform` | `ecs`, `k8s_self_managed`, invalid value rejected, `eks` reserved guard |
+| `platform` | `ecs`, `k8s_self_managed`, `eks`, invalid value rejected |
 | `ecs_capacity_mode` | `fargate`, `fargate_spot`, `ec2`, invalid value rejected |
 
 ## Remaining Gaps (Ranked)
