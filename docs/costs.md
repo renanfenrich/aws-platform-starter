@@ -31,6 +31,19 @@ Notes:
 - `make cost` uses backendless init/plan; data sources still call AWS, so read-only AWS credentials are required.
 - After estimating, set `TF_VAR_estimated_monthly_cost` before running plan/apply with enforcement enabled.
 
+## Latest Infracost Snapshot
+
+Based on `make cost` with the committed tfvars and usage files:
+
+| Project | Estimated monthly cost |
+| --- | --- |
+| bootstrap | $1.00 |
+| dev | $76.27 |
+| prod | $309.44 |
+| total | $386.70 |
+
+Note: Infracost reported missing SMS pricing for the bootstrap SNS topic, so treat this as a lower bound.
+
 ## Cost Levers
 
 - `single_nat_gateway`: reduce NAT hourly cost in dev; prod defaults to one per AZ for resilience.
