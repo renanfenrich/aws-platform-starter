@@ -16,6 +16,7 @@ This repo uses `terraform test` with mock providers and backendless init to keep
 | --- | --- | --- |
 | `modules/network` | `modules/network/network.tftest.hcl` | Subnet counts, NAT gateway count, flow logs enabled, name_prefix + tags, input validation |
 | `modules/alb` | `modules/alb/alb.tftest.hcl` | HTTPS listener + ACM, HTTP-only when enabled, subnet wiring, SG ingress, target group config, tags, input validation |
+| `modules/apigw-lambda` | `modules/apigw-lambda/apigw-lambda.tftest.hcl` | HTTP API routes, Lambda VPC config, log retention, optional RDS egress, X-Ray toggle |
 | `modules/ecs` | `modules/ecs/ecs.tftest.hcl` | No public IPs, container insights default, autoscaling toggles, tag presence, input validation |
 | `modules/ecs-ec2-capacity` | `modules/ecs-ec2-capacity/ecs-ec2-capacity.tftest.hcl` | No public IPs, IMDSv2 required, tag propagation |
 | `modules/eks` | `modules/eks/eks.tftest.hcl` | Private API endpoint default, node group subnet wiring, no public SSH, tags |

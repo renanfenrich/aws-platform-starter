@@ -5,7 +5,7 @@ Start with `project-overview.md` for the repo map and environment model, then `a
 - `project-overview.md` — repository layout and environment model.
 - `architecture.md` — system walkthrough and diagram.
 - `architecture.mmd` — Mermaid diagram source.
-- `architecture-aws.svg` — AWS icon diagram (optional).
+- `architecture.svg` — generated diagram (`make diagram`).
 - `runbook.md` — operational runbook.
 - `finops.md` — cost estimation, enforcement, and monitoring model.
 - `costs.md` — cost drivers and optimizations.

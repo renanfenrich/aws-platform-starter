@@ -43,6 +43,8 @@ Use these commands exactly (don’t guess other tooling).
 - Docs generation/check:
   - `make docs`
   - `make docs-check`
+- Diagram:
+  - `make diagram`
 - Cost estimate:
   - `make cost`
 - Tests:
@@ -78,7 +80,7 @@ CI should validate without requiring a real backend. Use `terraform init -backen
 
 ## Platform selectors and “modes”
 Current selectors and guards:
-- `platform`: `ecs` or `k8s_self_managed`; `eks` is reserved and must remain blocked by preconditions. Only one platform is active per environment.
+- `platform`: `ecs`, `k8s_self_managed`, or `eks`; only one platform is active per environment. EKS defaults to a private endpoint and can use an admin runner for SSM-based access.
 - `ecs_capacity_mode`: `fargate`, `fargate_spot`, or `ec2`; Fargate Spot in prod requires `allow_spot_in_prod = true`.
 
 When adding “choose between options” functionality:

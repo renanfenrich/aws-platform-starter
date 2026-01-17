@@ -9,7 +9,9 @@ For the end-to-end FinOps flow (estimate → enforce → monitor), see `docs/fin
 - NAT gateways (hourly + data processing)
 - RDS instance class, storage, and Multi-AZ (when enabled)
 - ECS Fargate vCPU/memory (including Spot when selected) or EC2 instance hours when using EC2 capacity providers or Kubernetes nodes
+- EKS control plane + managed node groups (when `platform = "eks"`)
 - ALB hourly + LCU usage
+- API Gateway + Lambda (when `enable_serverless_api = true`)
 - CloudWatch logs and alarms
 
 ## Cost Estimation (Infracost)

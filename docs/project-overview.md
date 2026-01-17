@@ -58,6 +58,15 @@ Documentation is treated as part of the system: architecture, runbook, and decis
 │   │   ├── versions.tf
 │   │   ├── alb.tftest.hcl
 │   │   └── README.md
+│   ├── apigw-lambda
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   ├── outputs.tf
+│   │   ├── versions.tf
+│   │   ├── apigw-lambda.tftest.hcl
+│   │   ├── src
+│   │   │   └── handler.py
+│   │   └── README.md
 │   ├── budget
 │   │   ├── main.tf
 │   │   ├── variables.tf
@@ -128,10 +137,12 @@ Documentation is treated as part of the system: architecture, runbook, and decis
 │   ├── project-overview.md
 │   ├── architecture.md
 │   ├── architecture.mmd
+│   ├── architecture.svg
 │   ├── runbook.md
 │   ├── finops.md
 │   ├── costs.md
 │   ├── tests.md
+│   ├── github-actions.md
 │   ├── decisions.md
 │   ├── well-architected.md
 │   └── interview-talk-track.md
@@ -164,6 +175,7 @@ Note: local caches and state (for example: `.terraform/`, `.infracost/`, and `te
 - `environments/prod/`: Prod root stack with the same module wiring as dev, but stricter defaults for resilience and protection.
 - `modules/`: Focused building blocks with single responsibilities.
 - `modules/alb`: Internet-facing ALB, listeners, target group, and edge SG rules.
+- `modules/apigw-lambda`: API Gateway HTTP API + Lambda module for an optional serverless endpoint.
 - `modules/budget`: Monthly budget with warning/critical thresholds and notifications.
 - `modules/ecs`: ECS cluster, task definition, service, IAM, and logs for Fargate/EC2 modes.
 - `modules/ecs-ec2-capacity`: ECS EC2 capacity provider backed by an Auto Scaling group.
@@ -173,7 +185,7 @@ Note: local caches and state (for example: `.terraform/`, `.infracost/`, and `te
 - `modules/network`: VPC, subnets, routing, NAT gateways, VPC endpoints, and optional flow logs.
 - `modules/observability`: Baseline CloudWatch alarms + dashboard for ALB, ECS/EC2, and RDS.
 - `modules/rds`: Encrypted PostgreSQL instance, subnet group, KMS key, and SG rules.
-- `docs/`: Architecture, decisions, runbook, FinOps guidance, and test strategy.
+- `docs/`: Architecture, decisions, runbook, FinOps guidance, GitHub Actions setup, and test strategy.
 - `tests/terraform/`: Terraform test suites covering selectors and module behavior without a live backend.
 - `k8s/`: Demo manifests (Kustomize base + overlays) for the Kubernetes options.
 - `scripts/`: CI helpers (FinOps summary).

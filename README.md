@@ -8,7 +8,7 @@ This repo exists to show the baseline layout I use for a single-service AWS stac
 
 ## Assumptions
 
-- One public entry point (ALB) and one application service.
+- Default public entry point is the ALB for the main application service; an optional API Gateway + Lambda path can be enabled for lightweight endpoints.
 - Postgres is the only stateful dependency.
 - Dev and prod are separate Terraform environments; you can run them in one account or split them later, but the repo does not manage multi-account plumbing.
 - You can create VPC, ALB, ECS (Fargate/Fargate Spot/EC2 capacity providers), EC2/Auto Scaling, ECR, RDS, KMS, IAM, SSM, CloudWatch, and Budgets resources in your AWS account.
@@ -16,7 +16,7 @@ This repo exists to show the baseline layout I use for a single-service AWS stac
 ## Trade-offs I Made
 
 - ECS Fargate is the prod default; dev uses Fargate Spot with Fargate fallback, and ECS on EC2 is available when host-level control is needed.
-- Self-managed Kubernetes uses kubeadm with a single control plane and NodePort ingress behind the ALB; HA control plane and EKS are out of scope here.
+- Self-managed Kubernetes uses kubeadm with a single control plane and NodePort ingress behind the ALB; EKS is available when I want a managed control plane with a private API endpoint and an admin runner for access.
 - Dev uses a single NAT gateway to save cost; prod uses one per AZ for resilience.
 - Alarms are intentionally minimal; you are expected to add app-specific signals.
 - HTTPS is the default; HTTP is only allowed in dev to speed local testing.
@@ -29,9 +29,9 @@ This repo exists to show the baseline layout I use for a single-service AWS stac
 
 ## Architecture Overview
 
-Think of it as a straight line: user -> ALB -> compute -> RDS. The ALB lives in public subnets; compute runs as ECS tasks (Fargate, Fargate Spot, or EC2 capacity providers) or a self-managed Kubernetes cluster on EC2 in private subnets. NAT gateways handle outbound internet access for compute, and interface endpoints (when enabled) keep ECR/Logs/SSM traffic inside the VPC.
+Think of it as a straight line: user -> ALB -> compute -> RDS. The ALB lives in public subnets; compute runs as ECS tasks (Fargate, Fargate Spot, or EC2 capacity providers) or Kubernetes (self-managed on EC2 or EKS) in private subnets. NAT gateways handle outbound internet access for compute, and interface endpoints (when enabled) keep ECR/Logs/SSM traffic inside the VPC. When `enable_serverless_api = true`, API Gateway + Lambda is a parallel ingress path.
 
-- Diagram and walkthrough: `docs/architecture.md`, `docs/architecture.mmd`, and optional generated `docs/architecture-aws.svg`
+- Diagram and walkthrough: `docs/architecture.md`, `docs/architecture.mmd`, and generated `docs/architecture.svg`
 - Well-Architected mapping: `docs/well-architected.md`
 
 ## What Is Included
@@ -41,7 +41,9 @@ Think of it as a straight line: user -> ALB -> compute -> RDS. The ALB lives in 
 - ECS service in private subnets with capacity providers (Fargate default, Fargate Spot in dev, EC2 optional)
 - ECS EC2 capacity provider with a private Auto Scaling group (optional)
 - Self-managed Kubernetes on EC2 with a single control plane and worker Auto Scaling group (optional)
+- EKS cluster with a managed node group and optional admin runner (optional)
 - ECR repository per environment (immutable tags, scan-on-push, lifecycle policy for untagged images)
+- API Gateway HTTP API + Lambda serverless API (optional)
 - RDS PostgreSQL with KMS encryption and Secrets Manager-managed master password
 - Baseline CloudWatch logs, alarms, and an environment dashboard
 - VPC endpoints for S3/DynamoDB (gateway) and optional interface endpoints (ECR/Logs/SSM)
@@ -80,7 +82,6 @@ RDS manages the master password and stores it in Secrets Manager. ECS tasks inje
 - Advanced autoscaling policies (multi-metric, request-based, step scaling), blue/green deployments, or canaries
 - Centralized logging or metrics beyond baseline CloudWatch alarms (ALB access logs and VPC Flow Logs are minimal, not a full log platform)
 - Multi-account orchestration or organization-level controls
-- EKS (reserved for future work and explicitly blocked today)
 
 ## How This Would Evolve in a Real Production Environment
 
@@ -110,10 +111,12 @@ If this were running a real product, I would add:
     prod/
   modules/
     alb/
+    apigw-lambda/
     k8s-ec2-infra/
     ecs-ec2-capacity/
     ecs/
     ecr/
+    eks/
     network/
     observability/
     rds/
@@ -126,7 +129,7 @@ If this were running a real product, I would add:
 
 ## Prerequisites
 
-- Terraform >= 1.11.0
+- Terraform >= 1.6.0
 - AWS credentials via environment variables, SSO, or profile (no hardcoded keys)
 - Permission to create VPC, ECS, EC2/Auto Scaling, ALB, RDS, KMS, SSM, ECR, CloudWatch, and Budget resources
 
@@ -169,7 +172,7 @@ Set `platform` in `terraform.tfvars` to choose the compute layer:
 
 - `ecs` (default): existing ECS behavior.
 - `k8s_self_managed`: self-managed Kubernetes on EC2 with kubeadm.
-- `eks`: reserved for future work (not implemented yet).
+- `eks`: managed EKS cluster with a private API endpoint by default and an optional admin runner for kubectl.
 
 For Kubernetes:
 
@@ -184,13 +187,19 @@ kubectl apply -k k8s/overlays/dev
 
 Use `k8s/overlays/prod` for prod.
 
+For EKS:
+
+1) Set `platform = "eks"` in `environments/dev/terraform.tfvars` or `environments/prod/terraform.tfvars`.
+2) Apply the environment as usual; when using the Makefile, pass `platform=eks` so it does not override the tfvars value.
+3) Use the `cluster_access_instructions` output to connect to the admin runner via SSM and run `eks-kubeconfig`.
+
 ## Configuration Highlights
 
 - HTTPS is always enabled; HTTP is allowed only when `allow_http = true` (dev only).
 - RDS master password is managed by AWS and stored in Secrets Manager.
 - ECS tasks run as a non-root user by default (`container_user`).
 - Container images default to the environment ECR repository plus `image_tag`; set `container_image` to override. The resolved value is in the `resolved_container_image` output.
-- `platform` selects `ecs` or `k8s_self_managed` (with `eks` reserved for future use).
+- `platform` selects `ecs`, `k8s_self_managed`, or `eks`.
 - `ecs_capacity_mode` switches between `fargate`, `fargate_spot`, and `ec2` capacity providers; Fargate Spot in prod requires `allow_spot_in_prod = true`.
 - ECS settings are ignored when `platform = "k8s_self_managed"`.
 - ECS autoscaling is opt-in via `enable_autoscaling` and uses CPU target tracking; tune min/max/target/cooldowns per environment.
@@ -198,6 +207,8 @@ Use `k8s/overlays/prod` for prod.
 - EC2 capacity providers use SSM by default; no public SSH ingress is configured.
 - Provide `ec2_user_data` to extend ECS container instance bootstrap when using EC2 capacity.
 - Self-managed Kubernetes uses kubeadm and a NodePort ingress behind the ALB.
+- EKS defaults to a private API endpoint; set `eks_endpoint_public_access = true` and restrict `eks_endpoint_public_access_cidrs` if you need public access.
+- `enable_serverless_api` toggles the API Gateway + Lambda module; use the `serverless_api_*` variables to tune CORS, X-Ray, and routes.
 - Prod defaults enable alarms, flow logs, ALB access logs, and `prevent_destroy` for RDS.
 
 ## CI/CD
@@ -206,7 +217,7 @@ GitHub Actions runs `fmt-check`, `validate`, `lint`, `tfsec`, `docs-check`, and 
 
 ## Testing
 
-`make test` runs `terraform test` for bootstrap, `tests/terraform`, environments, and the core modules (network, ALB, ECS, ECS EC2 capacity, K8s EC2 infra, RDS, observability) with backendless init.
+`make test` runs `terraform test` for bootstrap, `tests/terraform`, environments, and the core modules (network, ALB, API Gateway + Lambda, ECS, ECS EC2 capacity, EKS, K8s EC2 infra, RDS, observability) with backendless init.
 
 ## Documentation
 
