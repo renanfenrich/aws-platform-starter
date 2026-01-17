@@ -1,18 +1,56 @@
 flowchart TB
-  User((User)) --> ALB[ALB : HTTPS]
+  User[User] --> ALB[ALB HTTPS]
+  User --> APIGW[API Gateway HTTP API]
 
-  subgraph VPC
-    subgraph PublicSubnets[Public Subnets x2]
-      ALB
-      NAT[NAT GW (1 or 2)]
+  WAF[WAF optional attach only rules out of scope] -.-> ALB
+
+  subgraph Environment
+    direction TB
+
+    subgraph VPC
+      direction TB
+
+      subgraph PublicSubnets[Public subnets x2]
+        ALB
+        NAT[NAT gateway shared or per az]
+      end
+
+      subgraph PrivateSubnets[Private subnets x2]
+        Compute[Compute module ECS or self managed Kubernetes]
+        ECS[ECS service]
+        K8s[Kubernetes self managed]
+        EKSBlocked[EKS reserved blocked]
+        Lambda[Lambda in private subnets]
+        RDS[RDS PostgreSQL]
+      end
     end
 
-    subgraph PrivateSubnets[Private Subnets x2]
-      Compute[Compute : ECS or self-managed Kubernetes on EC2]
-      RDS[(RDS PostgreSQL)]
+    subgraph Observability[Observability per environment]
+      CloudWatch[CloudWatch metrics and logs]
     end
+
+    Guardrail[Terraform deploy guardrail estimated_monthly_cost required]
   end
 
+  Compute --> ECS
+  Compute --> K8s
+  Compute -.-> EKSBlocked
+
   ALB --> Compute
-  Compute --> RDS
-  Compute --> NAT
+  APIGW --> Lambda
+
+  Lambda --> RDS
+  ECS --> RDS
+  K8s --> RDS
+
+  ECS --> NAT
+  K8s --> NAT
+
+  ECR[ECR repository] -.-> Compute
+  Compute --> CloudWatch
+  Lambda --> CloudWatch
+  RDS --> CloudWatch
+
+  Guardrail -.-> Compute
+  Guardrail -.-> Lambda
+  Guardrail -.-> RDS

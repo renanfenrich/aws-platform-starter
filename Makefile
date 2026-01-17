@@ -3,8 +3,12 @@ ROOT_DIR := $(shell pwd)
 ENV_DIRS := environments/dev environments/prod
 ENV ?= dev
 platform ?= ecs
+MERMAID_CLI_VERSION ?= 10.9.1
+MERMAID_CLI := npx -y @mermaid-js/mermaid-cli@$(MERMAID_CLI_VERSION)
+DIAGRAM_SRC := docs/architecture.mmd
+DIAGRAM_OUT := docs/architecture.svg
 
-.PHONY: fmt fmt-check validate lint security docs docs-check test plan apply cost
+.PHONY: fmt fmt-check validate lint security docs docs-check diagram test plan apply cost
 
 fmt:
 	terraform fmt -recursive
@@ -39,6 +43,9 @@ docs-check:
 	@for dir in modules/*; do \
 		terraform-docs markdown table --output-file README.md --output-mode inject --output-check $$dir; \
 	done
+
+diagram:
+	$(MERMAID_CLI) -i $(DIAGRAM_SRC) -o $(DIAGRAM_OUT) -t neutral
 
 test:
 	terraform -chdir=bootstrap init -backend=false -input=false >/dev/null
