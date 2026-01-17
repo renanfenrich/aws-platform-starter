@@ -2,61 +2,68 @@
 
 ## Recruiter summary
 
-- I built a small AWS platform in Terraform that mirrors how I start real services: VPC, ALB, ECS Fargate or EC2, RDS, and a few alarms.
-- It includes dev/prod environments and a bootstrap step for remote state and notifications.
-- CI runs fmt/validate/tflint/tfsec/terraform-docs/terraform test, plus an optional Infracost cost check.
-- The scope is intentionally limited so the trade-offs are visible.
+- I built a small, opinionated AWS platform in Terraform for a single service: VPC, ALB, compute (ECS default with Kubernetes options), ECR, and Postgres RDS.
+- Dev/prod environments share the same wiring but enforce different cost postures, budgets, and deploy-time cost guards.
+- A bootstrap stack owns remote state (S3 lock files), KMS, SNS notifications, ALB log storage, and optional ACM + GitHub Actions OIDC.
+- CI runs fmt/validate/tflint/tfsec/terraform-docs/terraform test; Infracost is optional but integrated for FinOps reporting.
+- The scope is intentionally limited so the trade-offs are explicit.
 
 ## Technical overview
 
-- Bootstrap creates the S3 state bucket + access logs with native lock files, a KMS key, and an encrypted SNS topic for alerts.
-- Optional ACM DNS validation is supported when a hosted zone ID is provided (no Route53 zone creation).
-- Environments (dev/prod) compose the modules and apply default tags.
-- Network module provisions a two-AZ VPC, public/private subnets, IGW, NAT, and optional flow logs.
-- ALB module provides HTTPS by default (HTTP optional in dev), restrictive security groups, and target group health checks.
-- ECS module runs Fargate tasks in private subnets with separate IAM roles and CloudWatch logs.
-- EC2 capacity providers and self-managed Kubernetes run in private subnets with Auto Scaling and SSM-enabled instance roles.
-- RDS module deploys encrypted Postgres with an RDS-managed master password stored in Secrets Manager.
-- Observability module adds CloudWatch alarms for ALB 5xx, ECS CPU, EC2 CPU, and RDS CPU; SNS actions are opt-in.
+- Bootstrap creates state/log buckets with KMS, an ALB log bucket, an encrypted SNS topic, optional ACM DNS validation, and optional GitHub Actions OIDC.
+- Environments (dev/prod) wire modules together, enforce required tags, and validate `platform` plus cost posture rules.
+- Network module provisions a two-AZ VPC, public/private subnets, IGW, NAT, optional flow logs, and VPC endpoints (S3/DynamoDB gateway plus optional ECR/Logs/SSM interface).
+- ALB module provides HTTPS by default (HTTP optional in dev), target group health checks, restrictive security groups, and optional access logs/WAF.
+- Compute defaults to ECS (Fargate/Fargate Spot/EC2 capacity providers) with exec and optional autoscaling; EC2 capacity uses private ASG + SSM.
+- Kubernetes options: self-managed kubeadm on EC2 (single control plane + worker ASG + NodePort ingress) or EKS with a private API endpoint and an SSM admin runner.
+- RDS module deploys encrypted PostgreSQL with Secrets Manager-managed master password, backups, and prod protections (Multi-AZ, deletion protection).
+- ECR module provides immutable, scan-on-push repos; API Gateway + Lambda is an opt-in serverless ingress path.
+- Observability module adds baseline alarms (ALB 5xx/latency/unhealthy, ECS CPU/memory/capacity, EC2 CPU, RDS CPU/free storage) and a per-env dashboard.
+- FinOps integrates AWS Budgets and deploy-time `estimated_monthly_cost` enforcement with optional Infracost reporting in CI.
 
 ## Key decisions and trade-offs
 
-- ECS by default to keep the example focused, with EC2 available when host control is needed.
-- Two AZs as a baseline; single NAT in dev to reduce cost.
-- HTTPS enforced by default; HTTP only allowed in dev for speed.
-- Managed RDS master password to keep secrets out of Terraform state.
-- Minimal alarms to avoid noise; I expect teams to add app-specific signals.
-- Name prefix length guard to avoid AWS ALB and target group limits.
+- ECS is the default path for simplicity; Kubernetes (self-managed or EKS) is optional to show the operational trade-offs without changing the ALB edge model.
+- Compute stays private and SSH-free; access is via SSM, and EKS uses a private endpoint with an admin runner.
+- Dev optimizes cost (single NAT, Spot-first ECS); prod optimizes stability (multi-NAT, Fargate, longer log retention).
+- Interface VPC endpoints are enabled by default in prod but opt-in in dev to balance hourly endpoint cost vs NAT egress.
+- HTTPS is enforced; HTTP is allowed only in dev to keep iteration fast. WAF is optional but not configured by default.
+- Secrets live in Secrets Manager and KMS protects state/logs/RDS; Terraform state never stores the DB password.
+- Alarms and dashboards are minimal by design to avoid noise; teams are expected to add app-specific signals.
+- Cost controls are explicit: budgets per environment and deploy-time enforcement against `estimated_monthly_cost`.
 
 ## Failure scenarios
 
-- ALB 5xx spike: check target health, ECS logs, and recent deploys; roll back the image or Terraform change.
-- ECS CPU saturation: increase task size or desired count; add autoscaling if needed.
-- EC2 CPU saturation: increase instance size or scale the Auto Scaling group.
-- RDS CPU or storage pressure: scale the instance or storage; review queries and connection counts.
-- NAT outage (dev single NAT): accept reduced resilience; prod uses multi-NAT.
-- State lock contention: check the S3 lock file and team workflow; use `terraform force-unlock` only with coordination.
+- ALB 5xx/latency/unhealthy host alarms: check target group health, ECS/K8s logs, and recent deploys; roll back if needed.
+- ECS desired vs running mismatch or CPU/memory alarms: adjust task size/count, verify capacity provider strategy, or enable autoscaling.
+- EC2 capacity or Kubernetes node churn: inspect ASG health, SSM connectivity, and AMI updates; replace nodes if needed.
+- EKS access issues: use the admin runner via SSM and verify endpoint access settings and node group capacity.
+- RDS CPU or free storage alarms: scale the instance/storage and review query pressure and connection counts.
+- Cost enforcement/budget alerts: update `estimated_monthly_cost` or reduce spend before re-running plan/apply.
+- NAT failure in dev (single NAT): accept reduced resilience; prod uses one NAT per AZ.
+- State lock contention: coordinate with the team and use `terraform force-unlock` only when necessary.
 
 ## What was intentionally not built
 
-- WAF, IDS/IPS, or advanced edge security controls.
-- Blue/green deployments or ECS autoscaling policies.
-- Centralized logging or metrics beyond baseline CloudWatch alarms.
-- VPC endpoints, private registries, or multi-account orchestration.
+- WAF rule sets, IDS/IPS, or managed auth for API Gateway.
+- Blue/green deployments, canaries, or multi-metric autoscaling policies.
+- Centralized logging, tracing, or a full observability platform.
+- Multi-account orchestration or organization-level governance.
+- Cross-region DR or automated backup policies beyond RDS defaults.
 
 ## Well-Architected alignment
 
-- Operational Excellence: IaC, a runbook, and CI quality checks.
-- Security: private subnets, TLS by default, KMS encryption, Secrets Manager.
-- Reliability: multi-AZ networking, remote state locking, health checks.
-- Performance Efficiency: explicit Fargate sizing and ALB health checks.
-- Cost Optimization: single NAT in dev, size defaults, configurable log retention.
-- Sustainability: smaller dev defaults with clear sizing knobs.
+- Operational Excellence: modular Terraform, repeatable workflows, CI checks, and a runbook.
+- Security: private subnets, no public SSH, SSM access, TLS, KMS encryption, and Secrets Manager.
+- Reliability: multi-AZ networking, remote state locking, ALB health checks, and RDS backups/protection.
+- Performance Efficiency: explicit task sizing and optional autoscaling; choice of ECS/EKS/K8s where needed.
+- Cost Optimization: cost posture guardrails, budgets, deploy-time enforcement, and dev cost defaults.
+- Sustainability: smaller dev defaults and clear right-sizing knobs.
 
 ## Common interview questions
 
-- "Why Fargate?" -> I wanted to keep ops overhead low and focus on infrastructure wiring.
-- "How do you keep secrets out of state?" -> RDS manages the master password and stores it in Secrets Manager; ECS reads the secret at runtime.
-- "How would you harden this for production?" -> Add WAF, access logs, VPC endpoints, backup policies, and tighter ingress controls.
-- "What would you add for scale?" -> ECS autoscaling, ALB target tracking, and DB read replicas if the workload needs them.
-- "How do you estimate cost?" -> Infracost runs against bootstrap/dev/prod plans; it’s rough but highlights deltas early.
+- "Why default to ECS instead of Kubernetes?" -> It keeps ops overhead low; EKS/self-managed are there when I need K8s features.
+- "How do you keep secrets out of state?" -> RDS manages the master password in Secrets Manager; Terraform only handles the ARN.
+- "How do you access private compute?" -> Session Manager for ECS/EC2 nodes; EKS uses a private endpoint with an admin runner.
+- "How do you keep costs in check?" -> Budgets, cost posture validation, deploy-time `estimated_monthly_cost`, and optional Infracost in CI.
+- "What would you add for a real production rollout?" -> WAF rules, centralized logging/tracing, stronger autoscaling, and multi-account separation.
