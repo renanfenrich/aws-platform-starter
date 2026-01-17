@@ -16,10 +16,10 @@ flowchart TB
       end
 
       subgraph PrivateSubnets[Private subnets x2]
-        Compute[Compute module ECS or self managed Kubernetes]
+        Compute["Compute module ECS or Kubernetes (self managed or EKS)"]
         ECS[ECS service]
         K8s[Kubernetes self managed]
-        EKSBlocked[EKS reserved blocked]
+        EKS[EKS managed]
         Lambda[Lambda in private subnets]
         RDS[RDS PostgreSQL]
       end
@@ -34,7 +34,7 @@ flowchart TB
 
   Compute --> ECS
   Compute --> K8s
-  Compute -.-> EKSBlocked
+  Compute --> EKS
 
   ALB --> Compute
   APIGW --> Lambda
@@ -42,9 +42,11 @@ flowchart TB
   Lambda --> RDS
   ECS --> RDS
   K8s --> RDS
+  EKS --> RDS
 
   ECS --> NAT
   K8s --> NAT
+  EKS --> NAT
 
   ECR[ECR repository] -.-> Compute
   Compute --> CloudWatch

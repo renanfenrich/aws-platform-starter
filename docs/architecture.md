@@ -4,7 +4,7 @@ If I were sketching this on a whiteboard, I would start at the edge and walk inw
 
 1) The user hits the ALB in the public subnets. TLS terminates here. HTTP only exists when `allow_http = true` in dev. A WAF can be attached, but rule sets are out of scope for this repo.
 2) Optional: the user can hit an API Gateway HTTP API, which invokes a Lambda function in private subnets. When enabled, that Lambda can optionally reach RDS through an explicit security group rule.
-3) The ALB forwards to the compute layer in private subnets. Compute runs either as ECS tasks with capacity providers (Fargate, Fargate Spot, or EC2 capacity provider) or as a self-managed Kubernetes cluster on EC2. EKS is intentionally reserved/blocked. For Kubernetes, the ALB forwards to a NodePort on worker nodes backed by an ingress controller.
+3) The ALB forwards to the compute layer in private subnets. Compute runs either as ECS tasks with capacity providers (Fargate, Fargate Spot, or EC2 capacity provider) or as Kubernetes (self-managed on EC2 or EKS). For Kubernetes, the ALB forwards to a NodePort on worker nodes backed by an ingress controller.
 4) Container images live in an environment-scoped ECR repository. ECS tasks pull from ECR using the task execution role; Kubernetes nodes use the ECR credential helper configured during node bootstrap.
 5) Compute and Lambda talk to RDS in private subnets. The DB security group only allows traffic from the compute and Lambda security groups.
 6) For outbound internet access (image pulls, patches, external APIs), compute traffic goes through NAT gateways. `single_nat_gateway` controls whether there is one NAT (dev default) or one per AZ (prod default). VPC endpoints keep S3/DynamoDB (gateway) and optional ECR/Logs/SSM (interface) traffic off the NAT.
@@ -34,10 +34,10 @@ flowchart TB
       end
 
       subgraph PrivateSubnets[Private subnets x2]
-        Compute[Compute module ECS or self managed Kubernetes]
+        Compute["Compute module ECS or Kubernetes (self managed or EKS)"]
         ECS[ECS service]
         K8s[Kubernetes self managed]
-        EKSBlocked[EKS reserved blocked]
+        EKS[EKS managed]
         Lambda[Lambda in private subnets]
         RDS[RDS PostgreSQL]
       end
@@ -52,7 +52,7 @@ flowchart TB
 
   Compute --> ECS
   Compute --> K8s
-  Compute -.-> EKSBlocked
+  Compute --> EKS
 
   ALB --> Compute
   APIGW --> Lambda
@@ -60,9 +60,11 @@ flowchart TB
   Lambda --> RDS
   ECS --> RDS
   K8s --> RDS
+  EKS --> RDS
 
   ECS --> NAT
   K8s --> NAT
+  EKS --> NAT
 
   ECR[ECR repository] -.-> Compute
   Compute --> CloudWatch

@@ -138,6 +138,34 @@ kubectl get netpol -n demo
 
 If HPA reports `Unknown`, install metrics-server in the cluster first.
 
+## Deploy (EKS)
+
+1) Set `platform = "eks"` in the environment `terraform.tfvars`.
+2) Apply the environment as usual; when using the Makefile, pass `platform=eks` so it does not override the tfvars value.
+3) Use the `cluster_access_instructions` output to access the admin runner via SSM and run kubectl.
+
+The EKS API endpoint is private by default. If you need public endpoint access, set `eks_endpoint_public_access = true` and restrict `eks_endpoint_public_access_cidrs` to trusted IPs.
+
+Once you are connected to the admin runner:
+
+```bash
+eks-kubeconfig
+kubectl get nodes
+```
+
+Install ingress-nginx and pin the NodePort to the Terraform-configured value (default `30080`). Replace `30080` if you set `eks_ingress_nodeport` (or use `terraform output -raw k8s_ingress_nodeport` from the environment directory):
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/aws/deploy.yaml
+kubectl -n ingress-nginx patch svc ingress-nginx-controller -p "{\"spec\": {\"type\": \"NodePort\", \"ports\": [{\"name\": \"http\", \"port\": 80, \"protocol\": \"TCP\", \"targetPort\": \"http\", \"nodePort\": 30080}]}}"
+```
+
+Then apply the demo manifests (dev shown):
+
+```bash
+kubectl apply -k k8s/overlays/dev
+```
+
 ## Update ECS Image
 
 1) Set `image_tag` (or `container_image`) in the environment `terraform.tfvars`.
@@ -159,6 +187,7 @@ Kubernetes nodes use the ECR credential helper, so no expiring imagePullSecrets 
 - Fargate Spot (`ecs_capacity_mode = "fargate_spot"`): update `desired_count`, `container_cpu`, or `container_memory`, then apply.
 - EC2 capacity provider (`ecs_capacity_mode = "ec2"`): update `desired_count`, `ec2_desired_capacity`, `ec2_min_size`, `ec2_max_size`, or `ec2_instance_type`, then apply.
 - Kubernetes workers: update `k8s_worker_desired_capacity`, `k8s_worker_min_size`, `k8s_worker_max_size`, or `k8s_worker_instance_type`, then apply.
+- EKS nodes: update `eks_node_desired_capacity`, `eks_node_min_size`, `eks_node_max_size`, or `eks_node_instance_type`, then apply.
 
 ## Handle Fargate Spot Interruptions
 
@@ -169,7 +198,7 @@ Kubernetes nodes use the ECR credential helper, so no expiring imagePullSecrets 
 
 EC2 capacity providers are designed for SSM access. Ensure the instance role has SSM permissions (default) and use Session Manager; no SSH ingress is opened by default.
 
-Kubernetes control plane and worker nodes follow the same rule. Use Session Manager to connect to the control plane and run `kubectl` with `/etc/kubernetes/admin.conf`.
+Kubernetes control plane and worker nodes follow the same rule. EKS nodes and the admin runner also use Session Manager; no SSH ingress is opened by default.
 
 ## Rotate kubeadm Join Token
 
