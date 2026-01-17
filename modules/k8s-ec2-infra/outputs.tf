@@ -23,6 +23,11 @@ output "worker_autoscaling_group_name" {
   value       = aws_autoscaling_group.worker.name
 }
 
+output "log_group_name" {
+  description = "CloudWatch log group name for Kubernetes logs."
+  value       = aws_cloudwatch_log_group.k8s_app.name
+}
+
 output "control_plane_instance_profile_arn" {
   description = "IAM instance profile ARN for the control plane."
   value       = aws_iam_instance_profile.control_plane.arn
