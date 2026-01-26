@@ -74,6 +74,11 @@ run "prod_ecs_fargate" {
   }
 
   assert {
+    condition     = length(module.dns.dns_records) == 0
+    error_message = "expected no Route53 records when DNS is disabled"
+  }
+
+  assert {
     condition     = length(module.ecs) == 1
     error_message = "expected ECS module to be created"
   }
@@ -286,6 +291,110 @@ run "prod_serverless_api_enabled" {
   assert {
     condition     = length(module.rds.additional_ingress_security_group_ids) == 1
     error_message = "expected RDS to allow ingress from the serverless API security group"
+  }
+}
+
+run "prod_dns_enabled" {
+  command = plan
+
+  variables {
+    service_name                     = "platform"
+    owner                            = "platform-team"
+    cost_center                      = "platform"
+    cost_posture                     = "stability_first"
+    budget_limit_usd                 = 400
+    budget_warning_threshold_percent = 75
+    budget_hard_limit_percent        = 90
+    budget_notification_emails       = ["platform-alerts@example.com"]
+    estimated_monthly_cost           = 200
+    platform                         = "ecs"
+    ecs_capacity_mode                = "fargate"
+    acm_certificate_arn              = "arn:aws:acm:us-east-1:123456789012:certificate/00000000-0000-0000-0000-000000000000"
+    alb_access_logs_bucket           = "example-alb-access-logs"
+    enable_dns                       = true
+    dns_hosted_zone_id               = "Z1234567890"
+    dns_domain_name                  = "example.com"
+    dns_record_name                  = "app"
+    dns_create_aaaa                  = true
+  }
+
+  override_data {
+    target = data.aws_availability_zones.available
+    values = {
+      names = ["us-east-1a", "us-east-1b"]
+    }
+  }
+
+  override_data {
+    target = module.network.data.aws_iam_policy_document.flow_logs_assume
+    values = {
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
+    }
+  }
+
+  override_data {
+    target = module.network.data.aws_iam_policy_document.flow_logs
+    values = {
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
+    }
+  }
+
+  override_data {
+    target = module.ecs[0].data.aws_region.current
+    values = {
+      name = "us-east-1"
+    }
+  }
+
+  override_data {
+    target = module.ecs[0].data.aws_iam_policy_document.task_assume
+    values = {
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
+    }
+  }
+
+  override_data {
+    target = module.ecs[0].data.aws_iam_policy_document.task_execution_exec[0]
+    values = {
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
+    }
+  }
+
+  override_data {
+    target = module.ecs[0].data.aws_iam_policy_document.task_execution_secrets[0]
+    values = {
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
+    }
+  }
+
+  assert {
+    condition     = output.public_fqdn == "app.example.com"
+    error_message = "expected public_fqdn to use the DNS name when enabled"
+  }
+
+  assert {
+    condition     = output.public_fqdn == module.dns.dns_fqdn
+    error_message = "expected public_fqdn to match the DNS module output"
+  }
+
+  assert {
+    condition     = length(module.dns.dns_records) == 2
+    error_message = "expected A and AAAA records when DNS is enabled"
+  }
+
+  assert {
+    condition     = module.dns.dns_records[0].name == "app.example.com"
+    error_message = "expected primary record name to match the DNS record name"
+  }
+
+  assert {
+    condition     = module.dns.dns_records[0].type == "A"
+    error_message = "expected primary record to be an A alias"
+  }
+
+  assert {
+    condition     = module.dns.dns_records[1].type == "AAAA"
+    error_message = "expected secondary record to be an AAAA alias"
   }
 }
 
