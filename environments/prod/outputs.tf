@@ -43,6 +43,11 @@ output "alb_dns_name" {
   value       = module.alb.alb_dns_name
 }
 
+output "public_fqdn" {
+  description = "Public endpoint FQDN (DNS when enabled, otherwise the ALB DNS name)."
+  value       = var.enable_dns ? coalesce(module.dns.dns_fqdn, module.alb.alb_dns_name) : module.alb.alb_dns_name
+}
+
 output "alb_sg_id" {
   description = "ALB security group ID."
   value       = module.alb.alb_security_group_id

@@ -31,6 +31,13 @@ acm_certificate_arn       = "arn:aws:acm:us-east-1:000000000000:certificate/0000
 alb_ingress_cidrs         = ["0.0.0.0/0"]
 alb_deletion_protection   = false
 
+enable_dns           = false
+dns_hosted_zone_id   = ""
+dns_domain_name      = ""
+dns_record_name      = ""
+dns_create_www_alias = false
+dns_create_aaaa      = true
+
 ecr_enable_replication          = false
 ecr_replication_regions         = []
 ecr_replication_filter_prefixes = []

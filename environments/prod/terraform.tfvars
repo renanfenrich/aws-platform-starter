@@ -32,6 +32,13 @@ alb_deletion_protection   = true
 alb_enable_access_logs    = true
 alb_access_logs_bucket    = "CHANGE_ME"
 
+enable_dns           = false
+dns_hosted_zone_id   = ""
+dns_domain_name      = ""
+dns_record_name      = ""
+dns_create_www_alias = false
+dns_create_aaaa      = true
+
 ecr_enable_replication          = false
 ecr_replication_regions         = []
 ecr_replication_filter_prefixes = []
