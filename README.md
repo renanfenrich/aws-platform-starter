@@ -49,6 +49,7 @@ Think of it as a straight line: user -> ALB -> compute -> RDS. The ALB lives in 
 - VPC endpoints for S3/DynamoDB (gateway) and optional interface endpoints (ECR/Logs/SSM)
 - AWS Budgets per environment + deploy-time cost enforcement
 - Remote state bootstrap with S3 native locking, KMS key, SNS topic, and ALB log bucket
+- Pilot-light DR environment (opt-in) with optional ECR replication and AWS Backup copy hooks
 - Demo Kubernetes manifests under `k8s/base` and `k8s/overlays`
 
 ## Autoscaling
@@ -72,7 +73,7 @@ Enable or disable it with:
 
 ## Data Protection
 
-RDS uses native automated backups with environment-aware retention (dev 3 days, prod 7 days) and encryption at rest; prod also enforces deletion protection and requires a final snapshot on delete. You can override `db_backup_retention_period`, `db_deletion_protection`, and `db_skip_final_snapshot` per environment, but doing so reduces recoverability; AWS Backup and cross-region DR are intentionally out of scope here.
+RDS uses native automated backups with environment-aware retention (dev 3 days, prod 7 days) and encryption at rest; prod also enforces deletion protection and requires a final snapshot on delete. You can override `db_backup_retention_period`, `db_deletion_protection`, and `db_skip_final_snapshot` per environment, but doing so reduces recoverability. Optional AWS Backup copy and pilot-light DR are now supported; see `docs/dr-plan.md` for the cross-region workflow.
 
 RDS manages the master password and stores it in Secrets Manager. ECS tasks inject the secret ARN as `DB_SECRET` by default (the value is the JSON payload from Secrets Manager). Kubernetes secrets are not wired in by default; you need to fetch them yourself if you run `k8s_self_managed`.
 
@@ -225,6 +226,7 @@ GitHub Actions runs `fmt-check`, `validate`, `lint`, `tfsec`, `docs-check`, and 
 - `docs/project-overview.md` — repository layout and environment model
 - `docs/architecture.md` — architecture walkthrough and diagram
 - `docs/runbook.md` — operational runbook
+- `docs/dr-plan.md` — disaster recovery plan and procedures
 - `docs/finops.md` — cost estimation and enforcement model
 - `docs/tests.md` — test coverage and how to run
 - `docs/decisions.md` — key design decisions

@@ -11,6 +11,7 @@ If you discover a security issue, please open a private security advisory or con
 - RDS storage is encrypted with KMS, and the master password is managed by AWS.
 - ALB ingress is restricted to HTTPS by default; HTTP is only enabled for dev.
 - No public SSH is configured; EC2 access is intended through SSM Session Manager.
+- Cross-region replication (ECR, AWS Backup, state bucket) is opt-in and requires explicit configuration.
 
 ## Shared Responsibility
 
@@ -28,4 +29,5 @@ If you discover a security issue, please open a private security advisory or con
 - In dev, enable ALB access logs and VPC flow logs when you need request-level or network visibility.
 - In dev, consider interface VPC endpoints to keep ECR/SSM/Logs traffic inside the VPC.
 - Add AWS Backup policies for RDS in production if required by policy.
+- Enable cross-region AWS Backup copy and ECR replication if DR objectives require it.
 - Add managed WAF rules, centralized log storage, and threat detection for broader security coverage.

@@ -25,6 +25,7 @@ This repo treats cost as a system property: estimate before deploy, enforce duri
 | --- | --- | --- | --- |
 | dev | `cost_optimized` | Spot-first (`fargate_spot` default) | Higher tolerance thresholds |
 | prod | `stability_first` | Spot allowed only with `allow_spot_in_prod = true` | Stricter thresholds |
+| dr | `cost_optimized` | Spot allowed (opt-in) | Minimal baseline budgets; scale up during incidents |
 
 These rules are enforced via variable validation and defaults in each environment.
 

@@ -113,3 +113,9 @@ These are the defaults I chose for this repo. Each one is a trade-off, and I kep
    - I added EKS to offload control plane operations while keeping the API endpoint private by default and accessible via the SSM admin runner.
    - Ingress stays behind the existing ALB and a fixed NodePort to avoid creating a second public ALB and to keep edge behavior consistent.
    - The footprint stays minimal: only core EKS add-ons (vpc-cni, coredns, kube-proxy) and no extra controllers beyond ingress.
+
+34) **Pilot-light DR as the default recovery model**
+   - I added a dedicated `environments/dr` stack with zero/low compute and no public ingress by default.
+   - Cross-region recovery is opt-in: ECR replication and AWS Backup copy are off unless explicitly enabled.
+   - State bucket replication is optional and scoped to the state bucket only to avoid hidden costs.
+   - This keeps DR practical and reproducible without turning the repo into a multi-region platform.

@@ -43,6 +43,11 @@ make apply ENV=prod platform=ecs
 - Budget notifications require `budget_notification_emails`, `budget_sns_topic_arn`, or `alarm_sns_topic_arn`.
 - Deploys fail when `enforce_cost_controls = true` and `estimated_monthly_cost` is missing or above the hard limit.
 
+## DR-Related Toggles
+
+- Enable ECR replication: set `ecr_enable_replication = true` and `ecr_replication_regions = ["<dr-region>"]`.
+- Enable AWS Backup copy: set `enable_rds_backup = true` and `rds_backup_copy_destination_vault_arn` to the DR vault ARN.
+
 ## Destructive Changes
 
 Prod uses `prevent_destroy` and `db_deletion_protection`. To destroy or replace protected resources, you must explicitly disable those safeguards in `terraform.tfvars`, apply, and then proceed with the change.

@@ -39,7 +39,18 @@ Documentation is treated as part of the system: architecture, runbook, and decis
 │   │   ├── terraform.tfvars
 │   │   ├── infracost.tfvars
 │   │   └── stack.tftest.hcl
-│   └── prod
+│   ├── prod
+│   │   ├── backend.tf
+│   │   ├── backend.hcl
+│   │   ├── backend.hcl.example
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   ├── outputs.tf
+│   │   ├── versions.tf
+│   │   ├── terraform.tfvars
+│   │   ├── infracost.tfvars
+│   │   └── stack.tftest.hcl
+│   └── dr
 │       ├── backend.tf
 │       ├── backend.hcl
 │       ├── backend.hcl.example
@@ -66,6 +77,13 @@ Documentation is treated as part of the system: architecture, runbook, and decis
 │   │   ├── apigw-lambda.tftest.hcl
 │   │   ├── src
 │   │   │   └── handler.py
+│   │   └── README.md
+│   ├── backup-vault
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   ├── outputs.tf
+│   │   ├── versions.tf
+│   │   ├── backup-vault.tftest.hcl
 │   │   └── README.md
 │   ├── budget
 │   │   ├── main.tf
@@ -139,6 +157,7 @@ Documentation is treated as part of the system: architecture, runbook, and decis
 │   ├── architecture.mmd
 │   ├── architecture.svg
 │   ├── runbook.md
+│   ├── dr-plan.md
 │   ├── finops.md
 │   ├── costs.md
 │   ├── tests.md
@@ -173,9 +192,11 @@ Note: local caches and state (for example: `.terraform/`, `.infracost/`, and `te
 - `bootstrap/`: One-time/account prerequisites (state bucket + logging bucket, ALB access log bucket, KMS key, SNS topic, optional ACM). Outputs feed `backend.hcl` and environment notifications/certificates.
 - `environments/dev/`: Dev root stack wiring modules together, plus environment-specific tfvars/backends and stack tests.
 - `environments/prod/`: Prod root stack with the same module wiring as dev, but stricter defaults for resilience and protection.
+- `environments/dr/`: Pilot-light DR root stack in a secondary region with low/zero capacity defaults.
 - `modules/`: Focused building blocks with single responsibilities.
 - `modules/alb`: Internet-facing ALB, listeners, target group, and edge SG rules.
 - `modules/apigw-lambda`: API Gateway HTTP API + Lambda module for an optional serverless endpoint.
+- `modules/backup-vault`: Encrypted AWS Backup vault for DR copy targets.
 - `modules/budget`: Monthly budget with warning/critical thresholds and notifications.
 - `modules/ecs`: ECS cluster, task definition, service, IAM, and logs for Fargate/EC2 modes.
 - `modules/ecs-ec2-capacity`: ECS EC2 capacity provider backed by an Auto Scaling group.
@@ -195,6 +216,7 @@ Dev and prod are separate root stacks with environment-scoped configuration file
 Defaults in tfvars reinforce cost and safety posture differences:
 - Dev emphasizes cost optimization (Fargate Spot default, single NAT gateway, HTTP listener allowed, shorter log retention, alarms optional).
 - Prod favors stability (Fargate default, multi-NAT, Multi-AZ RDS, deletion protection + final snapshot, alarms enforced, `prevent_destroy = true`).
+- DR is pilot-light by default (zero/low compute, no public ingress, minimal RDS settings) and is opt-in.
 - Interface VPC endpoints and VPC Flow Logs are enabled by default in prod and opt-in in dev.
 
 ## Selectors and Modes
@@ -229,5 +251,7 @@ When curating or rebuilding history, follow these defaults:
 - Apply dev: `make apply ENV=dev platform=ecs`
 - Plan prod: `make plan ENV=prod platform=ecs`
 - Apply prod: `make apply ENV=prod platform=ecs`
+- Plan dr: `make plan ENV=dr platform=ecs`
+- Apply dr: `make apply ENV=dr platform=ecs`
 
 The plan/apply workflow expects bootstrap outputs to be wired into each environment backend config and tfvars before running.

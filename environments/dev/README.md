@@ -36,6 +36,8 @@ make apply ENV=dev platform=ecs
 - Enable alarms: set `enable_alarms = true` and wire `alarm_sns_topic_arn`.
 - Enable flow logs: set `enable_flow_logs = true`.
 - Enable interface endpoints: set `enable_interface_endpoints = true`.
+- Enable ECR replication: set `ecr_enable_replication = true` and `ecr_replication_regions = ["<dr-region>"]`.
+- Enable AWS Backup copy: set `enable_rds_backup = true` and `rds_backup_copy_destination_vault_arn` to the DR vault ARN.
 - Override image: set `container_image` or update `image_tag`.
 
 ## Guardrails

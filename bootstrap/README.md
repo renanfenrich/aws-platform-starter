@@ -9,6 +9,7 @@ I keep bootstrap separate to avoid circular dependencies. This stack creates the
 - S3 bucket for ALB access logs (SSE-KMS, lifecycle rules, restricted delivery policy).
 - KMS key for state, logs, and SNS encryption.
 - SNS topic for infrastructure notifications (optional email subscriptions).
+- Optional S3 cross-region replication for the state bucket (replica bucket + replication IAM role).
 - Optional GitHub Actions OIDC provider and IAM role for CI.
 - Optional ACM certificate with DNS validation when a hosted zone ID is supplied.
 
@@ -28,7 +29,7 @@ terraform -chdir=bootstrap plan -var-file=terraform.tfvars
 terraform -chdir=bootstrap apply -var-file=terraform.tfvars
 ```
 
-3) Update `environments/dev/backend.hcl` and `environments/prod/backend.hcl` using the outputs:
+3) Update `environments/dev/backend.hcl`, `environments/prod/backend.hcl`, and `environments/dr/backend.hcl` using the outputs:
 
 - `state_bucket_name`
 - `kms_key_arn`
@@ -51,6 +52,7 @@ terraform -chdir=bootstrap apply -var-file=terraform.tfvars
 - Access logs go to `${state_bucket_name}-logs` unless `log_bucket_name` is set.
 - The log bucket does not log itself to avoid recursive logging.
 - The ALB access log bucket name defaults to `<project>-<environment>-<account>-<region>-alb-logs` unless overridden.
+- State replication is opt-in. When enabled, a replica bucket is created in `replication_region` and replication is configured for the state bucket.
 - Restrict ALB log delivery to specific load balancers by setting `alb_access_logs_source_arns` after the ALB exists.
 - SNS topic name is `${project_name}-${environment}-${region_short}-infra-alerts`.
 - SNS email subscriptions require confirmation from each recipient.

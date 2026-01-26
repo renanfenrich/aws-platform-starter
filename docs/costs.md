@@ -13,6 +13,7 @@ For the end-to-end FinOps flow (estimate → enforce → monitor), see `docs/fin
 - ALB hourly + LCU usage
 - API Gateway + Lambda (when `enable_serverless_api = true`)
 - CloudWatch logs and alarms
+- DR add-ons (when enabled): AWS Backup vault storage, cross-region backup copy, ECR replication, extra ALB/RDS in the DR region
 
 ## Cost Estimation (Infracost)
 
@@ -52,3 +53,5 @@ Note: Infracost reported missing SMS pricing for the bootstrap SNS topic, so tre
 - `desired_count`, `container_cpu`, `container_memory`: right-size ECS tasks.
 - `db_instance_class`, `db_multi_az`, `db_backup_retention_period`: control RDS cost and resiliency.
 - `log_retention_in_days`: trim CloudWatch log storage costs.
+- `enable_rds_backup`, `rds_backup_schedule`: tune AWS Backup copy frequency and retention.
+- `ecr_enable_replication`: keep image replication scoped to the DR region.

@@ -246,6 +246,75 @@ Warnings:
 - Keep `db_skip_final_snapshot = false` in prod so a final snapshot is captured before any deletion.
 - Do not assume Terraform can restore the existing instance in place; it requires a new instance and an import.
 
+## Disaster Recovery (Pilot-Light)
+
+Use this when the primary region is unavailable or you must fail over for incident response.
+
+### Preconditions
+
+- DR environment exists and can be planned (`environments/dr`).
+- ECR replication is enabled in the primary environment (optional but recommended).
+- AWS Backup copy to the DR vault is enabled if you want cross-region recovery points.
+- DNS cutover plan is ready (Route 53 failover or manual CNAME).
+
+### Declare DR Checklist
+
+1) Confirm primary region outage scope and estimated duration.
+2) Freeze non-essential changes in the primary environment.
+3) Notify stakeholders of expected RTO/RPO.
+4) Run readiness checks:
+
+```bash
+scripts/dr-readiness.sh environments/prod environments/dr
+```
+
+### Restore Database in DR
+
+1) Identify a recovery point or snapshot in the primary region.
+2) Restore into the DR region:
+   - AWS Backup: restore the latest recovery point into a new DB instance.
+   - Snapshot copy: restore the latest copied snapshot.
+3) Capture the new endpoint and secret ARN.
+4) Update application configuration/secrets in the DR region.
+
+### Scale Compute in DR
+
+1) Update `environments/dr/terraform.tfvars`:
+   - `desired_count` for ECS, or
+   - `k8s_worker_*` / `eks_node_*` for Kubernetes.
+2) Apply:
+
+```bash
+export TF_VAR_estimated_monthly_cost=123.45
+make apply ENV=dr platform=ecs
+```
+
+### Enable Public Ingress and Cutover Traffic
+
+1) Set `alb_enable_public_ingress = true` and provide a DR ACM cert.
+2) Apply `environments/dr`.
+3) Cut over DNS:
+   - Route 53 failover record, or
+   - Manual CNAME change.
+
+### Validate
+
+- Smoke tests against the DR endpoint.
+- Check ALB target health and ECS task status.
+- Verify RDS connectivity and application logs.
+
+### Rollback Path
+
+- Revert DNS to primary.
+- Scale DR compute back to 0.
+- Disable public ingress (`alb_enable_public_ingress = false`).
+
+### Post-Incident Reconciliation
+
+- Compare Terraform state vs. actual DR resources (import if needed).
+- Document incident timeline and data loss (actual RPO).
+- Re-enable primary and plan a controlled failback.
+
 ## Investigate Alarms
 
 - ALB 5xx: check target health, application logs, and recent deploys.
