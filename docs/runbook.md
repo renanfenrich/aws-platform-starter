@@ -61,6 +61,24 @@ Logs land in:
 
 When Lambda runs inside private subnets, it still needs NAT or relevant VPC endpoints to reach AWS APIs.
 
+## Enable DNS Records (Optional)
+
+1) Set `enable_dns = true` in the environment `terraform.tfvars`.
+2) Provide the hosted zone and record inputs:
+   - `dns_hosted_zone_id`
+   - `dns_domain_name` (no trailing dot)
+   - `dns_record_name` (empty string for apex)
+   - Optional: `dns_create_www_alias`, `dns_create_aaaa`
+3) Apply the environment.
+
+Verify the record resolves:
+
+```bash
+PUBLIC_FQDN=$(terraform output -raw public_fqdn)
+dig +short "${PUBLIC_FQDN}"
+nslookup "${PUBLIC_FQDN}"
+```
+
 ## Build and Push an Image to ECR (Manual)
 
 From the environment directory (set `AWS_REGION` to match `aws_region` in your tfvars):

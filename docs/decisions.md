@@ -119,3 +119,7 @@ These are the defaults I chose for this repo. Each one is a trade-off, and I kep
    - Cross-region recovery is opt-in: ECR replication and AWS Backup copy are off unless explicitly enabled.
    - State bucket replication is optional and scoped to the state bucket only to avoid hidden costs.
    - This keeps DR practical and reproducible without turning the repo into a multi-region platform.
+
+35) **Route53 records are opt-in and hosted zones stay out of scope**
+   - DNS changes only happen when `enable_dns = true` and an existing hosted zone ID is provided.
+   - Hosted zone creation/ownership remains out of scope by default to avoid accidental DNS ownership changes.

@@ -195,6 +195,7 @@ Note: local caches and state (for example: `.terraform/`, `.infracost/`, and `te
 - `environments/dr/`: Pilot-light DR root stack in a secondary region with low/zero capacity defaults.
 - `modules/`: Focused building blocks with single responsibilities.
 - `modules/alb`: Internet-facing ALB, listeners, target group, and edge SG rules.
+- `modules/dns`: Optional Route53 alias records for the public ALB endpoint.
 - `modules/apigw-lambda`: API Gateway HTTP API + Lambda module for an optional serverless endpoint.
 - `modules/backup-vault`: Encrypted AWS Backup vault for DR copy targets.
 - `modules/budget`: Monthly budget with warning/critical thresholds and notifications.
