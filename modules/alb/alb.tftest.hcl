@@ -4,15 +4,16 @@ run "alb_http_enabled" {
   command = plan
 
   variables {
-    name_prefix         = "test"
-    vpc_id              = "vpc-12345678"
-    vpc_cidr            = "10.0.0.0/16"
-    public_subnet_ids   = ["subnet-123", "subnet-456"]
-    target_port         = 80
-    health_check_path   = "/health"
-    enable_http         = true
-    acm_certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
-    ingress_cidrs       = ["0.0.0.0/0"]
+    name_prefix           = "test"
+    vpc_id                = "vpc-12345678"
+    vpc_cidr              = "10.0.0.0/16"
+    public_subnet_ids     = ["subnet-123", "subnet-456"]
+    target_port           = 80
+    health_check_path     = "/health"
+    enable_public_ingress = true
+    enable_http           = true
+    acm_certificate_arn   = "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
+    ingress_cidrs         = ["0.0.0.0/0"]
     tags = {
       Project     = "test"
       Environment = "test"
@@ -25,12 +26,12 @@ run "alb_http_enabled" {
   }
 
   assert {
-    condition     = aws_lb_listener.https.port == 443 && aws_lb_listener.https.protocol == "HTTPS"
+    condition     = aws_lb_listener.https[0].port == 443 && aws_lb_listener.https[0].protocol == "HTTPS"
     error_message = "expected HTTPS listener on port 443"
   }
 
   assert {
-    condition     = aws_lb_listener.https.certificate_arn == "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
+    condition     = aws_lb_listener.https[0].certificate_arn == "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
     error_message = "expected HTTPS listener to use the provided ACM certificate"
   }
 
@@ -45,7 +46,7 @@ run "alb_http_enabled" {
   }
 
   assert {
-    condition     = aws_security_group_rule.alb_https_ingress.from_port == 443 && toset(aws_security_group_rule.alb_https_ingress.cidr_blocks) == toset(["0.0.0.0/0"])
+    condition     = aws_security_group_rule.alb_https_ingress[0].from_port == 443 && toset(aws_security_group_rule.alb_https_ingress[0].cidr_blocks) == toset(["0.0.0.0/0"])
     error_message = "expected HTTPS ingress from 0.0.0.0/0"
   }
 
@@ -55,7 +56,7 @@ run "alb_http_enabled" {
   }
 
   assert {
-    condition     = aws_lb_listener.https.default_action[0].type == "forward"
+    condition     = aws_lb_listener.https[0].default_action[0].type == "forward"
     error_message = "expected HTTPS listener default action to forward"
   }
 
@@ -89,14 +90,15 @@ run "alb_http_disabled" {
   command = plan
 
   variables {
-    name_prefix         = "test"
-    vpc_id              = "vpc-12345678"
-    vpc_cidr            = "10.0.0.0/16"
-    public_subnet_ids   = ["subnet-123", "subnet-456"]
-    target_port         = 80
-    enable_http         = false
-    acm_certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
-    ingress_cidrs       = ["0.0.0.0/0"]
+    name_prefix           = "test"
+    vpc_id                = "vpc-12345678"
+    vpc_cidr              = "10.0.0.0/16"
+    public_subnet_ids     = ["subnet-123", "subnet-456"]
+    target_port           = 80
+    enable_public_ingress = true
+    enable_http           = false
+    acm_certificate_arn   = "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
+    ingress_cidrs         = ["0.0.0.0/0"]
     tags = {
       Project     = "test"
       Environment = "test"
@@ -119,8 +121,48 @@ run "alb_http_disabled" {
   }
 
   assert {
-    condition     = aws_lb_listener.https.port == 443 && aws_lb_listener.https.certificate_arn == "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
+    condition     = aws_lb_listener.https[0].port == 443 && aws_lb_listener.https[0].certificate_arn == "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
     error_message = "expected HTTPS listener to remain configured"
+  }
+}
+
+run "alb_public_ingress_disabled" {
+  command = plan
+
+  variables {
+    name_prefix           = "test"
+    vpc_id                = "vpc-12345678"
+    vpc_cidr              = "10.0.0.0/16"
+    public_subnet_ids     = ["subnet-123", "subnet-456"]
+    target_port           = 80
+    enable_public_ingress = false
+    enable_http           = false
+    acm_certificate_arn   = ""
+    ingress_cidrs         = ["0.0.0.0/0"]
+    tags = {
+      Project     = "test"
+      Environment = "test"
+      Service     = "test"
+      Owner       = "test"
+      CostCenter  = "test"
+      ManagedBy   = "Terraform"
+      Repository  = "aws-platform-starter"
+    }
+  }
+
+  assert {
+    condition     = length(aws_lb_listener.https) == 0
+    error_message = "expected no HTTPS listener when public ingress is disabled"
+  }
+
+  assert {
+    condition     = length(aws_security_group_rule.alb_https_ingress) == 0
+    error_message = "expected no HTTPS ingress rule when public ingress is disabled"
+  }
+
+  assert {
+    condition     = length(aws_lb_listener.http) == 0
+    error_message = "expected no HTTP listener when public ingress is disabled"
   }
 }
 
@@ -128,14 +170,15 @@ run "alb_missing_acm_certificate" {
   command = plan
 
   variables {
-    name_prefix         = "test"
-    vpc_id              = "vpc-12345678"
-    vpc_cidr            = "10.0.0.0/16"
-    public_subnet_ids   = ["subnet-123", "subnet-456"]
-    target_port         = 80
-    enable_http         = false
-    acm_certificate_arn = ""
-    ingress_cidrs       = ["0.0.0.0/0"]
+    name_prefix           = "test"
+    vpc_id                = "vpc-12345678"
+    vpc_cidr              = "10.0.0.0/16"
+    public_subnet_ids     = ["subnet-123", "subnet-456"]
+    target_port           = 80
+    enable_http           = false
+    enable_public_ingress = true
+    acm_certificate_arn   = ""
+    ingress_cidrs         = ["0.0.0.0/0"]
     tags = {
       Project     = "test"
       Environment = "test"

@@ -87,3 +87,64 @@ run "rds_additional_ingress" {
     error_message = "expected additional ingress rules to use the database port"
   }
 }
+
+run "rds_backup_enabled" {
+  command = plan
+
+  variables {
+    name_prefix                       = "test"
+    vpc_id                            = "vpc-12345678"
+    private_subnet_ids                = ["subnet-123", "subnet-456"]
+    app_security_group_id             = "sg-app12345"
+    db_name                           = "appdb"
+    db_username                       = "appuser"
+    enable_backup_plan                = true
+    backup_retention_days             = 14
+    backup_plan_schedule              = "cron(0 5 * * ? *)"
+    backup_copy_destination_vault_arn = "arn:aws:backup:us-west-2:123456789012:backup-vault:dr-vault"
+    backup_copy_retention_days        = 30
+    tags = {
+      Project     = "test"
+      Environment = "test"
+      Service     = "test"
+      Owner       = "test"
+      CostCenter  = "test"
+      ManagedBy   = "Terraform"
+      Repository  = "aws-platform-starter"
+    }
+  }
+
+  override_data {
+    target = data.aws_iam_policy_document.backup_assume[0]
+    values = {
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
+    }
+  }
+
+  override_data {
+    target = data.aws_iam_policy_document.backup_kms[0]
+    values = {
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
+    }
+  }
+
+  assert {
+    condition     = length(aws_backup_plan.rds) == 1
+    error_message = "expected AWS Backup plan to be created when enabled"
+  }
+
+  assert {
+    condition     = length(aws_backup_selection.rds[0].resources) == 1
+    error_message = "expected AWS Backup selection to include one resource"
+  }
+
+  assert {
+    condition = anytrue([
+      for rule in aws_backup_plan.rds[0].rule :
+      anytrue([
+        for action in rule.copy_action : action.destination_vault_arn == "arn:aws:backup:us-west-2:123456789012:backup-vault:dr-vault"
+      ])
+    ])
+    error_message = "expected AWS Backup copy action to target the destination vault"
+  }
+}

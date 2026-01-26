@@ -38,6 +38,11 @@ output "budget_hard_limit_usd" {
   value       = local.budget_hard_limit_usd
 }
 
+output "dr_backup_vault_arn" {
+  description = "Backup vault ARN in the DR region (null when disabled)."
+  value       = var.enable_dr_backup_vault ? module.backup_vault[0].vault_arn : null
+}
+
 output "alb_dns_name" {
   description = "ALB DNS name."
   value       = module.alb.alb_dns_name

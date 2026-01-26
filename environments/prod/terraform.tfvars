@@ -24,12 +24,17 @@ enable_gateway_endpoints   = true
 enable_interface_endpoints = true
 enable_flow_logs           = true
 
-allow_http              = false
-acm_certificate_arn     = "CHANGE_ME"
-alb_ingress_cidrs       = ["0.0.0.0/0"]
-alb_deletion_protection = true
-alb_enable_access_logs  = true
-alb_access_logs_bucket  = "CHANGE_ME"
+alb_enable_public_ingress = true
+allow_http                = false
+acm_certificate_arn       = "CHANGE_ME"
+alb_ingress_cidrs         = ["0.0.0.0/0"]
+alb_deletion_protection   = true
+alb_enable_access_logs    = true
+alb_access_logs_bucket    = "CHANGE_ME"
+
+ecr_enable_replication          = false
+ecr_replication_regions         = []
+ecr_replication_filter_prefixes = []
 
 image_tag         = "latest"
 container_port    = 80
@@ -52,14 +57,16 @@ enable_container_insights = true
 health_check_grace_period_seconds = 60
 
 
-db_name                    = "appdb"
-db_username                = "appuser"
-db_instance_class          = "db.t4g.medium"
-db_multi_az                = true
-db_backup_retention_period = 7
-db_deletion_protection     = true
-db_skip_final_snapshot     = false
-db_apply_immediately       = false
+db_name                               = "appdb"
+db_username                           = "appuser"
+db_instance_class                     = "db.t4g.medium"
+db_multi_az                           = true
+db_backup_retention_period            = 7
+enable_rds_backup                     = false
+rds_backup_copy_destination_vault_arn = ""
+db_deletion_protection                = true
+db_skip_final_snapshot                = false
+db_apply_immediately                  = false
 
 prevent_destroy = true
 

@@ -110,9 +110,12 @@ module "budget" {
 module "ecr" {
   source = "../../modules/ecr"
 
-  name_prefix  = local.name_prefix
-  service_name = var.service_name
-  tags         = local.tags
+  name_prefix                 = local.name_prefix
+  service_name                = var.service_name
+  enable_replication          = var.ecr_enable_replication
+  replication_regions         = var.ecr_replication_regions
+  replication_filter_prefixes = var.ecr_replication_filter_prefixes
+  tags                        = local.tags
 }
 
 module "network" {
@@ -193,22 +196,23 @@ resource "aws_security_group_rule" "app_from_alb" {
 module "alb" {
   source = "../../modules/alb"
 
-  name_prefix         = local.name_prefix
-  vpc_id              = module.network.vpc_id
-  vpc_cidr            = module.network.vpc_cidr
-  public_subnet_ids   = module.network.public_subnet_ids
-  target_port         = local.alb_target_port
-  target_type         = local.alb_target_type
-  health_check_path   = var.health_check_path
-  enable_http         = var.allow_http
-  acm_certificate_arn = var.acm_certificate_arn
-  ingress_cidrs       = var.alb_ingress_cidrs
-  deletion_protection = var.alb_deletion_protection
-  enable_access_logs  = var.alb_enable_access_logs
-  access_logs_bucket  = var.alb_access_logs_bucket
-  enable_waf          = var.alb_enable_waf
-  waf_acl_arn         = var.alb_waf_acl_arn
-  tags                = local.tags
+  name_prefix           = local.name_prefix
+  vpc_id                = module.network.vpc_id
+  vpc_cidr              = module.network.vpc_cidr
+  public_subnet_ids     = module.network.public_subnet_ids
+  target_port           = local.alb_target_port
+  target_type           = local.alb_target_type
+  health_check_path     = var.health_check_path
+  enable_public_ingress = var.alb_enable_public_ingress
+  enable_http           = var.allow_http
+  acm_certificate_arn   = var.acm_certificate_arn
+  ingress_cidrs         = var.alb_ingress_cidrs
+  deletion_protection   = var.alb_deletion_protection
+  enable_access_logs    = var.alb_enable_access_logs
+  access_logs_bucket    = var.alb_access_logs_bucket
+  enable_waf            = var.alb_enable_waf
+  waf_acl_arn           = var.alb_waf_acl_arn
+  tags                  = local.tags
 }
 
 module "rds" {
@@ -232,6 +236,14 @@ module "rds" {
   backup_retention_period               = var.db_backup_retention_period
   maintenance_window                    = var.db_maintenance_window
   backup_window                         = var.db_backup_window
+  enable_backup_plan                    = var.enable_rds_backup
+  backup_vault_name                     = var.rds_backup_vault_name
+  backup_plan_schedule                  = var.rds_backup_schedule
+  backup_plan_start_window_minutes      = var.rds_backup_start_window_minutes
+  backup_plan_completion_window_minutes = var.rds_backup_completion_window_minutes
+  backup_retention_days                 = var.rds_backup_retention_days
+  backup_copy_destination_vault_arn     = var.rds_backup_copy_destination_vault_arn
+  backup_copy_retention_days            = var.rds_backup_copy_retention_days
   deletion_protection                   = var.db_deletion_protection
   skip_final_snapshot                   = var.db_skip_final_snapshot
   final_snapshot_identifier             = var.db_final_snapshot_identifier

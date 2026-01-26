@@ -50,6 +50,12 @@ variable "health_check_path" {
   default     = "/"
 }
 
+variable "enable_public_ingress" {
+  type        = bool
+  description = "Enable public ingress rules and listeners for the ALB."
+  default     = true
+}
+
 variable "enable_http" {
   type        = bool
   description = "Enable HTTP listener (allowed in dev only)."
@@ -61,8 +67,8 @@ variable "acm_certificate_arn" {
   description = "ACM certificate ARN for HTTPS listener."
 
   validation {
-    condition     = length(trimspace(var.acm_certificate_arn)) > 0
-    error_message = "acm_certificate_arn must be provided for HTTPS."
+    condition     = !var.enable_public_ingress || (var.acm_certificate_arn != null && length(trimspace(var.acm_certificate_arn)) > 0)
+    error_message = "acm_certificate_arn must be provided when public ingress is enabled."
   }
 }
 
@@ -76,6 +82,13 @@ variable "ingress_cidrs" {
   type        = list(string)
   description = "CIDR blocks allowed to access the ALB."
   default     = ["0.0.0.0/0"]
+
+  validation {
+    condition = !var.enable_public_ingress || alltrue([
+      for cidr in var.ingress_cidrs : length(trimspace(cidr)) > 0
+    ])
+    error_message = "ingress_cidrs must be non-empty when public ingress is enabled."
+  }
 }
 
 variable "deletion_protection" {

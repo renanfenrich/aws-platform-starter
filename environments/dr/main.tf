@@ -107,6 +107,16 @@ module "budget" {
   cost_filters               = local.budget_cost_filters
 }
 
+module "backup_vault" {
+  count  = var.enable_dr_backup_vault ? 1 : 0
+  source = "../../modules/backup-vault"
+
+  name_prefix                 = local.name_prefix
+  vault_name_override         = var.dr_backup_vault_name
+  kms_deletion_window_in_days = var.kms_deletion_window_in_days
+  tags                        = local.tags
+}
+
 module "ecr" {
   source = "../../modules/ecr"
 

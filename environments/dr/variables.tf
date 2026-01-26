@@ -10,11 +10,11 @@ variable "project_name" {
 
 variable "environment" {
   type        = string
-  description = "Environment name (dev or prod)."
+  description = "Environment name (dr)."
 
   validation {
-    condition     = contains(["dev", "prod"], var.environment)
-    error_message = "environment must be dev or prod."
+    condition     = var.environment == "dr"
+    error_message = "environment must be dr."
   }
 }
 
@@ -58,8 +58,8 @@ variable "cost_posture" {
   }
 
   validation {
-    condition     = (var.environment == "dev" && var.cost_posture == "cost_optimized") || (var.environment == "prod" && var.cost_posture == "stability_first")
-    error_message = "cost_posture must be cost_optimized for dev and stability_first for prod."
+    condition     = var.cost_posture == "cost_optimized"
+    error_message = "cost_posture must be cost_optimized for dr."
   }
 }
 
@@ -155,10 +155,10 @@ variable "platform" {
 variable "ecs_capacity_mode" {
   type        = string
   description = "ECS capacity mode (fargate, fargate_spot, or ec2)."
-  default     = "fargate_spot"
+  default     = "fargate"
 
   validation {
-    condition     = contains(["fargate", "fargate_spot", "ec2"], var.ecs_capacity_mode) && (var.environment == "dev" || var.ecs_capacity_mode != "fargate_spot" || var.allow_spot_in_prod)
+    condition     = contains(["fargate", "fargate_spot", "ec2"], var.ecs_capacity_mode) && (var.environment == "dev" || var.environment == "dr" || var.ecs_capacity_mode != "fargate_spot" || var.allow_spot_in_prod)
     error_message = "ecs_capacity_mode must be fargate, fargate_spot, or ec2. Fargate Spot in prod requires allow_spot_in_prod = true."
   }
 }
@@ -178,13 +178,13 @@ variable "k8s_worker_instance_type" {
 variable "k8s_worker_desired_capacity" {
   type        = number
   description = "Desired capacity for the Kubernetes worker Auto Scaling group."
-  default     = 1
+  default     = 0
 }
 
 variable "k8s_worker_min_size" {
   type        = number
   description = "Minimum size for the Kubernetes worker Auto Scaling group."
-  default     = 1
+  default     = 0
 }
 
 variable "k8s_worker_max_size" {
@@ -283,13 +283,13 @@ variable "eks_node_instance_type" {
 variable "eks_node_desired_capacity" {
   type        = number
   description = "Desired size of the EKS node group."
-  default     = 1
+  default     = 0
 }
 
 variable "eks_node_min_size" {
   type        = number
   description = "Minimum size of the EKS node group."
-  default     = 1
+  default     = 0
 }
 
 variable "eks_node_max_size" {
@@ -452,7 +452,7 @@ variable "flow_logs_retention_in_days" {
 variable "alb_enable_public_ingress" {
   type        = bool
   description = "Enable public ALB listeners and ingress."
-  default     = true
+  default     = false
 }
 
 variable "allow_http" {
@@ -461,8 +461,8 @@ variable "allow_http" {
   default     = false
 
   validation {
-    condition     = !(var.allow_http && var.environment == "prod")
-    error_message = "allow_http must be false in prod."
+    condition     = !var.allow_http
+    error_message = "allow_http must be false in dr."
   }
 
   validation {
@@ -485,13 +485,18 @@ variable "alb_ingress_cidrs" {
 variable "alb_deletion_protection" {
   type        = bool
   description = "Enable ALB deletion protection."
-  default     = true
+  default     = false
 }
 
 variable "alb_enable_access_logs" {
   type        = bool
   description = "Enable ALB access logs."
   default     = false
+
+  validation {
+    condition     = var.environment != "prod" || var.alb_enable_access_logs
+    error_message = "alb_enable_access_logs must be true in prod."
+  }
 }
 
 variable "alb_access_logs_bucket" {
@@ -601,7 +606,7 @@ variable "container_memory" {
 variable "desired_count" {
   type        = number
   description = "Desired number of ECS tasks."
-  default     = 1
+  default     = 0
 }
 
 variable "enable_autoscaling" {
@@ -613,7 +618,7 @@ variable "enable_autoscaling" {
 variable "autoscaling_min_capacity" {
   type        = number
   description = "Minimum task count when autoscaling is enabled."
-  default     = 1
+  default     = 2
 
   validation {
     condition     = var.autoscaling_min_capacity >= 1
@@ -624,7 +629,7 @@ variable "autoscaling_min_capacity" {
 variable "autoscaling_max_capacity" {
   type        = number
   description = "Maximum task count when autoscaling is enabled."
-  default     = 2
+  default     = 6
 
   validation {
     condition     = var.autoscaling_max_capacity >= var.autoscaling_min_capacity
@@ -635,7 +640,7 @@ variable "autoscaling_max_capacity" {
 variable "autoscaling_target_cpu" {
   type        = number
   description = "Target CPU utilization percentage for autoscaling."
-  default     = 60
+  default     = 50
 
   validation {
     condition     = var.autoscaling_target_cpu >= 10 && var.autoscaling_target_cpu <= 90
@@ -646,7 +651,7 @@ variable "autoscaling_target_cpu" {
 variable "autoscaling_scale_in_cooldown" {
   type        = number
   description = "Cooldown in seconds before scaling in."
-  default     = 60
+  default     = 120
 
   validation {
     condition     = var.autoscaling_scale_in_cooldown >= 0
@@ -657,7 +662,7 @@ variable "autoscaling_scale_in_cooldown" {
 variable "autoscaling_scale_out_cooldown" {
   type        = number
   description = "Cooldown in seconds before scaling out."
-  default     = 60
+  default     = 120
 
   validation {
     condition     = var.autoscaling_scale_out_cooldown >= 0
@@ -922,7 +927,7 @@ variable "db_multi_az" {
 variable "db_backup_retention_period" {
   type        = number
   description = "Backup retention period in days."
-  default     = 3
+  default     = 1
 }
 
 variable "db_maintenance_window" {
@@ -1007,6 +1012,23 @@ variable "rds_backup_copy_retention_days" {
   validation {
     condition     = var.rds_backup_copy_retention_days > 0
     error_message = "rds_backup_copy_retention_days must be greater than 0."
+  }
+}
+
+variable "enable_dr_backup_vault" {
+  type        = bool
+  description = "Enable a DR backup vault for cross-region copy targets."
+  default     = true
+}
+
+variable "dr_backup_vault_name" {
+  type        = string
+  description = "Optional override for the DR backup vault name."
+  default     = null
+
+  validation {
+    condition     = var.dr_backup_vault_name == null || length(trimspace(var.dr_backup_vault_name)) > 0
+    error_message = "dr_backup_vault_name must be null or a non-empty string."
   }
 }
 

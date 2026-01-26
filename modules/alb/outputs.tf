@@ -30,12 +30,12 @@ output "target_group_arn_suffix" {
 
 output "https_listener_arn" {
   description = "ARN of the HTTPS listener."
-  value       = aws_lb_listener.https.arn
+  value       = var.enable_public_ingress ? aws_lb_listener.https[0].arn : null
 }
 
 output "http_listener_arn" {
   description = "ARN of the HTTP listener (if enabled)."
-  value       = var.enable_http ? aws_lb_listener.http[0].arn : null
+  value       = var.enable_public_ingress && var.enable_http ? aws_lb_listener.http[0].arn : null
 }
 
 output "alb_access_logs_bucket" {

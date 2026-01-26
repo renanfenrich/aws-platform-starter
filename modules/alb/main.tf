@@ -9,6 +9,8 @@ resource "aws_security_group" "alb" {
 }
 
 resource "aws_security_group_rule" "alb_https_ingress" {
+  count = var.enable_public_ingress ? 1 : 0
+
   type              = "ingress"
   from_port         = 443
   to_port           = 443
@@ -19,7 +21,7 @@ resource "aws_security_group_rule" "alb_https_ingress" {
 }
 
 resource "aws_security_group_rule" "alb_http_ingress" {
-  count = var.enable_http ? 1 : 0
+  count = var.enable_public_ingress && var.enable_http ? 1 : 0
 
   type              = "ingress"
   from_port         = 80
@@ -85,6 +87,8 @@ resource "aws_lb_target_group" "this" {
 }
 
 resource "aws_lb_listener" "https" {
+  count = var.enable_public_ingress ? 1 : 0
+
   load_balancer_arn = aws_lb.this.arn
   port              = 443
   protocol          = "HTTPS"
@@ -98,7 +102,7 @@ resource "aws_lb_listener" "https" {
 }
 
 resource "aws_lb_listener" "http" {
-  count = var.enable_http ? 1 : 0
+  count = var.enable_public_ingress && var.enable_http ? 1 : 0
 
   load_balancer_arn = aws_lb.this.arn
   port              = 80

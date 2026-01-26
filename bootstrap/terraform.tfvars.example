@@ -6,6 +6,11 @@ region_short  = "use1"
 state_bucket_name = "aws-platform-starter-state-dev"
 log_bucket_name   = null
 
+# Optional state bucket replication (disabled by default).
+enable_state_bucket_replication = false
+replication_region              = ""
+replica_state_bucket_name        = null
+
 sns_email_subscriptions = []
 
 # Optional ALB access log bucket controls.

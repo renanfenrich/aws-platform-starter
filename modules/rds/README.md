@@ -29,15 +29,24 @@ No modules.
 
 | Name | Type |
 |------|------|
+| [aws_backup_plan.rds](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_plan) | resource |
+| [aws_backup_selection.rds](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_selection) | resource |
+| [aws_backup_vault.rds](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_vault) | resource |
 | [aws_db_instance.protected](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_instance) | resource |
 | [aws_db_instance.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_instance) | resource |
 | [aws_db_subnet_group.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_subnet_group) | resource |
+| [aws_iam_role.backup](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_role_policy.backup_kms](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy) | resource |
+| [aws_iam_role_policy_attachment.backup](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_iam_role_policy_attachment.restore](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_kms_alias.db](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_alias) | resource |
 | [aws_kms_key.db](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_key) | resource |
 | [aws_kms_key.db_protected](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_key) | resource |
 | [aws_security_group.db](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_security_group_rule.db_ingress](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.db_ingress_additional](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
+| [aws_iam_policy_document.backup_assume](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.backup_kms](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 
 ## Inputs
 
@@ -47,12 +56,20 @@ No modules.
 | <a name="input_allocated_storage"></a> [allocated\_storage](#input\_allocated\_storage) | Allocated storage in GB. | `number` | `20` | no |
 | <a name="input_app_security_group_id"></a> [app\_security\_group\_id](#input\_app\_security\_group\_id) | Security group ID for application tasks that need DB access. | `string` | n/a | yes |
 | <a name="input_apply_immediately"></a> [apply\_immediately](#input\_apply\_immediately) | Apply changes immediately. | `bool` | `false` | no |
+| <a name="input_backup_copy_destination_vault_arn"></a> [backup\_copy\_destination\_vault\_arn](#input\_backup\_copy\_destination\_vault\_arn) | Destination backup vault ARN for cross-region copy (optional). | `string` | `""` | no |
+| <a name="input_backup_copy_retention_days"></a> [backup\_copy\_retention\_days](#input\_backup\_copy\_retention\_days) | Retention period in days for copied recovery points. | `number` | `35` | no |
+| <a name="input_backup_plan_completion_window_minutes"></a> [backup\_plan\_completion\_window\_minutes](#input\_backup\_plan\_completion\_window\_minutes) | Completion window in minutes for AWS Backup jobs. | `number` | `180` | no |
+| <a name="input_backup_plan_schedule"></a> [backup\_plan\_schedule](#input\_backup\_plan\_schedule) | CRON schedule for AWS Backup (UTC). | `string` | `"cron(0 5 * * ? *)"` | no |
+| <a name="input_backup_plan_start_window_minutes"></a> [backup\_plan\_start\_window\_minutes](#input\_backup\_plan\_start\_window\_minutes) | Start window in minutes for AWS Backup jobs. | `number` | `60` | no |
+| <a name="input_backup_retention_days"></a> [backup\_retention\_days](#input\_backup\_retention\_days) | Retention period in days for AWS Backup recovery points. | `number` | `35` | no |
 | <a name="input_backup_retention_period"></a> [backup\_retention\_period](#input\_backup\_retention\_period) | Backup retention in days. | `number` | `7` | no |
+| <a name="input_backup_vault_name"></a> [backup\_vault\_name](#input\_backup\_vault\_name) | Optional override for the AWS Backup vault name. | `string` | `null` | no |
 | <a name="input_backup_window"></a> [backup\_window](#input\_backup\_window) | Preferred backup window. | `string` | `"03:00-04:00"` | no |
 | <a name="input_db_name"></a> [db\_name](#input\_db\_name) | Database name. | `string` | n/a | yes |
 | <a name="input_db_port"></a> [db\_port](#input\_db\_port) | Database port. | `number` | `5432` | no |
 | <a name="input_db_username"></a> [db\_username](#input\_db\_username) | Master username for the database. | `string` | n/a | yes |
 | <a name="input_deletion_protection"></a> [deletion\_protection](#input\_deletion\_protection) | Enable deletion protection. | `bool` | `true` | no |
+| <a name="input_enable_backup_plan"></a> [enable\_backup\_plan](#input\_enable\_backup\_plan) | Enable AWS Backup plan for the database. | `bool` | `false` | no |
 | <a name="input_enabled_cloudwatch_logs_exports"></a> [enabled\_cloudwatch\_logs\_exports](#input\_enabled\_cloudwatch\_logs\_exports) | CloudWatch log exports to enable. | `list(string)` | `[]` | no |
 | <a name="input_engine"></a> [engine](#input\_engine) | Database engine. | `string` | `"postgres"` | no |
 | <a name="input_engine_version"></a> [engine\_version](#input\_engine\_version) | Database engine version. | `string` | `"15.4"` | no |
@@ -76,6 +93,11 @@ No modules.
 | Name | Description |
 |------|-------------|
 | <a name="output_additional_ingress_security_group_ids"></a> [additional\_ingress\_security\_group\_ids](#output\_additional\_ingress\_security\_group\_ids) | Additional security group IDs allowed to access the database. |
+| <a name="output_backup_copy_destination_vault_arn"></a> [backup\_copy\_destination\_vault\_arn](#output\_backup\_copy\_destination\_vault\_arn) | Destination backup vault ARN for cross-region copy (null when not set). |
+| <a name="output_backup_plan_enabled"></a> [backup\_plan\_enabled](#output\_backup\_plan\_enabled) | Whether AWS Backup is enabled for the database. |
+| <a name="output_backup_plan_id"></a> [backup\_plan\_id](#output\_backup\_plan\_id) | AWS Backup plan ID (null when disabled). |
+| <a name="output_backup_vault_arn"></a> [backup\_vault\_arn](#output\_backup\_vault\_arn) | AWS Backup vault ARN (null when disabled). |
+| <a name="output_backup_vault_name"></a> [backup\_vault\_name](#output\_backup\_vault\_name) | AWS Backup vault name (null when disabled). |
 | <a name="output_db_endpoint"></a> [db\_endpoint](#output\_db\_endpoint) | RDS endpoint. |
 | <a name="output_db_instance_id"></a> [db\_instance\_id](#output\_db\_instance\_id) | RDS instance identifier. |
 | <a name="output_db_port"></a> [db\_port](#output\_db\_port) | RDS port. |

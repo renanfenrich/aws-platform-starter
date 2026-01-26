@@ -1,5 +1,8 @@
 locals {
   final_snapshot_identifier = coalesce(var.final_snapshot_identifier, "${var.name_prefix}-final")
+  backup_vault_name_input   = var.backup_vault_name == null ? "" : trimspace(var.backup_vault_name)
+  backup_vault_name         = length(local.backup_vault_name_input) > 0 ? var.backup_vault_name : "${var.name_prefix}-rds-backup"
+  backup_plan_name          = "${var.name_prefix}-rds-backup"
 }
 
 resource "aws_kms_key" "db" {
@@ -167,4 +170,119 @@ resource "aws_db_instance" "protected" {
   }
 
   tags = var.tags
+}
+
+locals {
+  db_instance_id      = var.prevent_destroy ? aws_db_instance.protected[0].id : aws_db_instance.this[0].id
+  db_instance_arn     = var.prevent_destroy ? aws_db_instance.protected[0].arn : aws_db_instance.this[0].arn
+  db_instance_address = var.prevent_destroy ? aws_db_instance.protected[0].address : aws_db_instance.this[0].address
+  db_instance_port    = var.prevent_destroy ? aws_db_instance.protected[0].port : aws_db_instance.this[0].port
+  backup_copy_enabled = length(trimspace(var.backup_copy_destination_vault_arn)) > 0
+}
+
+data "aws_iam_policy_document" "backup_assume" {
+  count = var.enable_backup_plan ? 1 : 0
+
+  statement {
+    sid     = "AllowBackupServiceAssume"
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["backup.amazonaws.com"]
+    }
+  }
+}
+
+data "aws_iam_policy_document" "backup_kms" {
+  count = var.enable_backup_plan ? 1 : 0
+
+  statement {
+    sid = "AllowBackupKeyUsage"
+    actions = [
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey"
+    ]
+    resources = [local.kms_key_arn]
+  }
+}
+
+resource "aws_iam_role" "backup" {
+  count = var.enable_backup_plan ? 1 : 0
+
+  name               = "${var.name_prefix}-rds-backup"
+  assume_role_policy = data.aws_iam_policy_document.backup_assume[0].json
+
+  tags = var.tags
+}
+
+resource "aws_iam_role_policy_attachment" "backup" {
+  count      = var.enable_backup_plan ? 1 : 0
+  role       = aws_iam_role.backup[0].name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup"
+}
+
+resource "aws_iam_role_policy_attachment" "restore" {
+  count      = var.enable_backup_plan ? 1 : 0
+  role       = aws_iam_role.backup[0].name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForRestores"
+}
+
+resource "aws_iam_role_policy" "backup_kms" {
+  count  = var.enable_backup_plan ? 1 : 0
+  name   = "${var.name_prefix}-rds-backup-kms"
+  role   = aws_iam_role.backup[0].id
+  policy = data.aws_iam_policy_document.backup_kms[0].json
+}
+
+resource "aws_backup_vault" "rds" {
+  count = var.enable_backup_plan ? 1 : 0
+
+  name        = local.backup_vault_name
+  kms_key_arn = local.kms_key_arn
+
+  tags = var.tags
+}
+
+resource "aws_backup_plan" "rds" {
+  count = var.enable_backup_plan ? 1 : 0
+
+  name = local.backup_plan_name
+
+  rule {
+    rule_name         = "${local.backup_plan_name}-daily"
+    target_vault_name = aws_backup_vault.rds[0].name
+    schedule          = var.backup_plan_schedule
+    start_window      = var.backup_plan_start_window_minutes
+    completion_window = var.backup_plan_completion_window_minutes
+
+    lifecycle {
+      delete_after = var.backup_retention_days
+    }
+
+    dynamic "copy_action" {
+      for_each = local.backup_copy_enabled ? [1] : []
+
+      content {
+        destination_vault_arn = var.backup_copy_destination_vault_arn
+
+        lifecycle {
+          delete_after = var.backup_copy_retention_days
+        }
+      }
+    }
+  }
+}
+
+resource "aws_backup_selection" "rds" {
+  count = var.enable_backup_plan ? 1 : 0
+
+  name         = "${local.backup_plan_name}-selection"
+  iam_role_arn = aws_iam_role.backup[0].arn
+  plan_id      = aws_backup_plan.rds[0].id
+  resources    = [local.db_instance_arn]
 }

@@ -58,6 +58,16 @@ output "ecr_repository_url" {
   value       = module.ecr.repository_url
 }
 
+output "ecr_replication_enabled" {
+  description = "Whether ECR replication is enabled for this environment."
+  value       = module.ecr.replication_enabled
+}
+
+output "ecr_replication_regions" {
+  description = "Destination regions configured for ECR replication."
+  value       = module.ecr.replication_regions
+}
+
 output "resolved_container_image" {
   description = "Resolved container image reference (override or ECR repository + tag)."
   value       = local.resolved_container_image
@@ -145,6 +155,26 @@ output "rds_master_secret_arn" {
 output "rds_instance_id" {
   description = "RDS instance identifier."
   value       = module.rds.db_instance_id
+}
+
+output "rds_backup_plan_enabled" {
+  description = "Whether AWS Backup is enabled for the RDS instance."
+  value       = module.rds.backup_plan_enabled
+}
+
+output "rds_backup_plan_id" {
+  description = "AWS Backup plan ID (null when disabled)."
+  value       = module.rds.backup_plan_id
+}
+
+output "rds_backup_vault_name" {
+  description = "AWS Backup vault name (null when disabled)."
+  value       = module.rds.backup_vault_name
+}
+
+output "rds_backup_copy_destination_vault_arn" {
+  description = "Destination backup vault ARN for cross-region copy (null when not set)."
+  value       = module.rds.backup_copy_destination_vault_arn
 }
 
 output "rds_final_snapshot_arn_pattern" {

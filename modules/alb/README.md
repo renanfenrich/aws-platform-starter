@@ -48,6 +48,7 @@ No modules.
 | <a name="input_deletion_protection"></a> [deletion\_protection](#input\_deletion\_protection) | Enable deletion protection for the ALB. | `bool` | `false` | no |
 | <a name="input_enable_access_logs"></a> [enable\_access\_logs](#input\_enable\_access\_logs) | Enable ALB access logging. | `bool` | `false` | no |
 | <a name="input_enable_http"></a> [enable\_http](#input\_enable\_http) | Enable HTTP listener (allowed in dev only). | `bool` | `false` | no |
+| <a name="input_enable_public_ingress"></a> [enable\_public\_ingress](#input\_enable\_public\_ingress) | Enable public ingress rules and listeners for the ALB. | `bool` | `true` | no |
 | <a name="input_enable_waf"></a> [enable\_waf](#input\_enable\_waf) | Enable WAF web ACL association. | `bool` | `false` | no |
 | <a name="input_health_check_path"></a> [health\_check\_path](#input\_health\_check\_path) | HTTP path for target group health checks. | `string` | `"/"` | no |
 | <a name="input_ingress_cidrs"></a> [ingress\_cidrs](#input\_ingress\_cidrs) | CIDR blocks allowed to access the ALB. | `list(string)` | <pre>[<br/>  "0.0.0.0/0"<br/>]</pre> | no |

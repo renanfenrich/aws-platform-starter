@@ -3,9 +3,29 @@ output "state_bucket_name" {
   value       = aws_s3_bucket.state.id
 }
 
+output "state_bucket_replication_enabled" {
+  description = "Whether state bucket replication is enabled."
+  value       = var.enable_state_bucket_replication
+}
+
+output "replica_state_bucket_name" {
+  description = "Replica S3 bucket name for Terraform state (null when disabled)."
+  value       = var.enable_state_bucket_replication ? aws_s3_bucket.state_replica[0].id : null
+}
+
+output "replica_state_bucket_arn" {
+  description = "Replica S3 bucket ARN for Terraform state (null when disabled)."
+  value       = var.enable_state_bucket_replication ? aws_s3_bucket.state_replica[0].arn : null
+}
+
 output "kms_key_arn" {
   description = "KMS key ARN for state and bootstrap encryption."
   value       = aws_kms_key.state.arn
+}
+
+output "replica_kms_key_arn" {
+  description = "KMS key ARN for the replica state bucket (null when disabled)."
+  value       = var.enable_state_bucket_replication ? aws_kms_key.state_replica[0].arn : null
 }
 
 output "sns_topic_arn" {

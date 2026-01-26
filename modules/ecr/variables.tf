@@ -47,6 +47,43 @@ variable "lifecycle_keep_last" {
   }
 }
 
+variable "enable_replication" {
+  type        = bool
+  description = "Enable cross-region ECR replication for this repository."
+  default     = false
+
+  validation {
+    condition     = !var.enable_replication || length(var.replication_regions) > 0
+    error_message = "replication_regions must be set when enable_replication is true."
+  }
+}
+
+variable "replication_regions" {
+  type        = list(string)
+  description = "Destination regions for ECR replication."
+  default     = []
+
+  validation {
+    condition = alltrue([
+      for region in var.replication_regions : length(trimspace(region)) > 0
+    ])
+    error_message = "replication_regions must not contain empty values."
+  }
+}
+
+variable "replication_filter_prefixes" {
+  type        = list(string)
+  description = "Repository name prefixes to replicate (defaults to the repository name)."
+  default     = []
+
+  validation {
+    condition = alltrue([
+      for prefix in var.replication_filter_prefixes : length(trimspace(prefix)) > 0
+    ])
+    error_message = "replication_filter_prefixes must not contain empty values."
+  }
+}
+
 variable "tags" {
   type        = map(string)
   description = "Tags to apply to the ECR repository."

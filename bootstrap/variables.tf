@@ -44,6 +44,34 @@ variable "log_bucket_name" {
   default     = null
 }
 
+variable "enable_state_bucket_replication" {
+  type        = bool
+  description = "Enable cross-region replication for the Terraform state bucket."
+  default     = false
+
+  validation {
+    condition     = !var.enable_state_bucket_replication || length(trimspace(var.replication_region)) > 0
+    error_message = "replication_region must be set when enable_state_bucket_replication is true."
+  }
+}
+
+variable "replication_region" {
+  type        = string
+  description = "Destination region for state bucket replication."
+  default     = ""
+}
+
+variable "replica_state_bucket_name" {
+  type        = string
+  description = "Optional name of the replica state bucket."
+  default     = null
+
+  validation {
+    condition     = var.replica_state_bucket_name == null ? true : length(trimspace(var.replica_state_bucket_name)) > 0
+    error_message = "replica_state_bucket_name must be null or a non-empty string."
+  }
+}
+
 variable "alb_access_logs_bucket_name" {
   type        = string
   description = "Optional name of the S3 bucket for ALB access logs."

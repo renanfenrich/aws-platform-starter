@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 ROOT_DIR := $(shell pwd)
-ENV_DIRS := environments/dev environments/prod
+ENV_DIRS := environments/dev environments/prod environments/dr
 ENV ?= dev
 platform ?= ecs
 MERMAID_CLI_VERSION ?= 10.9.1
@@ -56,7 +56,7 @@ test:
 		terraform -chdir=$$dir init -backend=false -input=false >/dev/null; \
 		terraform -chdir=$$dir test; \
 	done
-	@for dir in modules/network modules/alb modules/apigw-lambda modules/ecs modules/ecs-ec2-capacity modules/eks modules/k8s-ec2-infra modules/rds modules/observability; do \
+	@for dir in modules/network modules/alb modules/apigw-lambda modules/backup-vault modules/ecs modules/ecs-ec2-capacity modules/eks modules/k8s-ec2-infra modules/rds modules/observability; do \
 		terraform -chdir=$$dir init -backend=false -input=false >/dev/null; \
 		terraform -chdir=$$dir test; \
 	done

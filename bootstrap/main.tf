@@ -5,6 +5,8 @@ locals {
   alb_access_logs_bucket_name_input = var.alb_access_logs_bucket_name == null ? "" : trimspace(var.alb_access_logs_bucket_name)
   log_bucket_name                   = length(local.log_bucket_name_input) > 0 ? var.log_bucket_name : "${var.state_bucket_name}-logs"
   alb_access_logs_bucket_name       = length(local.alb_access_logs_bucket_name_input) > 0 ? var.alb_access_logs_bucket_name : lower("${var.project_name}-${var.environment}-${data.aws_caller_identity.current.account_id}-${var.region_short}-alb-logs")
+  replica_state_bucket_name_input   = var.replica_state_bucket_name == null ? "" : trimspace(var.replica_state_bucket_name)
+  replica_state_bucket_name         = length(local.replica_state_bucket_name_input) > 0 ? var.replica_state_bucket_name : "${var.state_bucket_name}-replica-${var.replication_region}"
   name_prefix                       = "${var.project_name}-${var.environment}"
   sns_topic_name                    = "${local.name_prefix}-${var.region_short}-infra-alerts"
   sns_emails = toset([
@@ -262,6 +264,273 @@ resource "aws_s3_bucket_logging" "state" {
   target_prefix = "state/"
 
   depends_on = [aws_s3_bucket_acl.state_logs]
+}
+
+data "aws_iam_policy_document" "state_replication_assume" {
+  count = var.enable_state_bucket_replication ? 1 : 0
+
+  statement {
+    sid     = "AllowS3ReplicationAssume"
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["s3.amazonaws.com"]
+    }
+  }
+}
+
+data "aws_iam_policy_document" "state_replication" {
+  count = var.enable_state_bucket_replication ? 1 : 0
+
+  statement {
+    sid = "SourceBucketRead"
+    actions = [
+      "s3:GetReplicationConfiguration",
+      "s3:ListBucket"
+    ]
+    resources = [aws_s3_bucket.state.arn]
+  }
+
+  statement {
+    sid = "SourceObjectRead"
+    actions = [
+      "s3:GetObjectVersion",
+      "s3:GetObjectVersionAcl",
+      "s3:GetObjectVersionForReplication",
+      "s3:GetObjectVersionTagging"
+    ]
+    resources = ["${aws_s3_bucket.state.arn}/*"]
+  }
+
+  statement {
+    sid = "DestinationObjectWrite"
+    actions = [
+      "s3:ReplicateObject",
+      "s3:ReplicateDelete",
+      "s3:ReplicateTags",
+      "s3:ObjectOwnerOverrideToBucketOwner"
+    ]
+    resources = ["${aws_s3_bucket.state_replica[0].arn}/*"]
+  }
+
+  statement {
+    sid = "DecryptSourceKey"
+    actions = [
+      "kms:Decrypt",
+      "kms:DescribeKey"
+    ]
+    resources = [aws_kms_key.state.arn]
+
+    condition {
+      test     = "StringEquals"
+      variable = "kms:ViaService"
+      values   = ["s3.${var.aws_region}.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "kms:CallerAccount"
+      values   = [data.aws_caller_identity.current.account_id]
+    }
+  }
+
+  statement {
+    sid = "EncryptDestinationKey"
+    actions = [
+      "kms:Encrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey"
+    ]
+    resources = [aws_kms_key.state_replica[0].arn]
+
+    condition {
+      test     = "StringEquals"
+      variable = "kms:ViaService"
+      values   = ["s3.${var.replication_region}.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "kms:CallerAccount"
+      values   = [data.aws_caller_identity.current.account_id]
+    }
+  }
+}
+
+resource "aws_iam_role" "state_replication" {
+  count = var.enable_state_bucket_replication ? 1 : 0
+
+  name               = "${local.name_prefix}-${var.region_short}-state-replication"
+  assume_role_policy = data.aws_iam_policy_document.state_replication_assume[0].json
+
+  tags = var.tags
+}
+
+resource "aws_iam_policy" "state_replication" {
+  count = var.enable_state_bucket_replication ? 1 : 0
+
+  name   = "${local.name_prefix}-${var.region_short}-state-replication"
+  policy = data.aws_iam_policy_document.state_replication[0].json
+
+  tags = var.tags
+}
+
+resource "aws_iam_role_policy_attachment" "state_replication" {
+  count      = var.enable_state_bucket_replication ? 1 : 0
+  role       = aws_iam_role.state_replication[0].name
+  policy_arn = aws_iam_policy.state_replication[0].arn
+}
+
+resource "aws_kms_key" "state_replica" {
+  count    = var.enable_state_bucket_replication ? 1 : 0
+  provider = aws.replica
+
+  description             = "KMS key for ${var.state_bucket_name} replica"
+  deletion_window_in_days = var.kms_deletion_window_in_days
+  enable_key_rotation     = true
+
+  tags = var.tags
+}
+
+resource "aws_kms_alias" "state_replica" {
+  count    = var.enable_state_bucket_replication ? 1 : 0
+  provider = aws.replica
+
+  name          = "alias/${local.replica_state_bucket_name}-state"
+  target_key_id = aws_kms_key.state_replica[0].key_id
+}
+
+resource "aws_s3_bucket" "state_replica" {
+  count    = var.enable_state_bucket_replication ? 1 : 0
+  provider = aws.replica
+
+  bucket        = local.replica_state_bucket_name
+  force_destroy = var.force_destroy
+
+  lifecycle {
+    prevent_destroy = true
+  }
+
+  tags = merge(var.tags, {
+    Name = local.replica_state_bucket_name
+  })
+}
+
+resource "aws_s3_bucket_public_access_block" "state_replica" {
+  count    = var.enable_state_bucket_replication ? 1 : 0
+  provider = aws.replica
+
+  bucket = aws_s3_bucket.state_replica[0].id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_ownership_controls" "state_replica" {
+  count    = var.enable_state_bucket_replication ? 1 : 0
+  provider = aws.replica
+
+  bucket = aws_s3_bucket.state_replica[0].id
+
+  rule {
+    object_ownership = "BucketOwnerEnforced"
+  }
+}
+
+resource "aws_s3_bucket_versioning" "state_replica" {
+  count    = var.enable_state_bucket_replication ? 1 : 0
+  provider = aws.replica
+
+  bucket = aws_s3_bucket.state_replica[0].id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "state_replica" {
+  count    = var.enable_state_bucket_replication ? 1 : 0
+  provider = aws.replica
+
+  bucket = aws_s3_bucket.state_replica[0].id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm     = "aws:kms"
+      kms_master_key_id = aws_kms_key.state_replica[0].arn
+    }
+  }
+}
+
+data "aws_iam_policy_document" "state_replica_bucket" {
+  count = var.enable_state_bucket_replication ? 1 : 0
+
+  statement {
+    sid = "AllowReplicationRoleWrites"
+    actions = [
+      "s3:ReplicateObject",
+      "s3:ReplicateDelete",
+      "s3:ReplicateTags",
+      "s3:ObjectOwnerOverrideToBucketOwner"
+    ]
+    resources = ["${aws_s3_bucket.state_replica[0].arn}/*"]
+
+    principals {
+      type        = "AWS"
+      identifiers = [aws_iam_role.state_replication[0].arn]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "state_replica" {
+  count    = var.enable_state_bucket_replication ? 1 : 0
+  provider = aws.replica
+
+  bucket = aws_s3_bucket.state_replica[0].id
+  policy = data.aws_iam_policy_document.state_replica_bucket[0].json
+}
+
+resource "aws_s3_bucket_replication_configuration" "state" {
+  count = var.enable_state_bucket_replication ? 1 : 0
+
+  bucket = aws_s3_bucket.state.id
+  role   = aws_iam_role.state_replication[0].arn
+
+  rule {
+    id     = "state-replication"
+    status = "Enabled"
+
+    delete_marker_replication {
+      status = "Enabled"
+    }
+
+    filter {}
+
+    source_selection_criteria {
+      sse_kms_encrypted_objects {
+        status = "Enabled"
+      }
+    }
+
+    destination {
+      bucket        = aws_s3_bucket.state_replica[0].arn
+      storage_class = "STANDARD"
+
+      encryption_configuration {
+        replica_kms_key_id = aws_kms_key.state_replica[0].arn
+      }
+    }
+  }
+
+  depends_on = [
+    aws_s3_bucket_versioning.state,
+    aws_s3_bucket_versioning.state_replica
+  ]
 }
 
 resource "aws_s3_bucket" "alb_access_logs" {

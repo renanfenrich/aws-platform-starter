@@ -449,6 +449,12 @@ variable "flow_logs_retention_in_days" {
   default     = 30
 }
 
+variable "alb_enable_public_ingress" {
+  type        = bool
+  description = "Enable public ALB listeners and ingress."
+  default     = true
+}
+
 variable "allow_http" {
   type        = bool
   description = "Allow HTTP listener (dev only)."
@@ -457,6 +463,11 @@ variable "allow_http" {
   validation {
     condition     = !(var.allow_http && var.environment == "prod")
     error_message = "allow_http must be false in prod."
+  }
+
+  validation {
+    condition     = !var.allow_http || var.alb_enable_public_ingress
+    error_message = "allow_http requires alb_enable_public_ingress = true."
   }
 }
 
@@ -524,6 +535,43 @@ variable "container_image" {
   validation {
     condition     = var.container_image == null || length(trimspace(var.container_image)) > 0
     error_message = "container_image must be null or a non-empty string."
+  }
+}
+
+variable "ecr_enable_replication" {
+  type        = bool
+  description = "Enable cross-region ECR replication for this environment."
+  default     = false
+
+  validation {
+    condition     = !var.ecr_enable_replication || length(var.ecr_replication_regions) > 0
+    error_message = "ecr_replication_regions must be set when ecr_enable_replication is true."
+  }
+}
+
+variable "ecr_replication_regions" {
+  type        = list(string)
+  description = "Destination regions for ECR replication."
+  default     = []
+
+  validation {
+    condition = alltrue([
+      for region in var.ecr_replication_regions : length(trimspace(region)) > 0
+    ])
+    error_message = "ecr_replication_regions must not contain empty values."
+  }
+}
+
+variable "ecr_replication_filter_prefixes" {
+  type        = list(string)
+  description = "Repository name prefixes to replicate (defaults to the repository name)."
+  default     = []
+
+  validation {
+    condition = alltrue([
+      for prefix in var.ecr_replication_filter_prefixes : length(trimspace(prefix)) > 0
+    ])
+    error_message = "ecr_replication_filter_prefixes must not contain empty values."
   }
 }
 
@@ -892,6 +940,79 @@ variable "db_backup_window" {
   type        = string
   description = "RDS backup window."
   default     = "03:00-04:00"
+}
+
+variable "enable_rds_backup" {
+  type        = bool
+  description = "Enable AWS Backup plan for the RDS instance."
+  default     = false
+
+  validation {
+    condition     = !var.enable_rds_backup || length(trimspace(var.rds_backup_schedule)) > 0
+    error_message = "rds_backup_schedule must be set when enable_rds_backup is true."
+  }
+}
+
+variable "rds_backup_vault_name" {
+  type        = string
+  description = "Optional override for the AWS Backup vault name."
+  default     = null
+
+  validation {
+    condition     = var.rds_backup_vault_name == null || length(trimspace(var.rds_backup_vault_name)) > 0
+    error_message = "rds_backup_vault_name must be null or a non-empty string."
+  }
+}
+
+variable "rds_backup_schedule" {
+  type        = string
+  description = "CRON schedule for AWS Backup (UTC)."
+  default     = "cron(0 5 * * ? *)"
+}
+
+variable "rds_backup_start_window_minutes" {
+  type        = number
+  description = "Start window in minutes for AWS Backup jobs."
+  default     = 60
+}
+
+variable "rds_backup_completion_window_minutes" {
+  type        = number
+  description = "Completion window in minutes for AWS Backup jobs."
+  default     = 180
+}
+
+variable "rds_backup_retention_days" {
+  type        = number
+  description = "Retention period in days for AWS Backup recovery points."
+  default     = 35
+
+  validation {
+    condition     = var.rds_backup_retention_days > 0
+    error_message = "rds_backup_retention_days must be greater than 0."
+  }
+}
+
+variable "rds_backup_copy_destination_vault_arn" {
+  type        = string
+  description = "Destination backup vault ARN for cross-region copy (optional)."
+  default     = ""
+
+  validation {
+    condition     = length(trimspace(var.rds_backup_copy_destination_vault_arn)) == 0 || var.enable_rds_backup
+    error_message = "rds_backup_copy_destination_vault_arn requires enable_rds_backup = true."
+  }
+}
+
+variable "rds_backup_copy_retention_days" {
+  type        = number
+  description = "Retention period in days for copied recovery points."
+  default     = 35
+
+  validation {
+    condition     = var.rds_backup_copy_retention_days > 0
+    error_message = "rds_backup_copy_retention_days must be greater than 0."
+  }
 }
 
 variable "db_deletion_protection" {
