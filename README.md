@@ -128,6 +128,27 @@ If this were running a real product, I would add:
   .github/workflows/
 ```
 
+## Root Stack File Layout
+
+Terraform treats all `*.tf` files in a directory as a single module. The environment roots are split by context to keep stacks readable; there is no functional difference from a single `main.tf`.
+
+Standard file split (only create files when they have content):
+
+- `versions.tf`: Terraform and provider version constraints.
+- `providers.tf`: provider blocks and default tags.
+- `backend.tf`: backend configuration (empty config block).
+- `locals.tf`: locals for naming, tags, and computed values.
+- `variables.tf`: root input variables.
+- `data-sources.tf`: data sources (optional, for readability).
+- `network.tf`: VPC, subnets, NAT, endpoints, routing.
+- `security.tf`: security groups, WAF attachments, edge-related resources.
+- `dns.tf`: Route 53 zones/records when DNS is enabled.
+- `compute.tf`: ECS/EKS/K8s modules and serverless compute.
+- `data.tf`: RDS and backup resources.
+- `observability.tf`: logging, metrics, alarms, dashboards.
+- `finops.tf`: budgets and cost guardrails.
+- `outputs.tf`: root outputs.
+
 ## Prerequisites
 
 - Terraform >= 1.6.0

@@ -29,6 +29,25 @@ Codex reads the closest AGENTS.md relative to files it changes. If you add sub-p
 - `scripts/`     : CI helper scripts (FinOps summary, etc.)
 - `.github/`     : CI workflow and any repo instruction files
 
+## Root stack file layout
+Terraform loads every `*.tf` file in a directory as a single module. We split root stacks by context for readability; keep behavior identical.
+
+Standard split (create files only when they have content):
+- `versions.tf`      : Terraform + provider constraints
+- `providers.tf`     : provider blocks and default tags
+- `backend.tf`       : backend config block
+- `locals.tf`        : naming, tags, computed values
+- `variables.tf`     : root inputs
+- `data-sources.tf`  : data sources (optional)
+- `network.tf`       : VPC/subnets/NAT/endpoints/routing
+- `security.tf`      : security groups, edge/WAF-related resources
+- `dns.tf`           : Route 53 zones/records
+- `compute.tf`       : ECS/EKS/K8s/serverless compute
+- `data.tf`          : RDS and backups
+- `observability.tf` : logs/metrics/alarms/dashboards
+- `finops.tf`        : budgets and cost guardrails
+- `outputs.tf`       : root outputs
+
 ## Canonical commands
 Use these commands exactly (don’t guess other tooling).
 - Format:
