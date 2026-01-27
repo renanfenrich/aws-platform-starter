@@ -505,7 +505,7 @@ variable "alb_access_logs_bucket" {
   default     = null
 
   validation {
-    condition     = !var.alb_enable_access_logs || (var.alb_access_logs_bucket != null && length(trimspace(var.alb_access_logs_bucket)) > 0)
+    condition     = !var.alb_enable_access_logs || (var.alb_access_logs_bucket == null ? false : length(trimspace(var.alb_access_logs_bucket)) > 0)
     error_message = "alb_access_logs_bucket must be set when alb_enable_access_logs is true."
   }
 }
@@ -522,7 +522,7 @@ variable "alb_waf_acl_arn" {
   default     = null
 
   validation {
-    condition     = !var.alb_enable_waf || (var.alb_waf_acl_arn != null && length(trimspace(var.alb_waf_acl_arn)) > 0)
+    condition     = !var.alb_enable_waf || (var.alb_waf_acl_arn == null ? false : length(trimspace(var.alb_waf_acl_arn)) > 0)
     error_message = "alb_waf_acl_arn must be set when alb_enable_waf is true."
   }
 }
