@@ -10,7 +10,7 @@ This repo exists to show the baseline layout I use for a single-service AWS stac
 
 - Default public entry point is the ALB for the main application service; an optional API Gateway + Lambda path can be enabled for lightweight endpoints.
 - Postgres is the only stateful dependency.
-- Dev and prod are separate Terraform environments; you can run them in one account or split them later, but the repo does not manage multi-account plumbing.
+- Dev and prod are separate Terraform environments, with an optional pilot-light DR environment; you can run them in one account or split them later, but the repo does not manage multi-account plumbing.
 - You can create VPC, ALB, ECS (Fargate/Fargate Spot/EC2 capacity providers), EC2/Auto Scaling, ECR, RDS, KMS, IAM, SSM, CloudWatch, and Budgets resources in your AWS account.
 
 ## Trade-offs I Made
@@ -110,9 +110,13 @@ If this were running a real product, I would add:
   environments/
     dev/
     prod/
+    dr/
   modules/
     alb/
     apigw-lambda/
+    backup-vault/
+    budget/
+    dns/
     k8s-ec2-infra/
     ecs-ec2-capacity/
     ecs/
@@ -151,7 +155,7 @@ Standard file split (only create files when they have content):
 
 ## Prerequisites
 
-- Terraform >= 1.6.0
+- Terraform >= 1.11.0
 - AWS credentials via environment variables, SSO, or profile (no hardcoded keys)
 - Permission to create VPC, ECS, EC2/Auto Scaling, ALB, RDS, KMS, SSM, ECR, CloudWatch, and Budget resources
 
@@ -170,6 +174,7 @@ Use the outputs to update the backend configs:
 
 - `environments/dev/backend.hcl` (or start from `environments/dev/backend.hcl.example`)
 - `environments/prod/backend.hcl` (or start from `environments/prod/backend.hcl.example`)
+- `environments/dr/backend.hcl` (optional, for pilot-light DR; start from `environments/dr/backend.hcl.example`)
 
 Wire notifications by setting `alarm_sns_topic_arn` in each environment `terraform.tfvars` to the bootstrap `sns_topic_arn` output.
 
@@ -186,7 +191,7 @@ make plan ENV=dev platform=ecs
 make apply ENV=dev platform=ecs
 ```
 
-Prod is identical with `ENV=prod`. The Makefile targets assume `backend.hcl` and `terraform.tfvars` are already populated.
+Prod is identical with `ENV=prod`. DR (optional) uses `ENV=dr`. The Makefile targets assume `backend.hcl` and `terraform.tfvars` are already populated.
 
 ## Platform Selection
 
@@ -239,7 +244,7 @@ GitHub Actions runs `fmt-check`, `validate`, `lint`, `tfsec`, `docs-check`, and 
 
 ## Testing
 
-`make test` runs `terraform test` for bootstrap, `tests/terraform`, environments, and the core modules (network, ALB, API Gateway + Lambda, ECS, ECS EC2 capacity, EKS, K8s EC2 infra, RDS, observability) with backendless init.
+`make test` runs `terraform test` for bootstrap, `tests/terraform`, environments (dev/prod/dr), and the core modules (network, ALB, DNS, API Gateway + Lambda, backup vault, ECS, ECS EC2 capacity, EKS, K8s EC2 infra, RDS, observability) with backendless init.
 
 ## Documentation
 

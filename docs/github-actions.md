@@ -5,7 +5,7 @@ This repo uses GitHub Actions for CI. The main `terraform` job always runs; the 
 ## Repository Settings
 
 - Enable Actions (Settings -> Actions -> General).
-- Workflow permissions: `Read and write`. The workflow posts PR comments and uploads artifacts, so the default `GITHUB_TOKEN` needs write access.
+- Workflow permissions: `Read repository contents` is enough for the default token; the workflow explicitly requests `pull-requests: write` and `id-token: write` on the Infracost job for PR comments and OIDC. If your org restricts token scopes, allow those permissions.
 - If your org restricts actions, allow the actions used in `.github/workflows/ci.yml`.
 
 ## Required Secrets
