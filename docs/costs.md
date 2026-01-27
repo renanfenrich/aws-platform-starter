@@ -34,16 +34,17 @@ Notes:
 
 ## Latest Infracost Snapshot
 
-Based on a recent `make cost` run with the committed tfvars and usage files (rerun to include DR after adding it to `infracost.yml`):
+Based on a recent `make cost` run with the committed tfvars and usage files:
 
 | Project | Estimated monthly cost |
 | --- | --- |
 | bootstrap | $1.00 |
 | dev | $76.27 |
 | prod | $309.44 |
-| total | $386.70 |
+| dr | $68.26 |
+| total | $454.96 |
 
-Note: Infracost reported missing SMS pricing for the bootstrap SNS topic, so treat this as a lower bound.
+Note: Infracost reported missing SMS pricing for the bootstrap SNS topic and missing ECR pricing in the DR environment, so treat this as a lower bound.
 
 ## Cost Levers
 
