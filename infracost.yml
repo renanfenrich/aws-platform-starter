@@ -20,3 +20,10 @@ projects:
       - "terraform.tfvars"
       - "infracost.tfvars"
     usage_file: "infracost-usage-prod.yml"
+
+  - path: "environments/dr"
+    name: "dr"
+    terraform_var_files:
+      - "terraform.tfvars"
+      - "infracost.tfvars"
+    usage_file: "infracost-usage-dr.yml"

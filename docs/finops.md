@@ -5,7 +5,7 @@ This repo treats cost as a system property: estimate before deploy, enforce duri
 ## Cost Lifecycle
 
 ### Pre-deploy: estimate
-- CI runs Infracost across `bootstrap/`, `environments/dev`, and `environments/prod` using `infracost.yml` when the required secrets are present.
+- CI runs Infracost across `bootstrap/`, `environments/dev`, `environments/prod`, and `environments/dr` using `infracost.yml` when the required secrets are present.
 - Each environment includes `infracost.tfvars` to disable deploy-time enforcement while Infracost runs, keeping estimates deterministic.
 - The PR job writes a summary table via `scripts/finops-ci.sh` and uploads the JSON report as an artifact.
 

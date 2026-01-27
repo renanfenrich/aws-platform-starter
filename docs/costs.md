@@ -17,7 +17,7 @@ For the end-to-end FinOps flow (estimate → enforce → monitor), see `docs/fin
 
 ## Cost Estimation (Infracost)
 
-I use Infracost for rough deltas across `bootstrap/`, `environments/dev`, and `environments/prod`.
+I use Infracost for rough deltas across `bootstrap/`, `environments/dev`, `environments/prod`, and `environments/dr`.
 
 Local run:
 
@@ -34,7 +34,7 @@ Notes:
 
 ## Latest Infracost Snapshot
 
-Based on `make cost` with the committed tfvars and usage files:
+Based on a recent `make cost` run with the committed tfvars and usage files (rerun to include DR after adding it to `infracost.yml`):
 
 | Project | Estimated monthly cost |
 | --- | --- |
