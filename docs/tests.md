@@ -40,3 +40,5 @@ This repo uses `terraform test` with mock providers and backendless init to keep
 - `make test`
 
 Expected behavior: Terraform tests run plan-only with mock providers across bootstrap, `tests/terraform`, environments, and selected modules. No state backend is required and no AWS credentials are used.
+
+For new test scaffolding examples, see `examples/testing/README.md`.

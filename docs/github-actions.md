@@ -1,6 +1,6 @@
 # GitHub Actions Setup
 
-This repo uses GitHub Actions for CI. The main `terraform` job always runs; the `infracost` job runs on pull requests only when its required secrets are present.
+This repo uses GitHub Actions for CI. The main `terraform` job always runs; the `infracost` job runs on pull requests only when its required secrets are present. A separate `terraform-ci` workflow runs fmt/validate/lint and generates backendless plans for changed stacks when AWS credentials are available, then uploads the plan artifacts. It also exposes a manual, workflow-dispatch apply path that is gated on the checks job.
 
 ## Repository Settings
 

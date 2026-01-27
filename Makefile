@@ -8,13 +8,15 @@ MERMAID_CLI := npx -y @mermaid-js/mermaid-cli@$(MERMAID_CLI_VERSION)
 DIAGRAM_SRC := docs/architecture.mmd
 DIAGRAM_OUT := docs/architecture.svg
 
-.PHONY: fmt fmt-check validate lint security docs docs-check diagram test plan apply cost
+.PHONY: fmt fmt-check validate lint security docs docs-check diagram test plan apply cost tf-fmt tf-validate tf-lint tf-test
 
 fmt:
 	terraform fmt -recursive
 
 fmt-check:
 	terraform fmt -recursive -check
+
+tf-fmt: fmt
 
 validate:
 	terraform -chdir=bootstrap init -backend=false -input=false >/dev/null
@@ -24,12 +26,16 @@ validate:
 		terraform -chdir=$$dir validate; \
 	done
 
+tf-validate: validate
+
 lint:
 	tflint --init
 	tflint --config $(ROOT_DIR)/.tflint.hcl --chdir bootstrap
 	@for dir in $(ENV_DIRS); do \
 		tflint --config $(ROOT_DIR)/.tflint.hcl --chdir $$dir; \
 	done
+
+tf-lint: lint
 
 security:
 	tfsec .
@@ -60,6 +66,8 @@ test:
 		terraform -chdir=$$dir init -backend=false -input=false >/dev/null; \
 		terraform -chdir=$$dir test; \
 	done
+
+tf-test: test
 
 plan:
 	terraform -chdir=environments/$(ENV) init -backend-config=backend.hcl

@@ -246,6 +246,13 @@ GitHub Actions runs `fmt-check`, `validate`, `lint`, `tfsec`, `docs-check`, and 
 
 `make test` runs `terraform test` for bootstrap, `tests/terraform`, environments (dev/prod/dr), and the core modules (network, ALB, DNS, API Gateway + Lambda, backup vault, ECS, ECS EC2 capacity, EKS, K8s EC2 infra, RDS, observability) with backendless init.
 
+## Engineering Standards
+
+- Terraform skillbook: `docs/terraform/skillbook.md` (repo-local standards, checklists, and CI patterns).
+- Attribution: `docs/terraform/ATTRIBUTION.md`.
+- Local checks: `make fmt`, `make validate`, `make lint`, `make security`, `make docs`, `make test`.
+- Module changes: update module docs and tests in the same PR; if a module is shared outside the repo, tag releases as `module-<name>-vX.Y.Z` with SemVer and a short release note (see the skillbook).
+
 ## Documentation
 
 - `docs/README.md` — documentation index
