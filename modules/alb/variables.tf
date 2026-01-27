@@ -67,7 +67,7 @@ variable "acm_certificate_arn" {
   description = "ACM certificate ARN for HTTPS listener."
 
   validation {
-    condition     = !var.enable_public_ingress || (var.acm_certificate_arn != null && length(trimspace(var.acm_certificate_arn)) > 0)
+    condition     = !var.enable_public_ingress || (var.acm_certificate_arn == null ? false : length(trimspace(var.acm_certificate_arn)) > 0)
     error_message = "acm_certificate_arn must be provided when public ingress is enabled."
   }
 }
@@ -109,7 +109,7 @@ variable "access_logs_bucket" {
   default     = null
 
   validation {
-    condition     = !var.enable_access_logs || (var.access_logs_bucket != null && length(trimspace(var.access_logs_bucket)) > 0)
+    condition     = !var.enable_access_logs || (var.access_logs_bucket == null ? false : length(trimspace(var.access_logs_bucket)) > 0)
     error_message = "access_logs_bucket must be set when enable_access_logs is true."
   }
 }
@@ -126,7 +126,7 @@ variable "waf_acl_arn" {
   default     = null
 
   validation {
-    condition     = !var.enable_waf || (var.waf_acl_arn != null && length(trimspace(var.waf_acl_arn)) > 0)
+    condition     = !var.enable_waf || (var.waf_acl_arn == null ? false : length(trimspace(var.waf_acl_arn)) > 0)
     error_message = "waf_acl_arn must be set when enable_waf is true."
   }
 }

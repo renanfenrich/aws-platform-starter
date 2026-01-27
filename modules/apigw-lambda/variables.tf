@@ -123,7 +123,7 @@ variable "vpc_id" {
   default     = null
 
   validation {
-    condition     = length(var.vpc_subnet_ids) == 0 || (var.vpc_id != null && length(trimspace(var.vpc_id)) > 0)
+    condition     = length(var.vpc_subnet_ids) == 0 || (var.vpc_id == null ? false : length(trimspace(var.vpc_id)) > 0)
     error_message = "vpc_id must be set when vpc_subnet_ids are provided."
   }
 }
@@ -162,7 +162,7 @@ variable "rds_security_group_id" {
   default     = null
 
   validation {
-    condition     = !var.enable_rds_access || (var.rds_security_group_id != null && length(trimspace(var.rds_security_group_id)) > 0)
+    condition     = !var.enable_rds_access || (var.rds_security_group_id == null ? false : length(trimspace(var.rds_security_group_id)) > 0)
     error_message = "rds_security_group_id must be set when enable_rds_access is true."
   }
 }
