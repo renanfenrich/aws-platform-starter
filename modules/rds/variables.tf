@@ -124,7 +124,7 @@ variable "backup_vault_name" {
   default     = null
 
   validation {
-    condition     = var.backup_vault_name == null || length(trimspace(coalesce(var.backup_vault_name, ""))) > 0
+    condition     = var.backup_vault_name == null ? true : length(trimspace(var.backup_vault_name)) > 0
     error_message = "backup_vault_name must be null or a non-empty string."
   }
 }

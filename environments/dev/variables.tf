@@ -372,7 +372,7 @@ variable "eks_admin_runner_ami_id" {
   default     = null
 
   validation {
-    condition     = var.eks_admin_runner_ami_id == null || length(trimspace(coalesce(var.eks_admin_runner_ami_id, ""))) > 0
+    condition     = var.eks_admin_runner_ami_id == null ? true : length(trimspace(var.eks_admin_runner_ami_id)) > 0
     error_message = "eks_admin_runner_ami_id must be null or a non-empty string."
   }
 }
@@ -584,7 +584,7 @@ variable "container_image" {
   default     = null
 
   validation {
-    condition     = var.container_image == null || length(trimspace(coalesce(var.container_image, ""))) > 0
+    condition     = var.container_image == null ? true : length(trimspace(var.container_image)) > 0
     error_message = "container_image must be null or a non-empty string."
   }
 }
@@ -859,7 +859,7 @@ variable "serverless_api_rds_secret_arn" {
   default     = null
 
   validation {
-    condition     = var.serverless_api_rds_secret_arn == null || length(trimspace(coalesce(var.serverless_api_rds_secret_arn, ""))) > 0
+    condition     = var.serverless_api_rds_secret_arn == null ? true : length(trimspace(var.serverless_api_rds_secret_arn)) > 0
     error_message = "serverless_api_rds_secret_arn must be null or a non-empty string."
   }
 }
@@ -1010,7 +1010,7 @@ variable "rds_backup_vault_name" {
   default     = null
 
   validation {
-    condition     = var.rds_backup_vault_name == null || length(trimspace(coalesce(var.rds_backup_vault_name, ""))) > 0
+    condition     = var.rds_backup_vault_name == null ? true : length(trimspace(var.rds_backup_vault_name)) > 0
     error_message = "rds_backup_vault_name must be null or a non-empty string."
   }
 }

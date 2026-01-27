@@ -53,7 +53,7 @@ variable "log_kms_key_id" {
   default     = null
 
   validation {
-    condition     = var.log_kms_key_id == null || length(trimspace(coalesce(var.log_kms_key_id, ""))) > 0
+    condition     = var.log_kms_key_id == null ? true : length(trimspace(var.log_kms_key_id)) > 0
     error_message = "log_kms_key_id must be null or a non-empty string."
   }
 }
@@ -173,7 +173,7 @@ variable "rds_secret_arn" {
   default     = null
 
   validation {
-    condition     = var.rds_secret_arn == null || length(trimspace(coalesce(var.rds_secret_arn, ""))) > 0
+    condition     = var.rds_secret_arn == null ? true : length(trimspace(var.rds_secret_arn)) > 0
     error_message = "rds_secret_arn must be null or a non-empty string."
   }
 }
