@@ -4,6 +4,23 @@ This repo uses GitHub Actions for CI. The main `terraform` job always runs; the 
 
 The `kubernetes-ci` workflow runs only when Kubernetes-related paths change (for example `k8s/`, `docs/kubernetes/`, or `policy/kubernetes/`). It runs the repo-local Kubernetes checks (`make k8s-validate`, `make k8s-lint`, `make k8s-policy`, `make k8s-sec`).
 
+## CI Contract
+
+CI is a quality gate only. It enforces:
+
+- Terraform formatting, validation, linting, security scanning, docs checks, and `terraform test` in `.github/workflows/ci.yml`.
+- Kubernetes validation/lint/policy/security checks when Kubernetes-related paths change in `.github/workflows/kubernetes-ci.yml`.
+- Infracost cost estimation and the FinOps summary on PRs when `INFRACOST_API_KEY` and AWS credentials are present.
+- Backendless plan generation for changed stacks in `.github/workflows/terraform-ci.yml` when AWS credentials are present, with plan artifacts uploaded.
+
+CI explicitly does not:
+
+- Deploy or apply automatically; there is no continuous delivery. The optional `terraform-ci` workflow-dispatch apply is manual, opt-in, and outside the CI contract.
+- Perform drift detection or auto-remediation.
+- Enforce org-wide policies (SCPs, AWS Config rules, GuardDuty baselines) or manage accounts.
+
+These exclusions are intentional: the repo is scoped to a small, auditable platform baseline, and CI is meant to prove correctness without taking control of environments.
+
 ## Repository Settings
 
 - Enable Actions (Settings -> Actions -> General).
