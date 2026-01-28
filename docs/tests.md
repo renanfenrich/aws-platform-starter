@@ -33,8 +33,10 @@ This repo uses `terraform test` with mock providers and backendless init to keep
 | `ecs_capacity_mode` | `fargate`, `fargate_spot`, `ec2`, invalid value rejected |
 
 ## Remaining Gaps (Ranked)
-1. Tag coverage relies on representative resources (app SG, VPC, ECS/RDS/K8s resources); no plan-wide tag sweep.
-2. No plan JSON assertions yet for forbidden security posture across all resources (for example, an SSH 0.0.0.0/0 sweep).
+1. CLOSED: Plan-wide mandatory tag sweep enforced via `terraform test` plan JSON assertions.
+2. CLOSED: Plan-wide forbidden security posture sweep (SSH 0.0.0.0/0) enforced via `terraform test` plan JSON assertions.
+3. Plan JSON assertions are plan-only; runtime state and apply-time computed values are out of scope.
+4. Coverage is limited to the modes exercised in the Coverage Matrix; optional paths not enabled in those runs are not evaluated.
 
 ## How To Run
 - `make test`
