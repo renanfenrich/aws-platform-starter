@@ -240,7 +240,7 @@ For EKS:
 
 ## CI/CD
 
-GitHub Actions runs `fmt-check`, `validate`, `lint`, `tfsec`, `docs-check`, and `terraform test`. An Infracost job runs on PRs when the required secrets are present, then posts a FinOps summary; CI is a quality gate, not a deployment pipeline. Repo setup steps and required secrets are documented in `docs/github-actions.md`.
+GitHub Actions runs `fmt-check`, `validate`, `lint`, `tfsec`, `docs-check`, and `terraform test`. A Kubernetes workflow runs `k8s-validate`, `k8s-lint`, `k8s-policy`, and `k8s-sec` when Kubernetes-related files change. An Infracost job runs on PRs when the required secrets are present, then posts a FinOps summary; CI is a quality gate, not a deployment pipeline. Repo setup steps and required secrets are documented in `docs/github-actions.md`.
 
 ## Testing
 
@@ -250,7 +250,9 @@ GitHub Actions runs `fmt-check`, `validate`, `lint`, `tfsec`, `docs-check`, and 
 
 - Terraform skillbook: `docs/terraform/skillbook.md` (repo-local standards, checklists, and CI patterns).
 - Attribution: `docs/terraform/ATTRIBUTION.md`.
+- Kubernetes skillbook: `docs/kubernetes/skillbook.md` (repo-local standards, checklists, and policy rules).
 - Local checks: `make fmt`, `make validate`, `make lint`, `make security`, `make docs`, `make test`.
+- Kubernetes checks: `make k8s-fmt`, `make k8s-validate`, `make k8s-lint`, `make k8s-policy`, `make k8s-sec`.
 - Module changes: update module docs and tests in the same PR; if a module is shared outside the repo, tag releases as `module-<name>-vX.Y.Z` with SemVer and a short release note (see the skillbook).
 
 ## Documentation

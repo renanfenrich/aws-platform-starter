@@ -8,7 +8,7 @@ MERMAID_CLI := npx -y @mermaid-js/mermaid-cli@$(MERMAID_CLI_VERSION)
 DIAGRAM_SRC := docs/architecture.mmd
 DIAGRAM_OUT := docs/architecture.svg
 
-.PHONY: fmt fmt-check validate lint security docs docs-check diagram test plan apply cost tf-fmt tf-validate tf-lint tf-test
+.PHONY: fmt fmt-check validate lint security docs docs-check diagram test plan apply cost tf-fmt tf-validate tf-lint tf-test k8s-fmt k8s-lint k8s-policy k8s-sec k8s-validate
 
 fmt:
 	terraform fmt -recursive
@@ -80,3 +80,18 @@ apply:
 cost:
 	@test -n "$$INFRACOST_API_KEY" || (echo "INFRACOST_API_KEY is required"; exit 1)
 	TF_CLI_ARGS_init="-backend=false -input=false" TF_CLI_ARGS_plan="-input=false" infracost breakdown --config-file infracost.yml
+
+k8s-fmt:
+	scripts/kubernetes/run_checks.sh fmt
+
+k8s-lint:
+	scripts/kubernetes/run_checks.sh lint
+
+k8s-validate:
+	scripts/kubernetes/run_checks.sh validate
+
+k8s-policy:
+	scripts/kubernetes/run_checks.sh policy
+
+k8s-sec:
+	scripts/kubernetes/run_checks.sh sec

@@ -13,6 +13,8 @@ Start with `project-overview.md` for the repo map and environment model, then `a
 - `tests.md` — test coverage and how to run.
 - `terraform/skillbook.md` — repo-local Terraform standards and review checklist.
 - `terraform/ATTRIBUTION.md` — upstream attribution for the skillbook.
+- `kubernetes/README.md` — Kubernetes skillbook index and local checks.
+- `kubernetes/skillbook.md` — repo-local Kubernetes standards and decision matrices.
 - `github-actions.md` — GitHub Actions setup and required secrets.
 - `decisions.md` — key design decisions.
 - `well-architected.md` — AWS Well-Architected mapping.

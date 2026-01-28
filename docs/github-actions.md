@@ -2,6 +2,8 @@
 
 This repo uses GitHub Actions for CI. The main `terraform` job always runs; the `infracost` job runs on pull requests only when its required secrets are present. A separate `terraform-ci` workflow runs fmt/validate/lint and generates backendless plans for changed stacks when AWS credentials are available, then uploads the plan artifacts. It also exposes a manual, workflow-dispatch apply path that is gated on the checks job.
 
+The `kubernetes-ci` workflow runs only when Kubernetes-related paths change (for example `k8s/`, `docs/kubernetes/`, or `policy/kubernetes/`). It runs the repo-local Kubernetes checks (`make k8s-validate`, `make k8s-lint`, `make k8s-policy`, `make k8s-sec`).
+
 ## Repository Settings
 
 - Enable Actions (Settings -> Actions -> General).

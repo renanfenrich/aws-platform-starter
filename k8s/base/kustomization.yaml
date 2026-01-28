@@ -1,6 +1,14 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: demo
+labels:
+  - pairs:
+      app.kubernetes.io/name: demo-app
+      app.kubernetes.io/instance: demo-app
+      app.kubernetes.io/part-of: demo
+      owner: platform-team
+    includeSelectors: false
+    includeTemplates: true
 resources:
   - namespace.yaml
   - serviceaccount.yaml

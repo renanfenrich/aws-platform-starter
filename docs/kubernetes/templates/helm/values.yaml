@@ -1,0 +1,29 @@
+nameOverride: ""
+fullnameOverride: ""
+partOf: "demo"
+environment: "dev"
+owner: "platform-team"
+
+image:
+  repository: "REPLACE_WITH_IMAGE"
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  className: "nginx"
+  host: ""
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: "/"
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "500m"
+    memory: "256Mi"

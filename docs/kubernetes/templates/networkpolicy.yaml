@@ -1,0 +1,15 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: APP_NAME-deny-all
+  labels:
+    app.kubernetes.io/name: APP_NAME
+    app.kubernetes.io/instance: APP_INSTANCE
+    app.kubernetes.io/part-of: APP_PART_OF
+    environment: ENVIRONMENT
+    owner: OWNER
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
