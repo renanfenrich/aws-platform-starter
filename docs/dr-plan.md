@@ -26,7 +26,7 @@ You can tighten these objectives by increasing backup frequency or moving to a w
 ## What “DR Implemented” Means Here
 
 - A dedicated `environments/dr` stack can be planned/applied independently.
-- A documented, repeatable recovery procedure exists (see Runbook + steps below).
+- A documented, repeatable recovery procedure exists (see steps below).
 - Data/replication prerequisites are codified and optional via explicit flags.
 
 ## Reference Architecture
@@ -163,7 +163,7 @@ When DR is enabled:
 - ECR replication and AWS Backup copy add data transfer + storage costs.
 - Compute is the main variable cost when scaling up during an incident.
 
-Note: `infracost.yml` currently covers bootstrap/dev/prod only; add the DR environment if you want estimates in CI.
+Note: `infracost.yml` includes the DR environment; CI estimates include it when the Infracost job runs.
 
 ## Optional Upgrades (Not Default)
 

@@ -55,11 +55,7 @@ Escalation path:
 
 ## Testing Guardrails
 
-Terraform tests assert:
-- Budgets exist per environment.
-- Required tags are present on representative resources.
-- Cost posture rules and spot usage restrictions are enforced.
-- Deploy-time cost enforcement blocks when estimates exceed hard limits.
+Guardrail coverage is tracked in `docs/tests.md`.
 
 ## Known Limitations
 

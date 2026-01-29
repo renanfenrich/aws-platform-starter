@@ -90,6 +90,11 @@ Documentation is treated as part of the system: architecture, runbook, and decis
 │   │   ├── variables.tf
 │   │   ├── outputs.tf
 │   │   └── README.md
+│   ├── dns
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   ├── outputs.tf
+│   │   └── README.md
 │   ├── ecs
 │   │   ├── main.tf
 │   │   ├── variables.tf
@@ -240,19 +245,4 @@ When curating or rebuilding history, follow these defaults:
 - Do not commit real account IDs, ARNs, state, or secrets; the placeholder tfvars/backends are safe to keep.
 
 ## How to Navigate and Run
-- Format: `make fmt`
-- Format (check): `make fmt-check`
-- Validate (backendless init): `make validate`
-- Lint: `make lint`
-- Security scan: `make security`
-- Docs generation/check: `make docs`, `make docs-check`
-- Cost estimate: `make cost`
-- Tests: `make test`
-- Plan dev: `make plan ENV=dev platform=ecs`
-- Apply dev: `make apply ENV=dev platform=ecs`
-- Plan prod: `make plan ENV=prod platform=ecs`
-- Apply prod: `make apply ENV=prod platform=ecs`
-- Plan dr: `make plan ENV=dr platform=ecs`
-- Apply dr: `make apply ENV=dr platform=ecs`
-
-The plan/apply workflow expects bootstrap outputs to be wired into each environment backend config and tfvars before running.
+Operational steps and commands live in `docs/runbook.md`. Tests are in `docs/tests.md`. Cost estimation and guardrails are in `docs/finops.md` and `docs/costs.md`. CI setup is in `docs/github-actions.md`.

@@ -86,7 +86,7 @@ These are the defaults I chose for this repo. Each one is a trade-off, and I kep
 
 27) **RDS-only data protection baseline**
    - I rely on native RDS automated backups and final snapshots for recoverability. Dev keeps short retention and skips final snapshots; prod keeps longer retention, deletion protection, and requires a final snapshot on delete.
-   - AWS Backup orchestration and cross-region DR are intentionally out of scope to keep the repo small and avoid introducing a second backup control plane without a clear operational need.
+   - AWS Backup copy and pilot-light DR are opt-in; I avoid always-on cross-region automation unless there is a clear operational need.
 
 28) **Kustomize-based Kubernetes demo with baseline hardening**
    - I use kustomize overlays (dev/prod) so environment differences are explicit without introducing Helm or operators.

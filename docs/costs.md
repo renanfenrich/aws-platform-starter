@@ -15,37 +15,6 @@ For the end-to-end FinOps flow (estimate → enforce → monitor), see `docs/fin
 - CloudWatch logs and alarms
 - DR add-ons (when enabled): AWS Backup vault storage, cross-region backup copy, ECR replication, extra ALB/RDS in the DR region
 
-## Cost Estimation (Infracost)
-
-I use Infracost for rough deltas across `bootstrap/`, `environments/dev`, `environments/prod`, and `environments/dr`.
-
-Local run:
-
-```bash
-INFRACOST_API_KEY=... make cost
-```
-
-Notes:
-
-- `infracost.yml` uses `bootstrap/terraform.tfvars.example` and each environment's `terraform.tfvars` + `infracost.tfvars`.
-- `infracost.tfvars` disables deploy-time enforcement and sets `estimated_monthly_cost = 0` so plans remain deterministic.
-- `make cost` uses backendless init/plan; data sources still call AWS, so read-only AWS credentials are required.
-- After estimating, set `TF_VAR_estimated_monthly_cost` before running plan/apply with enforcement enabled.
-
-## Latest Infracost Snapshot
-
-Based on a recent `make cost` run with the committed tfvars and usage files:
-
-| Project | Estimated monthly cost |
-| --- | --- |
-| bootstrap | $1.00 |
-| dev | $76.27 |
-| prod | $309.44 |
-| dr | $68.26 |
-| total | $454.96 |
-
-Note: Infracost reported missing SMS pricing for the bootstrap SNS topic and missing ECR pricing in the DR environment, so treat this as a lower bound.
-
 ## Cost Levers
 
 - `single_nat_gateway`: reduce NAT hourly cost in dev; prod defaults to one per AZ for resilience.

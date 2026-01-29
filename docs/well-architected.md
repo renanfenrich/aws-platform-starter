@@ -39,10 +39,11 @@ What this repo covers:
 - Multi-NAT in prod and a single NAT in dev (explicit trade-off).
 - Multi-AZ RDS enabled in prod by default.
 - Remote state locking to avoid concurrent apply issues.
+- Pilot-light DR stack with manual cutover and opt-in cross-region copy/replication (`docs/dr-plan.md`).
 
 Where it stops:
 
-- No multi-region failover or DR strategy.
+- No automated multi-region failover or active-active routing; DR remains manual.
 - No automated failover drills or chaos testing.
 - No explicit buffering beyond the Fargate fallback when using Fargate Spot.
 - Self-managed Kubernetes uses a single control plane instance (no HA control plane).

@@ -4,13 +4,13 @@ This is the short list of steps I actually use when operating this stack.
 
 ## Cost Estimate (Required)
 
-Estimate costs before any deploy and pass the number into Terraform:
+Estimate costs before any deploy and pass the number into Terraform. The enforcement model lives in `docs/finops.md`, and cost drivers live in `docs/costs.md`.
 
 ```bash
 INFRACOST_API_KEY=... make cost
 ```
 
-Capture the estimated monthly cost for the target environment, then export it as `TF_VAR_estimated_monthly_cost`. If you need to bypass enforcement for a one-off estimate, use `enforce_cost_controls = false` (as in `infracost.tfvars`).
+Capture the estimated monthly cost for the target environment, then export it as `TF_VAR_estimated_monthly_cost`.
 
 ## Deploy (Dev)
 
@@ -124,9 +124,7 @@ Each environment creates a CloudWatch dashboard named `<project>-<environment>-o
 
 ## Budget Alerts
 
-1) Set `budget_notification_emails` or `budget_sns_topic_arn` in each environment `terraform.tfvars` (or rely on `alarm_sns_topic_arn`).
-2) Confirm email subscriptions or SNS endpoints as required.
-3) When a budget warning fires, review the latest cost estimate and recent deploys before adjusting capacity.
+Budget configuration and alert routing live in `docs/finops.md`.
 
 ## Deploy (Kubernetes Self-Managed)
 
@@ -266,72 +264,7 @@ Warnings:
 
 ## Disaster Recovery (Pilot-Light)
 
-Use this when the primary region is unavailable or you must fail over for incident response.
-
-### Preconditions
-
-- DR environment exists and can be planned (`environments/dr`).
-- ECR replication is enabled in the primary environment (optional but recommended).
-- AWS Backup copy to the DR vault is enabled if you want cross-region recovery points.
-- DNS cutover plan is ready (Route 53 failover or manual CNAME).
-
-### Declare DR Checklist
-
-1) Confirm primary region outage scope and estimated duration.
-2) Freeze non-essential changes in the primary environment.
-3) Notify stakeholders of expected RTO/RPO.
-4) Run readiness checks:
-
-```bash
-scripts/dr-readiness.sh environments/prod environments/dr
-```
-
-### Restore Database in DR
-
-1) Identify a recovery point or snapshot in the primary region.
-2) Restore into the DR region:
-   - AWS Backup: restore the latest recovery point into a new DB instance.
-   - Snapshot copy: restore the latest copied snapshot.
-3) Capture the new endpoint and secret ARN.
-4) Update application configuration/secrets in the DR region.
-
-### Scale Compute in DR
-
-1) Update `environments/dr/terraform.tfvars`:
-   - `desired_count` for ECS, or
-   - `k8s_worker_*` / `eks_node_*` for Kubernetes.
-2) Apply:
-
-```bash
-export TF_VAR_estimated_monthly_cost=123.45
-make apply ENV=dr platform=ecs
-```
-
-### Enable Public Ingress and Cutover Traffic
-
-1) Set `alb_enable_public_ingress = true` and provide a DR ACM cert.
-2) Apply `environments/dr`.
-3) Cut over DNS:
-   - Route 53 failover record, or
-   - Manual CNAME change.
-
-### Validate
-
-- Smoke tests against the DR endpoint.
-- Check ALB target health and ECS task status.
-- Verify RDS connectivity and application logs.
-
-### Rollback Path
-
-- Revert DNS to primary.
-- Scale DR compute back to 0.
-- Disable public ingress (`alb_enable_public_ingress = false`).
-
-### Post-Incident Reconciliation
-
-- Compare Terraform state vs. actual DR resources (import if needed).
-- Document incident timeline and data loss (actual RPO).
-- Re-enable primary and plan a controlled failback.
+The DR architecture, prerequisites, and recovery procedure are documented in `docs/dr-plan.md`.
 
 ## Investigate Alarms
 
