@@ -170,6 +170,17 @@ Documentation is treated as part of the system: architecture, runbook, and decis
 │   ├── decisions.md
 │   ├── well-architected.md
 │   └── interview-talk-track.md
+├── examples
+│   ├── ecs-workload
+│   │   ├── README.md
+│   │   ├── locals.tf
+│   │   ├── main.tf
+│   │   ├── outputs.tf
+│   │   ├── providers.tf
+│   │   ├── variables.tf
+│   │   └── versions.tf
+│   └── testing
+│       └── README.md
 ├── tests
 │   └── terraform
 │       ├── main.tf
@@ -213,6 +224,7 @@ Note: local caches and state (for example: `.terraform/`, `.infracost/`, and `te
 - `modules/observability`: Baseline CloudWatch alarms + dashboard for ALB, ECS/EC2, and RDS.
 - `modules/rds`: Encrypted PostgreSQL instance, subnet group, KMS key, and SG rules.
 - `docs/`: Architecture, decisions, runbook, FinOps guidance, GitHub Actions setup, and test strategy.
+- `examples/ecs-workload`: Optional, illustrative ECS workload wiring that reuses the platform ALB, ECR, and Secrets Manager outputs.
 - `tests/terraform/`: Terraform test suites covering selectors and module behavior without a live backend.
 - `k8s/`: Demo manifests (Kustomize base + overlays) for the Kubernetes options.
 - `scripts/`: CI helpers (FinOps summary).

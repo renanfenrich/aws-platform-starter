@@ -58,6 +58,16 @@ output "target_group_arn" {
   value       = module.alb.target_group_arn
 }
 
+output "alb_https_listener_arn" {
+  description = "HTTPS listener ARN for the ALB."
+  value       = module.alb.https_listener_arn
+}
+
+output "alb_http_listener_arn" {
+  description = "HTTP listener ARN for the ALB (null when disabled)."
+  value       = module.alb.http_listener_arn
+}
+
 output "ecr_repository_url" {
   description = "ECR repository URL for the application image."
   value       = module.ecr.repository_url
