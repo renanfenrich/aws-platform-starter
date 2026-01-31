@@ -13,25 +13,27 @@ Kustomize stays the default for app overlays; Helm is reserved for third-party p
 
 ## Current layout
 
+- `clusters/dev`: dev entrypoint (references the overlay)
+- `clusters/prod`: prod entrypoint (references the overlay)
 - `base/`: shared resources
-- `overlays/dev`: dev patch set
-- `overlays/prod`: prod patch set
+- `overlays/dev`: dev patch set (implementation detail)
+- `overlays/prod`: prod patch set (implementation detail)
 - `kind-config.yaml`: local kind config
 
-## Quickstart (current)
+## Quickstart (recommended entrypoints)
 
 Apply:
 
 ```bash
-kubectl apply -k k8s/overlays/dev
-kubectl apply -k k8s/overlays/prod
+kubectl apply -k k8s/clusters/dev
+kubectl apply -k k8s/clusters/prod
 ```
 
 Preview and dry-run:
 
 ```bash
-kubectl kustomize k8s/overlays/dev
-kubectl apply -k k8s/overlays/dev --dry-run=client
+kustomize build k8s/clusters/dev | less
+kubectl apply -k k8s/clusters/dev --dry-run=client
 ```
 
 ## Checks

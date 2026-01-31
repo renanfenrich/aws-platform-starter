@@ -39,8 +39,9 @@ make k8s-sec
 
 ## What gets checked
 
-- Kustomize overlays under `k8s/overlays/*` are the default validation targets.
-- If no overlays exist, all detected Kustomize roots are checked.
+- Kustomize entrypoints under `k8s/clusters/*` are validated when present.
+- Overlays under `k8s/overlays/*` are also validated to keep patch sets visible.
+- If neither exists, all detected Kustomize roots are checked.
 - Helm charts are checked when a `Chart.yaml` exists.
 
 ## Tooling prerequisites

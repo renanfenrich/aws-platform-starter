@@ -89,14 +89,24 @@ discover_helm_dirs() {
 }
 
 select_kustomize_targets() {
-  local targets=()
   local overlays=()
+  local clusters=()
 
   for dir in "$@"; do
-    if [[ "$dir" == *"/overlays/"* ]]; then
+    if [[ "$dir" == *"/clusters/"* ]]; then
+      clusters+=("$dir")
+    elif [[ "$dir" == *"/overlays/"* ]]; then
       overlays+=("$dir")
     fi
   done
+
+  if [ ${#clusters[@]} -gt 0 ]; then
+    printf '%s\n' "${clusters[@]}"
+    if [ ${#overlays[@]} -gt 0 ]; then
+      printf '%s\n' "${overlays[@]}"
+    fi
+    return
+  fi
 
   if [ ${#overlays[@]} -gt 0 ]; then
     printf '%s\n' "${overlays[@]}"
