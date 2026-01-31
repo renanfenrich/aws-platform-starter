@@ -2,13 +2,25 @@
 
 These manifests are intentionally small but hardened. They target the self-managed kubeadm cluster and assume an ALB that forwards to a NodePort ingress controller service. The control plane bootstrap installs flannel and ingress-nginx, and patches the ingress service to the configured NodePort.
 
-## Layout
+## Status
+
+This directory is transitioning to a production-grade layout with minimal churn. The plan and standards live in:
+
+- `k8s/docs/plan.md`
+- `k8s/docs/standards.md`
+
+Kustomize stays the default for app overlays; Helm is reserved for third-party platform charts.
+
+## Current layout
 
 - `base/`: shared resources
 - `overlays/dev`: dev patch set
 - `overlays/prod`: prod patch set
+- `kind-config.yaml`: local kind config
 
-## Apply
+## Quickstart (current)
+
+Apply:
 
 ```bash
 kubectl apply -k k8s/overlays/dev
@@ -20,6 +32,23 @@ Preview and dry-run:
 ```bash
 kubectl kustomize k8s/overlays/dev
 kubectl apply -k k8s/overlays/dev --dry-run=client
+```
+
+## Checks
+
+Full local check suite:
+
+```bash
+scripts/kubernetes/run_checks.sh
+```
+
+Makefile targets:
+
+```bash
+make k8s-validate
+make k8s-lint
+make k8s-policy
+make k8s-sec
 ```
 
 ## Ingress and ALB routing
