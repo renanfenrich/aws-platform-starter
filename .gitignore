@@ -10,3 +10,4 @@ crash.*.log
 .venv/
 bootstrap/plan.json
 bootstrap/terraform.tfvars
+k8s/kind-config.yaml
