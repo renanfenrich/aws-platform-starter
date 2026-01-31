@@ -22,7 +22,7 @@ spec:
         app: demo-app
         app.kubernetes.io/name: demo-app
         app.kubernetes.io/part-of: demo
-      # Add prometheus.io/scrape and prometheus.io/port annotations here if the app exposes metrics.
+        # Add prometheus.io/scrape and prometheus.io/port annotations here if the app exposes metrics.
     spec:
       serviceAccountName: demo-app
       automountServiceAccountToken: false
