@@ -50,11 +50,18 @@ k8s/
           patch-pdb.json
   platform/
     namespaces/
-      kustomization.yaml
-      demo/
-        namespace.yaml
-        limitrange.yaml
-        resourcequota.yaml
+      base/
+        kustomization.yaml
+        namespaces.yaml
+        limitrange-apps.yaml
+        resourcequota-apps.yaml
+      overlays/
+        dev/
+          kustomization.yaml
+          patch-resourcequota-apps.yaml
+        prod/
+          kustomization.yaml
+          patch-resourcequota-apps.yaml
     ingress-nginx/
       kustomization.yaml
     cert-manager/
@@ -122,7 +129,7 @@ Notes:
 | `k8s/base/*` | `k8s/apps/demo-app/base/*` | Move as-is; update kustomization refs. |
 | `k8s/overlays/dev/*` | `k8s/apps/demo-app/overlays/dev/*` | Move as-is. |
 | `k8s/overlays/prod/*` | `k8s/apps/demo-app/overlays/prod/*` | Move as-is. |
-| `k8s/base/namespace.yaml` | `k8s/platform/namespaces/demo/namespace.yaml` | Add LimitRange + ResourceQuota alongside. |
+| `k8s/base/namespace.yaml` | `k8s/platform/namespaces/base/namespaces.yaml` | Consolidate namespace definitions; add `apps` LimitRange + ResourceQuota. |
 | `k8s/base/secret-template.yaml` | `k8s/apps/demo-app/base/secret-template.yaml` | Keep as template only; do not add to kustomization. |
 | `k8s/README.md` | `k8s/README.md` | Update to use `clusters/<env>` entrypoints and reference docs. |
 

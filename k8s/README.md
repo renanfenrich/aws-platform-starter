@@ -15,6 +15,7 @@ Kustomize stays the default for app overlays; Helm is reserved for third-party p
 
 - `clusters/dev`: dev entrypoint (references the overlay)
 - `clusters/prod`: prod entrypoint (references the overlay)
+- `platform/namespaces`: baseline namespaces and `apps` quota/limitrange
 - `base/`: shared resources
 - `overlays/dev`: dev patch set (implementation detail)
 - `overlays/prod`: prod patch set (implementation detail)
@@ -37,6 +38,12 @@ Preview and dry-run:
 kubectl kustomize k8s/clusters/dev | less
 kubectl apply -k k8s/clusters/dev --dry-run=client
 ```
+
+## Namespaces baseline
+
+Cluster entrypoints include `k8s/platform/namespaces/overlays/<env>` to create platform namespaces ahead of installing components. ResourceQuota and LimitRange apply only to the `apps` namespace by design.
+
+To opt out later, remove or delete the `apps` ResourceQuota/LimitRange in the environment overlay (for example with a Kustomize patch using `$patch: delete`).
 
 ## Reference app template
 

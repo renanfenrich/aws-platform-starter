@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: apps-baseline
+  namespace: apps
+  labels:
+    app.kubernetes.io/name: apps
+    app.kubernetes.io/instance: apps
+    app.kubernetes.io/part-of: platform
+    owner: platform-team
+    platform.aws-platform-starter.io/tier: apps
+  annotations:
+    platform.aws-platform-starter.io/owner: "platform-team"
+spec:
+  limits:
+    - type: Container
+      default:
+        cpu: "500m"
+        memory: "512Mi"
+      defaultRequest:
+        cpu: "100m"
+        memory: "256Mi"
