@@ -36,6 +36,15 @@ kustomize build k8s/clusters/dev | less
 kubectl apply -k k8s/clusters/dev --dry-run=client
 ```
 
+## Reference app template
+
+The reference workload template lives at `k8s/apps/reference-app` and is not wired into any cluster entrypoints yet. Render it directly:
+
+```bash
+kustomize build k8s/apps/reference-app/overlays/dev
+kustomize build k8s/apps/reference-app/overlays/prod
+```
+
 ## Checks
 
 Full local check suite:

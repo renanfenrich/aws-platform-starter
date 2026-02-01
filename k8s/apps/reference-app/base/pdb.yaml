@@ -1,0 +1,12 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: reference-app
+  labels:
+    app.kubernetes.io/name: reference-app
+    app.kubernetes.io/part-of: reference-apps
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: reference-app

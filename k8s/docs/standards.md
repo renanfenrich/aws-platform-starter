@@ -23,6 +23,24 @@ This document defines the workload and platform baseline for everything under `k
 - [ ] **Topology spread or anti-affinity:** keep replicas from collocating on one node/zone.
 - [ ] **NetworkPolicy:** default deny + explicit allowlist for ingress/egress (DNS, data stores, dependencies).
 
+## Reference app template
+
+`k8s/apps/reference-app` is the executable baseline. Each checklist item maps to a manifest:
+
+- **Deployment:** rolling updates, resources, probes, security context, topology spread.
+- **ServiceAccount:** dedicated SA with `automountServiceAccountToken: false`.
+- **PodDisruptionBudget + HPA:** disruption budget aligned with replicas and CPU scaling.
+- **NetworkPolicy:** default deny, explicit ingress allowlist, DNS egress.
+- **Service:** ClusterIP on a non-privileged port.
+
+## Template usage
+
+Copy the template, rename, then wire it into `k8s/clusters/<env>` when you are ready to deploy.
+
+1) Copy `k8s/apps/reference-app` to `k8s/apps/<app>`.
+2) Update names, labels, image, ports, and network policy allowlists.
+3) Add the overlay path to `k8s/clusters/<env>/kustomization.yaml`.
+
 ## Platform baseline checklist (cluster-wide)
 
 - [ ] **Ingress controller:** ingress-nginx (or equivalent) with explicit class.

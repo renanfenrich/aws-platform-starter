@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+labels:
+  - pairs:
+      app.kubernetes.io/name: reference-app
+      app.kubernetes.io/instance: reference-app
+      app.kubernetes.io/part-of: reference-apps
+      owner: platform-team
+    includeSelectors: false
+    includeTemplates: true
+resources:
+  - serviceaccount.yaml
+  - deployment.yaml
+  - service.yaml
+  - pdb.yaml
+  - hpa.yaml
+  - networkpolicy-deny-all.yaml
+  - networkpolicy-allow-ingress.yaml
+  - networkpolicy-allow-dns.yaml

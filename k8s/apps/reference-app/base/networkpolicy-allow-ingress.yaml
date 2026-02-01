@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: reference-app-allow-ingress
+  labels:
+    app.kubernetes.io/part-of: reference-apps
+spec:
+  podSelector:
+    matchLabels:
+      app: reference-app
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector: {}
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8080
