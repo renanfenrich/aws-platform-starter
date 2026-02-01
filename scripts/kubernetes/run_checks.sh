@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 POLICY_DIR="$ROOT_DIR/policy/kubernetes/rego"
+POLICY_TEST_DIR="$ROOT_DIR/policy/kubernetes/tests"
 YAMLLINT_CONFIG="$ROOT_DIR/scripts/kubernetes/yamllint.yaml"
 MODE="${1:-all}"
 K8S_VERSION="${K8S_VERSION:-1.29.2}"
@@ -217,6 +218,9 @@ run_policy() {
       helm template "$dir" | conftest test -p "$POLICY_DIR" --namespace kubernetes.policy -
     done
   fi
+
+  echo "Policy unit tests: $POLICY_TEST_DIR"
+  conftest verify -p "$POLICY_DIR" -p "$POLICY_TEST_DIR"
 }
 
 run_sec() {
