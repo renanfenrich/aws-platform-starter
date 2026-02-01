@@ -55,4 +55,11 @@ These are CLI tools, not cluster dependencies:
 
 Optional: add Trivy (or another config scanner) if you want a separate security scanner beyond Conftest policy rules.
 
+## Policy authoring (Rego v1)
+
+- Policies target OPA 1.x (Rego v1). CI pins `conftest` to v0.45.0 (OPA 1.x).
+- Rule bodies must use `if`, and partial set rules (like `deny`) must use `contains`.
+- Format policies with `conftest fmt policy/kubernetes/rego` before committing.
+- Run policy checks locally with `make k8s-policy` or `scripts/kubernetes/run_checks.sh policy`.
+
 See `policy/kubernetes/README.md` for rule details and exception labels.
