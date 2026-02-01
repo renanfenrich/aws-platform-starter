@@ -48,7 +48,7 @@ make k8s-sec
 
 These are CLI tools, not cluster dependencies:
 
-- `kubectl` (for `kubectl kustomize`) or `kustomize`
+- `kubectl` (includes `kubectl kustomize`; no standalone `kustomize` required)
 - `yamllint`
 - `kubeconform`
 - `conftest`

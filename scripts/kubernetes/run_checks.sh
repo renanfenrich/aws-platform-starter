@@ -18,20 +18,10 @@ require_tool() {
   fi
 }
 
-kustomize_build() {
+render_kustomize() {
   local dir="$1"
-  if command -v kustomize >/dev/null 2>&1; then
-    kustomize build "$dir"
-    return
-  fi
-
-  if command -v kubectl >/dev/null 2>&1; then
-    kubectl kustomize "$dir"
-    return
-  fi
-
-  echo "Missing required tool: kustomize or kubectl" >&2
-  return 1
+  require_tool kubectl
+  kubectl kustomize "$dir"
 }
 
 unique_dirs() {
@@ -180,7 +170,7 @@ run_validate() {
   if [ ${#KUSTOMIZE_TARGETS[@]} -gt 0 ]; then
     for dir in "${KUSTOMIZE_TARGETS[@]}"; do
       echo "Validating Kustomize: $dir"
-      kustomize_build "$dir" | kubeconform \
+      render_kustomize "$dir" | kubeconform \
         -summary \
         -strict \
         -ignore-missing-schemas \
@@ -207,7 +197,7 @@ run_policy() {
   if [ ${#KUSTOMIZE_TARGETS[@]} -gt 0 ]; then
     for dir in "${KUSTOMIZE_TARGETS[@]}"; do
       echo "Policy check (kustomize): $dir"
-      kustomize_build "$dir" | conftest test -p "$POLICY_DIR" --namespace kubernetes.policy -
+      render_kustomize "$dir" | conftest test -p "$POLICY_DIR" --namespace kubernetes.policy -
     done
   fi
 
@@ -229,7 +219,7 @@ run_sec() {
   if [ ${#KUSTOMIZE_TARGETS[@]} -gt 0 ]; then
     for dir in "${KUSTOMIZE_TARGETS[@]}"; do
       echo "Security check (kustomize): $dir"
-      kustomize_build "$dir" | conftest test -p "$POLICY_DIR" --namespace kubernetes.security -
+      render_kustomize "$dir" | conftest test -p "$POLICY_DIR" --namespace kubernetes.security -
     done
   fi
 

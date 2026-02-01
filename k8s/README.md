@@ -22,6 +22,8 @@ Kustomize stays the default for app overlays; Helm is reserved for third-party p
 
 ## Quickstart (recommended entrypoints)
 
+This repo uses kubectl's built-in kustomize; no separate kustomize install required.
+
 Apply:
 
 ```bash
@@ -32,7 +34,7 @@ kubectl apply -k k8s/clusters/prod
 Preview and dry-run:
 
 ```bash
-kustomize build k8s/clusters/dev | less
+kubectl kustomize k8s/clusters/dev | less
 kubectl apply -k k8s/clusters/dev --dry-run=client
 ```
 
@@ -41,8 +43,8 @@ kubectl apply -k k8s/clusters/dev --dry-run=client
 The reference workload template lives at `k8s/apps/reference-app` and is not wired into any cluster entrypoints yet. Render it directly:
 
 ```bash
-kustomize build k8s/apps/reference-app/overlays/dev
-kustomize build k8s/apps/reference-app/overlays/prod
+kubectl kustomize k8s/apps/reference-app/overlays/dev
+kubectl kustomize k8s/apps/reference-app/overlays/prod
 ```
 
 ## Checks

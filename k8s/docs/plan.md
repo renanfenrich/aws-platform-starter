@@ -133,7 +133,7 @@ The workload and platform checklists live in `k8s/docs/standards.md`. Those chec
 ## CI quality gates for `k8s/`
 
 Required gates (fail-fast):
-- `kustomize build k8s/clusters/dev` and `kustomize build k8s/clusters/prod`.
+- `kubectl kustomize k8s/clusters/dev` and `kubectl kustomize k8s/clusters/prod`.
 - `helm lint` and `helm template` for any platform charts.
 - `kubeconform` strict validation for rendered manifests (cluster version pinned via `K8S_VERSION`).
 - `conftest` policy checks for `kubernetes.policy` and `kubernetes.security` namespaces.
@@ -191,7 +191,7 @@ Files to add/change:
 - Update `k8s/clusters/*/kustomization.yaml` to reference the new app path.
 
 Acceptance criteria:
-- `kustomize build k8s/clusters/dev` and `prod` render the same resources as before.
+- `kubectl kustomize k8s/clusters/dev` and `prod` render the same resources as before.
 - Old `k8s/base` and `k8s/overlays` removed.
 
 Test commands:
