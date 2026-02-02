@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: argocd
+commonAnnotations:
+  policy.aws-platform-starter/allow-missing-resources: "true"
+  policy.aws-platform-starter/allow-missing-probes: "true"
+labels:
+  - pairs:
+      app.kubernetes.io/instance: argocd
+      owner: platform-team
+    includeSelectors: false
+    includeTemplates: true
+resources:
+  - install.yaml
+  - app-project.yaml
+  - applications/dev.yaml
+  - applications/prod.yaml

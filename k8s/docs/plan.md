@@ -9,7 +9,7 @@ This plan expands `k8s/` into a production-grade layout with minimal churn. It d
   - `overlays/dev` and `overlays/prod`
   - `kind-config.yaml`
   - `README.md`
-- Deployment approach: Kustomize base + overlays, applied with `kubectl apply -k`. There are no Helm charts or GitOps controllers in this repo today.
+- Deployment approach: Kustomize base + overlays, applied with `kubectl apply -k` for bootstrap. Argo CD Applications now sync `k8s/clusters/<env>` after initial apply.
 - CI checks already exist:
   - Local/CI entrypoint: `scripts/kubernetes/run_checks.sh` (Makefile targets `k8s-validate`, `k8s-lint`, `k8s-policy`, `k8s-sec`).
   - GitHub Actions: `.github/workflows/kubernetes-ci.yml` installs `yamllint`, `kubeconform`, and `conftest` and runs the make targets. Helm checks run only when a `Chart.yaml` is present.
@@ -232,6 +232,29 @@ Test commands:
 
 Rollback notes:
 - Remove platform components from cluster kustomizations.
+
+### PR4B - GitOps bootstrap (Argo CD)
+
+Status: **complete** (2026-02-02).
+
+Files to add/change:
+- `k8s/platform/argocd/*`
+- `k8s/clusters/*/kustomization.yaml`
+- `k8s/docs/gitops.md`
+
+Acceptance criteria:
+- Argo CD installs from a pinned manifest in `k8s/platform/argocd/base`.
+- `platform-dev` auto-syncs with prune + self-heal; `platform-prod` is manual with prune disabled.
+- No ingress exposure.
+
+Test commands:
+- `make k8s-validate`
+- `make k8s-lint`
+- `make k8s-policy`
+- `make k8s-sec`
+
+Rollback notes:
+- Remove Argo CD overlays from `k8s/clusters/*` and delete `k8s/platform/argocd`.
 
 ### PR5 - Observability stack (metrics, logs, traces)
 
