@@ -6,6 +6,7 @@ resources_exception_key := "policy.aws-platform-starter/allow-missing-resources"
 
 deny contains msg if {
 	lib.is_workload(input)
+	lib.is_apps_tier(input)
 	not lib.exception(input, resources_exception_key)
 	spec := lib.pod_spec(input)
 	container := spec.containers[_]
@@ -15,6 +16,7 @@ deny contains msg if {
 
 deny contains msg if {
 	lib.is_workload(input)
+	lib.is_apps_tier(input)
 	not lib.exception(input, resources_exception_key)
 	spec := lib.pod_spec(input)
 	init := spec.initContainers[_]

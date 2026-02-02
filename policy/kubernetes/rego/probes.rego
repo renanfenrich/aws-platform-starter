@@ -16,6 +16,7 @@ requires_probes if {
 
 deny contains msg if {
 	requires_probes
+	lib.is_apps_tier(input)
 	not lib.exception(input, probes_exception_key)
 	spec := lib.pod_spec(input)
 	container := spec.containers[_]
@@ -25,6 +26,7 @@ deny contains msg if {
 
 deny contains msg if {
 	requires_probes
+	lib.is_apps_tier(input)
 	not lib.exception(input, probes_exception_key)
 	spec := lib.pod_spec(input)
 	container := spec.containers[_]

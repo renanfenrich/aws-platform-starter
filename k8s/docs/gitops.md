@@ -35,8 +35,8 @@ Username is `admin` by default. Rotate the password after first login.
 
 ## Environment behavior
 
-- `dev` (`platform-dev` Application): automated sync with prune + self-heal.
-- `prod` (`platform-prod` Application): manual sync only, prune disabled by default.
+- `dev` (`platform-dev` Application): automated sync with prune + self-heal, tracking `main`.
+- `prod` (`platform-prod` Application): manual sync only, prune disabled by default, tracking `main`.
 
 ## Adding a new workload or platform component
 
@@ -47,6 +47,6 @@ Username is `admin` by default. Rotate the password after first login.
 ## Notes and trade-offs
 
 - Argo CD is pinned to v3.2.2 via `k8s/platform/argocd/base/install.yaml`.
-- Argo CD workloads carry policy exceptions for missing probes/resources to keep the vendored manifest close to upstream defaults. Tighten with explicit requests/limits and probes if you harden the platform.
-- Repo access is currently `*` in the AppProject for bootstrap simplicity. Tighten it to the exact repo URL once Argo is stable.
+- AppProject repo access is restricted to the exact repo URL.
 - Argo CD is installed by plain manifests pinned in git. Version changes require updating the vendored manifest.
+ - Prod should pin to a release tag or commit SHA once a release process exists; `main` is the minimal safe baseline.

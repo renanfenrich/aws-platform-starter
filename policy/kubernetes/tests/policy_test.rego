@@ -8,6 +8,7 @@ good_deploy := {
 	"kind": "Deployment",
 	"metadata": {
 		"name": "demo-app",
+		"namespace": "demo",
 		"labels": {
 			"app.kubernetes.io/name": "demo-app",
 			"app.kubernetes.io/instance": "demo-app",
@@ -53,6 +54,7 @@ bad_service := {
 	"kind": "Service",
 	"metadata": {
 		"name": "public-service",
+		"namespace": "demo",
 		"labels": {
 			"app.kubernetes.io/name": "public-service",
 			"app.kubernetes.io/instance": "public-service",

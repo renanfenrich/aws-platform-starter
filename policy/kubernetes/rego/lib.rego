@@ -17,6 +17,20 @@ required_label_kinds := {
 	"StatefulSet": true,
 }
 
+tier_label_key := "platform.aws-platform-starter.io/tier"
+
+namespace_tiers := {
+	"apps": "apps",
+	"demo": "apps",
+	"argocd": "platform",
+	"ingress": "platform",
+	"cert-manager": "platform",
+	"external-dns": "platform",
+	"monitoring": "platform",
+	"logging": "platform",
+	"tracing": "platform",
+}
+
 workload_kinds := {
 	"CronJob": true,
 	"DaemonSet": true,
@@ -28,6 +42,45 @@ workload_kinds := {
 
 kind_requires_labels(kind) if {
 	required_label_kinds[kind]
+}
+
+has_tier_label(obj) if {
+	metadata := object.get(obj, "metadata", {})
+	labels := object.get(metadata, "labels", {})
+	labels[tier_label_key] != ""
+}
+
+namespace_tier(obj) := tier if {
+	metadata := object.get(obj, "metadata", {})
+	labels := object.get(metadata, "labels", {})
+	tier := labels[tier_label_key]
+	tier != ""
+}
+
+namespace_tier(obj) := tier if {
+	metadata := object.get(obj, "metadata", {})
+	ns := object.get(metadata, "namespace", "")
+	ns != ""
+	tier := namespace_tiers[ns]
+}
+
+namespace_tier(obj) := "apps" if {
+	metadata := object.get(obj, "metadata", {})
+	ns := object.get(metadata, "namespace", "")
+	ns != ""
+	not namespace_tiers[ns]
+	not has_tier_label(obj)
+}
+
+namespace_tier(obj) := "platform" if {
+	metadata := object.get(obj, "metadata", {})
+	ns := object.get(metadata, "namespace", "")
+	ns == ""
+	not has_tier_label(obj)
+}
+
+is_apps_tier(obj) if {
+	namespace_tier(obj) == "apps"
 }
 
 is_workload(obj) if {

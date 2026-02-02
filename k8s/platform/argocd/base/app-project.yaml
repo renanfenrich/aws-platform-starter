@@ -10,7 +10,7 @@ metadata:
 spec:
   description: Platform GitOps boundary for cluster roots.
   sourceRepos:
-    - "*"
+    - git@github.com:renanfenrich/aws-platform-starter.git
   destinations:
     - namespace: "*"
       server: https://kubernetes.default.svc

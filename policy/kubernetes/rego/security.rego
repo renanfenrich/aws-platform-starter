@@ -21,6 +21,7 @@ drops_all(container) if {
 
 deny contains msg if {
 	lib.is_workload(input)
+	lib.is_apps_tier(input)
 	not lib.exception(input, privileged_exception)
 	spec := lib.pod_spec(input)
 	container := spec.containers[_]
@@ -30,6 +31,7 @@ deny contains msg if {
 
 deny contains msg if {
 	lib.is_workload(input)
+	lib.is_apps_tier(input)
 	not lib.exception(input, host_namespace_exception)
 	spec := lib.pod_spec(input)
 	spec.hostNetwork == true
@@ -38,6 +40,7 @@ deny contains msg if {
 
 deny contains msg if {
 	lib.is_workload(input)
+	lib.is_apps_tier(input)
 	not lib.exception(input, host_namespace_exception)
 	spec := lib.pod_spec(input)
 	spec.hostPID == true
@@ -46,6 +49,7 @@ deny contains msg if {
 
 deny contains msg if {
 	lib.is_workload(input)
+	lib.is_apps_tier(input)
 	not lib.exception(input, host_namespace_exception)
 	spec := lib.pod_spec(input)
 	spec.hostIPC == true
@@ -54,6 +58,7 @@ deny contains msg if {
 
 deny contains msg if {
 	lib.is_workload(input)
+	lib.is_apps_tier(input)
 	not lib.exception(input, run_as_root_exception)
 	spec := lib.pod_spec(input)
 	container := spec.containers[_]
@@ -63,6 +68,7 @@ deny contains msg if {
 
 deny contains msg if {
 	lib.is_workload(input)
+	lib.is_apps_tier(input)
 	not lib.exception(input, capabilities_exception)
 	spec := lib.pod_spec(input)
 	container := spec.containers[_]
