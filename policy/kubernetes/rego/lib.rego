@@ -1,5 +1,7 @@
 package kubernetes.lib
 
+import future.keywords.if
+
 required_label_kinds := {
 	"ConfigMap": true,
 	"CronJob": true,

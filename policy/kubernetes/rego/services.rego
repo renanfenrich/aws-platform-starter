@@ -1,5 +1,7 @@
 package kubernetes.policy
 
+import future.keywords.contains
+import future.keywords.if
 import data.kubernetes.lib as lib
 
 services_exception_key := "policy.aws-platform-starter/allow-loadbalancer"

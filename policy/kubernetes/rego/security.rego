@@ -1,5 +1,7 @@
 package kubernetes.security
 
+import future.keywords.contains
+import future.keywords.if
 import data.kubernetes.lib as lib
 
 privileged_exception := "policy.aws-platform-starter/allow-privileged"

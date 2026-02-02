@@ -1,5 +1,7 @@
 package kubernetes.policy
 
+import future.keywords.contains
+import future.keywords.if
 import data.kubernetes.lib as lib
 
 resources_exception_key := "policy.aws-platform-starter/allow-missing-resources"
